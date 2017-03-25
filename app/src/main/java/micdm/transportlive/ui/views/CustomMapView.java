@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -31,6 +32,8 @@ import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.models.Vehicle;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
+import micdm.transportlive.ui.misc.MarkerIconBuilder;
+import micdm.transportlive.utils.ObservableCache;
 
 public class CustomMapView extends BaseView {
 
@@ -42,6 +45,10 @@ public class CustomMapView extends BaseView {
     ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
     CommonFunctions commonFunctions;
+    @Inject
+    MarkerIconBuilder markerIconBuilder;
+    @Inject
+    ObservableCache observableCache;
 
     @BindView(R.id.v__custom_map__map)
     MapView mapView;
@@ -109,13 +116,23 @@ public class CustomMapView extends BaseView {
                             for (Vehicle vehicle: route.vehicles().values()) {
                                 Marker marker = markers.get(vehicle);
                                 if (marker == null) {
-                                    MarkerOptions options = new MarkerOptions();
-                                    options.position(new LatLng(vehicle.latitude(), vehicle.longitude()));
-                                    markers.put(vehicle, map.addMarker(options));
+                                    MarkerOptions options = new MarkerOptions()
+                                        .anchor(0.5f, 0.5f)
+                                        .flat(true)
+                                        .position(new LatLng(vehicle.latitude(), vehicle.longitude()));
+                                    marker = map.addMarker(options);
+                                    markers.put(vehicle, marker);
                                 } else {
                                     outdated.remove(vehicle);
                                     marker.setPosition(new LatLng(vehicle.latitude(), vehicle.longitude()));
                                 }
+                                MarkerIconBuilder.BitmapWrapper wrapper = (MarkerIconBuilder.BitmapWrapper) marker.getTag();
+                                if (wrapper != null) {
+                                    wrapper.recycle();
+                                }
+                                wrapper = markerIconBuilder.build(route.id(), route.number(), vehicle.direction());
+                                marker.setTag(wrapper);
+                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(wrapper.getBitmap()));
                             }
                         }
                     }
@@ -128,16 +145,21 @@ public class CustomMapView extends BaseView {
             .subscribe();
     }
 
-    private Observable<GoogleMap> map;
-
     private Observable<GoogleMap> getMap() {
-        if (map == null) {
-            map = Observable.<GoogleMap>create(source -> mapView.getMapAsync(source::onNext)).replay().refCount();
-        }
-        return map;
+        return observableCache.get(this, "getMap",
+            Observable
+                .<GoogleMap>create(source -> mapView.getMapAsync(source::onNext))
+                .replay()
+                .refCount()
+        );
     }
 
     public void setVehicles(Map<String, RouteGroup> groups) {
         this.groups.onNext(groups);
+    }
+
+    @Override
+    protected void cleanup() {
+        observableCache.clear(this);
     }
 }

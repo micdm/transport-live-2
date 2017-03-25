@@ -3,6 +3,7 @@ package micdm.transportlive.ui;
 import dagger.Module;
 import dagger.Provides;
 import micdm.transportlive.AppScope;
+import micdm.transportlive.ui.misc.PaintConstructor;
 
 @Module
 public class UiModule {
@@ -11,5 +12,11 @@ public class UiModule {
     @AppScope
     PresenterStore providePresenterStore() {
         return new PresenterStore();
+    }
+
+    @Provides
+    @AppScope
+    PaintConstructor providePaintConstructor() {
+        return new PaintConstructor();
     }
 }

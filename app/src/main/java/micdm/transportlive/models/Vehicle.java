@@ -6,7 +6,7 @@ import org.immutables.value.Value;
 public interface Vehicle {
 
     String id();
-    double latitude();
-    double longitude();
-    double direction();
+    float latitude();
+    float longitude();
+    float direction();
 }

@@ -1,6 +1,7 @@
 package micdm.transportlive;
 
 import dagger.Subcomponent;
+import micdm.transportlive.ui.misc.MarkerIconBuilder;
 import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.CustomMapView;
 import micdm.transportlive.ui.views.LoadingView;
@@ -15,6 +16,7 @@ public interface ActivityComponent {
     void inject(CustomMapView target);
     void inject(LoadingView target);
     void inject(RoutesView target);
+    void inject(MarkerIconBuilder target);
 
     @Subcomponent.Builder
     interface Builder {
