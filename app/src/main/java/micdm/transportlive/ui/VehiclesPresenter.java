@@ -1,62 +1,40 @@
 package micdm.transportlive.ui;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import micdm.transportlive.data.DataRepository;
-import micdm.transportlive.data.Loader;
-import micdm.transportlive.data.Loader.LoadingState;
-import micdm.transportlive.models.RouteGroup;
+import micdm.transportlive.data.BaseLoader;
+import micdm.transportlive.data.VehiclesLoader;
 
-public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> {
+public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> implements VehiclesLoader.Client {
 
     interface View extends BasePresenter.View {
 
-        Observable<Object> getLoadDataRequests();
-        Observable<Object> getReloadDataRequests();
+        Observable<Collection<String>> getLoadVehiclesRequests();
+        Observable<Collection<String>> getReloadVehiclesRequests();
     }
 
     @Inject
-    DataRepository dataRepository;
-    @Inject
-    Loader loader;
+    VehiclesLoader vehiclesLoader;
 
-    Observable<LoadingState> getLoadingState() {
-        return getViews()
-            .flatMap(view ->
-                Observable
-                    .merge(
-                        view.getLoadDataRequests().take(1),
-                        view.getReloadDataRequests()
-                    )
-                    .withLatestFrom(dataRepository.getSelectedRoutes(), (o, routes) -> {
-                        List<Observable<LoadingState>> observables = new ArrayList<>();
-                        for (String routeId: routes) {
-                            observables.add(loader.loadVehicles(routeId));
-                        }
-                        return observables;
-                    })
-                    .switchMap(observables ->
-                        Observable.combineLatest(observables, results -> {
-                            List<Object> list = Arrays.asList(results);
-                            if (list.contains(LoadingState.START)) {
-                                return LoadingState.START;
-                            }
-                            if (list.contains(LoadingState.FAIL)) {
-                                return LoadingState.FAIL;
-                            }
-                            return LoadingState.SUCCESS;
-                        })
-                    )
-            );
+    @Override
+    void initMore() {
+        vehiclesLoader.attach(this);
     }
 
-    Observable<Map<String, RouteGroup>> getRouteGroups() {
-        return dataRepository.getRouteGroups();
+    @Override
+    public Observable<Collection<String>> getLoadVehiclesRequests() {
+        return getViewInput(View::getLoadVehiclesRequests);
+    }
+
+    @Override
+    public Observable<Collection<String>> getReloadVehiclesRequests() {
+        return getViewInput(View::getReloadVehiclesRequests);
+    }
+
+    Observable<BaseLoader.State> getLoaderStates() {
+        return vehiclesLoader.getData();
     }
 }

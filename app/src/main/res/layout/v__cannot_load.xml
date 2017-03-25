@@ -7,13 +7,13 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Cannot load data"
+        android:text="@string/v__cannot_load__message"
         style="@style/TextAppearance.AppCompat.Caption"/>
     <Button
         android:id="@+id/f__cannot_load__retry"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Retry"
+        android:text="@string/v__cannot_load__retry"
         style="@style/Widget.AppCompat.Button.Colored"/>
 </LinearLayout>

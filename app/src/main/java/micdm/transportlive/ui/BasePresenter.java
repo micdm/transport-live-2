@@ -1,11 +1,14 @@
 package micdm.transportlive.ui;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.subjects.BehaviorSubject;
 
 abstract class BasePresenter<T extends BasePresenter.View> {
@@ -13,13 +16,11 @@ abstract class BasePresenter<T extends BasePresenter.View> {
     interface View {
 
         Observable<Object> getAttaches();
-
         Observable<Object> getDetaches();
-
         boolean isAttached();
     }
 
-    private final BehaviorSubject<Set<T>> views = BehaviorSubject.createDefault(Collections.emptySet());
+    private final BehaviorSubject<Collection<T>> views = BehaviorSubject.createDefault(Collections.emptySet());
 
     private boolean isInitialized;
     private Disposable eventSubscription;
@@ -28,12 +29,17 @@ abstract class BasePresenter<T extends BasePresenter.View> {
         if (isInitialized) {
             throw new IllegalStateException(String.format("presenter %s already initialized", this));
         }
+        initMore();
         eventSubscription = subscribeForEvents();
         isInitialized = true;
     }
 
     boolean isInitialized() {
         return isInitialized;
+    }
+
+    void initMore() {
+
     }
 
     Disposable subscribeForEvents() {
@@ -56,7 +62,10 @@ abstract class BasePresenter<T extends BasePresenter.View> {
         return views.getValue().contains(view);
     }
 
-    Observable<T> getViews() {
-        return views.switchMap(Observable::fromIterable);
+    <R> Observable<R> getViewInput(Function<T, Observable<R>> callback) {
+        return views
+            .switchMap(Observable::fromIterable)
+            .observeOn(AndroidSchedulers.mainThread())
+            .flatMap(callback);
     }
 }

@@ -1,7 +1,5 @@
 package micdm.transportlive;
 
-import dagger.Component;
-
 public class ComponentHolder {
 
     private static AppComponent appComponent;

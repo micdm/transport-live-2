@@ -1,41 +1,37 @@
 package micdm.transportlive.ui;
 
-import java.util.Map;
-
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import micdm.transportlive.data.DataRepository;
-import micdm.transportlive.data.Loader;
-import micdm.transportlive.models.RouteGroup;
+import micdm.transportlive.data.RoutesLoader;
 
-public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> {
+public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> implements RoutesLoader.Client {
 
     interface View extends BasePresenter.View {
 
-        Observable<Object> getLoadDataRequests();
-
-        Observable<Object> getReloadDataRequests();
+        Observable<Object> getLoadRoutesRequests();
+        Observable<Object> getReloadRoutesRequests();
     }
 
     @Inject
-    DataRepository dataRepository;
-    @Inject
-    Loader loader;
+    RoutesLoader routesLoader;
 
-    Observable<Loader.LoadingState> getLoadingState() {
-        return getViews()
-            .flatMap(view ->
-                Observable
-                    .merge(
-                        view.getLoadDataRequests().take(1),
-                        view.getReloadDataRequests()
-                    )
-                    .switchMap(o -> loader.loadRoutes())
-            );
+    @Override
+    void initMore() {
+        routesLoader.attach(this);
     }
 
-    Observable<Map<String, RouteGroup>> getRouteGroups() {
-        return dataRepository.getRouteGroups();
+    @Override
+    public Observable<Object> getLoadRoutesRequests() {
+        return getViewInput(View::getLoadRoutesRequests);
+    }
+
+    @Override
+    public Observable<Object> getReloadRoutesRequests() {
+        return getViewInput(View::getReloadRoutesRequests);
+    }
+
+    Observable<RoutesLoader.State> getLoaderStates() {
+        return routesLoader.getData();
     }
 }

@@ -13,6 +13,7 @@ import android.widget.TextView;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -49,15 +50,15 @@ public class RoutesView extends BaseView {
         }
 
         private final LayoutInflater layoutInflater;
-        private final Subject<Set<String>> selectRoutesRequests = BehaviorSubject.create();
+        private final Subject<Collection<String>> selectRoutesRequests = BehaviorSubject.create();
         private List<Pair<RouteGroup, Route>> routes;
-        private Set<String> selectedRoutes = Collections.emptySet();
+        private Collection<String> selectedRoutes = Collections.emptySet();
 
         private Adapter(LayoutInflater layoutInflater) {
             this.layoutInflater = layoutInflater;
         }
 
-        Observable<Set<String>> getSelectRoutesRequests() {
+        Observable<Collection<String>> getSelectRoutesRequests() {
             return selectRoutesRequests;
         }
 
@@ -104,7 +105,7 @@ public class RoutesView extends BaseView {
             notifyDataSetChanged();
         }
 
-        void setSelectedRoutes(Set<String> routes) {
+        void setSelectedRoutes(Collection<String> routes) {
             selectedRoutes = routes;
             notifyDataSetChanged();
         }
@@ -140,11 +141,11 @@ public class RoutesView extends BaseView {
         ((Adapter) routesView.getAdapter()).setRouteGroups(groups);
     }
 
-    public Observable<Set<String>> getSelectedRoutes() {
+    public Observable<Collection<String>> getSelectedRoutes() {
         return ((Adapter) routesView.getAdapter()).getSelectRoutesRequests();
     }
 
-    public void setSelectedRoutes(Set<String> routes) {
+    public void setSelectedRoutes(Collection<String> routes) {
         ((Adapter) routesView.getAdapter()).setSelectedRoutes(routes);
     }
 }

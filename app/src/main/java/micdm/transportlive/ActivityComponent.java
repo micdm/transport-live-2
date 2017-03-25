@@ -2,8 +2,8 @@ package micdm.transportlive;
 
 import dagger.Subcomponent;
 import micdm.transportlive.ui.views.CannotLoadView;
-import micdm.transportlive.ui.views.LoadingView;
 import micdm.transportlive.ui.views.CustomMapView;
+import micdm.transportlive.ui.views.LoadingView;
 import micdm.transportlive.ui.views.RoutesView;
 
 @ActivityScope

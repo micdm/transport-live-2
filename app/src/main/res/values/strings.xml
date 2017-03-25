@@ -1,4 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Transport Live 2</string>
-    <string name="title_activity_main">Transport Live 2</string>
+    <string name="v__cannot_load__message">Не получилось загрузить данные</string>
+    <string name="v__cannot_load__retry">Ещё раз</string>
+    <string name="v__loading__message">Загрузка…</string>
 </resources>

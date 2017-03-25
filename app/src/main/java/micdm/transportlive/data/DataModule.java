@@ -24,8 +24,17 @@ public class DataModule {
 
     @Provides
     @AppScope
-    Loader provideLoader() {
-        Loader instance = new Loader();
+    RoutesLoader provideRoutesLoader() {
+        RoutesLoader instance = new RoutesLoader();
+        ComponentHolder.getAppComponent().inject(instance);
+        instance.init();
+        return instance;
+    }
+
+    @Provides
+    @AppScope
+    VehiclesLoader provideVehiclesLoader() {
+        VehiclesLoader instance = new VehiclesLoader();
         ComponentHolder.getAppComponent().inject(instance);
         instance.init();
         return instance;

@@ -5,13 +5,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.ViewGroup;
 
 import com.bluelinelabs.conductor.Conductor;
-import com.bluelinelabs.conductor.Controller;
 import com.bluelinelabs.conductor.Router;
 import com.bluelinelabs.conductor.RouterTransaction;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
+import micdm.transportlive.ui.VehiclesController;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
 
@@ -19,8 +18,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
-    @Inject
-    Provider<Controller> rootControllerProvider;
 
     private Router router;
 
@@ -45,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Router initRouter(Bundle savedInstanceState) {
         Router router = Conductor.attachRouter(this, (ViewGroup) findViewById(R.id.v__main__container), savedInstanceState);
         if (!router.hasRootController()) {
-            router.setRoot(RouterTransaction.with(rootControllerProvider.get()));
+            router.setRoot(RouterTransaction.with(new VehiclesController()));
         }
         return router;
     }

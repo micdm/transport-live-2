@@ -2,7 +2,7 @@ package micdm.transportlive.data;
 
 import com.google.gson.Gson;
 
-import java.util.Set;
+import java.util.Collection;
 
 import javax.inject.Inject;
 
@@ -15,11 +15,11 @@ public class ServerConnector {
     @Inject
     Gson gson;
 
-    Single<Set<GetRoutesResponse>> getRoutes() {
+    Single<Collection<GetRoutesResponse>> getRoutes() {
         return apiService.getRoutes();
     }
 
-    Single<Set<GetVehiclesResponse>> getVehicles(String routeId) {
+    Single<Collection<GetVehiclesResponse>> getVehicles(String routeId) {
         return apiService.getVehicles(routeId);
     }
 }

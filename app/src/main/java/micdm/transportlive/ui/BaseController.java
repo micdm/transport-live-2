@@ -28,17 +28,12 @@ abstract class BaseController extends Controller implements BasePresenter.View {
     protected View onCreateView(@NonNull LayoutInflater inflater, @NonNull ViewGroup container) {
         View view = inflateContent(inflater, container);
         viewUnbinder = ButterKnife.bind(this, view);
-        initRouter();
         setupViews();
         return view;
     }
 
     @NonNull
     abstract View inflateContent(@NonNull LayoutInflater inflater, @NonNull ViewGroup container);
-
-    protected void initRouter() {
-
-    }
 
     protected void setupViews() {
 

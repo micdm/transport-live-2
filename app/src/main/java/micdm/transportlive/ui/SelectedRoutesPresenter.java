@@ -1,33 +1,33 @@
 package micdm.transportlive.ui;
 
-import java.util.Set;
+import java.util.Collection;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
-import micdm.transportlive.data.DataRepository;
+import micdm.transportlive.data.SelectedRoutesStore;
 
-public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresenter.View> {
+public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresenter.View> implements SelectedRoutesStore.Client {
 
     interface View extends BasePresenter.View {
 
-        Observable<Set<String>> getSelectRoutesRequests();
+        Observable<Collection<String>> getSelectRoutesRequests();
     }
 
     @Inject
-    DataRepository dataRepository;
+    SelectedRoutesStore selectedRoutesStore;
 
     @Override
-    Disposable subscribeForEvents() {
-        return subscribeForSelectRoutesRequest();
+    void initMore() {
+        selectedRoutesStore.attach(this);
     }
 
-    private Disposable subscribeForSelectRoutesRequest() {
-        return getViews().flatMap(View::getSelectRoutesRequests).subscribe(dataRepository::putSelectedRoutes);
+    Observable<Collection<String>> getSelectedRoutes() {
+        return selectedRoutesStore.getSelectedRoutes();
     }
 
-    Observable<Set<String>> getSelectedRoutes() {
-        return dataRepository.getSelectedRoutes();
+    @Override
+    public Observable<Collection<String>> getSelectRoutesRequests() {
+        return getViewInput(View::getSelectRoutesRequests);
     }
 }

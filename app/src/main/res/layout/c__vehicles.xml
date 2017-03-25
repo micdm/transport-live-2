@@ -3,19 +3,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <micdm.transportlive.ui.views.LoadingView
-        android:id="@+id/v__map__loading"
+        android:id="@+id/v__vehicles__loading"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"/>
     <micdm.transportlive.ui.views.CustomMapView
-        android:id="@+id/v__map__map"
+        android:id="@+id/v__vehicles__map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
     <micdm.transportlive.ui.views.CannotLoadView
-        android:id="@+id/v__map__cannot_load"
+        android:id="@+id/v__vehicles__cannot_load"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"/>
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/v__map__select_routes"
+        android:id="@+id/v__vehicles__select_routes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
