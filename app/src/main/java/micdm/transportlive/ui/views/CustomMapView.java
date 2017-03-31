@@ -12,7 +12,12 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.javatuples.Pair;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,11 +32,14 @@ import io.reactivex.subjects.Subject;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.models.Path;
+import micdm.transportlive.models.Point;
 import micdm.transportlive.models.Route;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.models.Vehicle;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
+import micdm.transportlive.ui.misc.ColorConstructor;
 import micdm.transportlive.ui.misc.MarkerIconBuilder;
 import micdm.transportlive.utils.ObservableCache;
 
@@ -44,6 +52,8 @@ public class CustomMapView extends BaseView {
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
+    ColorConstructor colorConstructor;
+    @Inject
     CommonFunctions commonFunctions;
     @Inject
     MarkerIconBuilder markerIconBuilder;
@@ -53,7 +63,9 @@ public class CustomMapView extends BaseView {
     @BindView(R.id.v__custom_map__map)
     MapView mapView;
 
-    private final Subject<Map<String, RouteGroup>> groups = BehaviorSubject.create();
+    private final Subject<Collection<RouteGroup>> groups = BehaviorSubject.create();
+    private final Subject<Collection<Vehicle>> vehicles = BehaviorSubject.create();
+    private final Subject<Collection<Path>> paths = BehaviorSubject.create();
 
     public CustomMapView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -72,7 +84,8 @@ public class CustomMapView extends BaseView {
         return new CompositeDisposable(
             subscribeForWindowEvents(),
             subscribeForMap(),
-            subscribeForVehicles()
+            subscribeForVehicles(),
+            subscribeForPaths()
         );
     }
 
@@ -108,38 +121,80 @@ public class CustomMapView extends BaseView {
     private Disposable subscribeForVehicles() {
         return getMap()
             .switchMap(map ->
-                groups.<Map<Vehicle, Marker>>scan(new HashMap<>(), (accumulated, routeGroups) -> {
+                Observable.combineLatest(
+                    groups,
+                    vehicles,
+                    Pair::with
+                )
+                .<Map<Vehicle, Marker>>scan(new HashMap<>(), (accumulated, pair) -> {
                     Map<Vehicle, Marker> markers = new HashMap<>(accumulated);
                     Map<Vehicle, Marker> outdated = new HashMap<>(accumulated);
-                    for (RouteGroup routeGroup: routeGroups.values()) {
-                        for (Route route: routeGroup.routes().values()) {
-                            for (Vehicle vehicle: route.vehicles().values()) {
-                                Marker marker = markers.get(vehicle);
-                                if (marker == null) {
-                                    MarkerOptions options = new MarkerOptions()
-                                        .anchor(0.5f, 0.5f)
-                                        .flat(true)
-                                        .position(new LatLng(vehicle.latitude(), vehicle.longitude()));
-                                    marker = map.addMarker(options);
-                                    markers.put(vehicle, marker);
-                                } else {
-                                    outdated.remove(vehicle);
-                                    marker.setPosition(new LatLng(vehicle.latitude(), vehicle.longitude()));
-                                }
-                                MarkerIconBuilder.BitmapWrapper wrapper = (MarkerIconBuilder.BitmapWrapper) marker.getTag();
-                                if (wrapper != null) {
-                                    wrapper.recycle();
-                                }
-                                wrapper = markerIconBuilder.build(route.id(), route.number(), vehicle.direction());
-                                marker.setTag(wrapper);
-                                marker.setIcon(BitmapDescriptorFactory.fromBitmap(wrapper.getBitmap()));
-                            }
+                    for (Vehicle vehicle: pair.getValue1()) {
+                        Marker marker = markers.get(vehicle);
+                        if (marker == null) {
+                            MarkerOptions options = new MarkerOptions()
+                                .anchor(0.5f, 0.5f)
+                                .flat(true)
+                                .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()));
+                            marker = map.addMarker(options);
+                            markers.put(vehicle, marker);
+                        } else {
+                            outdated.remove(vehicle);
+                            marker.setPosition(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()));
                         }
+                        MarkerIconBuilder.BitmapWrapper wrapper = (MarkerIconBuilder.BitmapWrapper) marker.getTag();
+                        if (wrapper != null) {
+                            wrapper.recycle();
+                        }
+                        Route route = getRouteById(pair.getValue0(), vehicle.route());
+                        wrapper = markerIconBuilder.build(route.id(), route.number(), vehicle.direction());
+                        marker.setTag(wrapper);
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(wrapper.getBitmap()));
                     }
                     for (Marker marker: outdated.values()) {
                         marker.remove();
                     }
                     return markers;
+                })
+            )
+            .subscribe();
+    }
+
+    private Route getRouteById(Collection<RouteGroup> groups, String routeId) {
+        for (RouteGroup group: groups) {
+            for (Route route: group.routes()) {
+                if (route.id().equals(routeId)) {
+                    return route;
+                }
+            }
+        }
+        throw new IllegalStateException(String.format("cannot find route %s", routeId));
+    }
+
+    private Disposable subscribeForPaths() {
+        return getMap()
+            .switchMap(map ->
+                paths.<Map<Path, Polyline>>scan(new HashMap<>(), (accumulated, paths) -> {
+                    Map<Path, Polyline> polylines = new HashMap<>(accumulated);
+                    Map<Path, Polyline> outdated = new HashMap<>(accumulated);
+                    for (Path path: paths) {
+                        Polyline polyline = polylines.get(path);
+                        if (polyline == null) {
+                            PolylineOptions options = new PolylineOptions()
+                                .color(colorConstructor.getByString(path.route()) & 0x55FFFFFF)
+                                .width(4);
+                            for (Point point : path.points()) {
+                                options.add(new LatLng(point.latitude(), point.longitude()));
+                            }
+                            polylines.put(path, map.addPolyline(options));
+                        } else {
+                            outdated.remove(path);
+                        }
+                    }
+                    for (Polyline polyline : outdated.values()) {
+                        polyline.remove();
+                    }
+                    return polylines;
                 })
             )
             .subscribe();
@@ -154,8 +209,16 @@ public class CustomMapView extends BaseView {
         );
     }
 
-    public void setVehicles(Map<String, RouteGroup> groups) {
+    public void setRoutes(Collection<RouteGroup> groups) {
         this.groups.onNext(groups);
+    }
+
+    public void setVehicles(Collection<Vehicle> vehicles) {
+        this.vehicles.onNext(vehicles);
+    }
+
+    public void setPaths(Collection<Path> paths) {
+        this.paths.onNext(paths);
     }
 
     @Override

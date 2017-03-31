@@ -1,93 +1,100 @@
 package micdm.transportlive.data;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
+import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutableRoute;
 import micdm.transportlive.models.ImmutableRouteGroup;
 import micdm.transportlive.models.RouteGroup;
-import micdm.transportlive.utils.ObservableCache;
-import timber.log.Timber;
 
-public class RoutesLoader extends BaseLoader<RoutesLoader.Client> {
+public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<RouteGroup>> implements RoutesStore.Client {
 
     public interface Client {
 
         Observable<Object> getLoadRoutesRequests();
         Observable<Object> getReloadRoutesRequests();
+        Observable<Object> getCancelRoutesLoadingRequests();
     }
 
     @Inject
-    @Named("io")
-    Scheduler ioScheduler;
-    @Inject
-    ObservableCache observableCache;
+    RoutesStore routesStore;
     @Inject
     ServerConnector serverConnector;
 
     @Override
-    public Observable<State> getData() {
-        return observableCache.get(this, "getData",
-            Observable
-                .merge(
-                    getLoadRequests().map(o -> new StateLoading()),
-                    getLoadRequests()
-                        .switchMap(o -> serverConnector.getRoutes().toObservable())
-                        .map(this::convertRoutesResponseToData)
-                        .<State>map(StateSuccess::new)
-                        .retry(3)
-                        .doOnError(error ->
-                            Timber.w(error, "Cannot load routes")
-                        )
-                        .onErrorReturn(o -> new StateFail())
-                        .subscribeOn(ioScheduler)
-                )
-                .replay(1)
-                .autoConnect()
-        );
+    public void init() {
+        routesStore.attach(this);
     }
 
-    private Observable<Object> getLoadRequests() {
-        return Observable
-            .merge(
-                clients.get().flatMap(Client::getLoadRoutesRequests).take(1),
-                clients.get().flatMap(Client::getReloadRoutesRequests)
-            )
-            .debounce(50, TimeUnit.MILLISECONDS);
+    @Override
+    protected Observable<Object> getLoadRequests() {
+        return clients.get()
+            .flatMap(Client::getLoadRoutesRequests)
+            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
     }
 
-    private Map<String, RouteGroup> convertRoutesResponseToData(Collection<GetRoutesResponse> response) {
-        Map<String, ImmutableRouteGroup.Builder> builders = new HashMap<>();
-        for (GetRoutesResponse item: response) {
-            String groupId = item.PathwayGroup.PathwayGroupId;
-            ImmutableRouteGroup.Builder groupBuilder = builders.get(groupId);
-            if (groupBuilder == null) {
-                groupBuilder = ImmutableRouteGroup.builder()
-                    .id(groupId)
-                    .name(item.PathwayGroup.Name);
-                builders.put(groupId, groupBuilder);
-            }
-            String routeId = item.PathwayId;
-            groupBuilder.putRoutes(routeId,
-                ImmutableRoute.builder()
-                    .id(routeId)
-                    .source(item.ItineraryFrom)
-                    .destination(item.ItineraryTo)
-                    .number(item.Number)
-                    .build()
-            );
-        }
-        Map<String, RouteGroup> groups = new HashMap<>();
-        for (Map.Entry<String, ImmutableRouteGroup.Builder> entry: builders.entrySet()) {
-            groups.put(entry.getKey(), entry.getValue().build());
-        }
-        return groups;
+    @Override
+    Observable<Object> getReloadRequests() {
+        return clients.get()
+            .flatMap(Client::getReloadRoutesRequests)
+            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
+    }
+
+    @Override
+    protected Observable<Object> getCancelRequests() {
+        return clients.get()
+            .flatMap(Client::getCancelRoutesLoadingRequests)
+            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
+    }
+
+    @Override
+    Observable<Collection<RouteGroup>> loadFromCache() {
+        return routesStore.getData(""); //TODO: туповато
+    }
+
+    @Override
+    Observable<Collection<RouteGroup>> loadFromServer() {
+        return serverConnector.getRoutes()
+            .toObservable()
+            .map(response -> {
+                Map<String, ImmutableRouteGroup.Builder> builders = new HashMap<>();
+                for (GetRoutesResponse item: response) {
+                    String groupId = item.PathwayGroup.PathwayGroupId;
+                    ImmutableRouteGroup.Builder groupBuilder = builders.get(groupId);
+                    if (groupBuilder == null) {
+                        groupBuilder = ImmutableRouteGroup.builder()
+                            .id(groupId)
+                            .name(item.PathwayGroup.Name);
+                        builders.put(groupId, groupBuilder);
+                    }
+                    String routeId = item.PathwayId;
+                    groupBuilder.addRoutes(
+                        ImmutableRoute.builder()
+                            .id(routeId)
+                            .source(item.ItineraryFrom)
+                            .destination(item.ItineraryTo)
+                            .number(item.Number)
+                            .build()
+                    );
+                }
+                Collection<RouteGroup> groups = new ArrayList<>();
+                for (ImmutableRouteGroup.Builder builder: builders.values()) {
+                    groups.add(builder.build());
+                }
+                return groups;
+            });
+    }
+
+    @Override
+    public Observable<Collection<RouteGroup>> getStoreRoutesRequests() {
+        return getData()
+            .filter(Result::isSuccess)
+            .map(Result::getData);
     }
 }

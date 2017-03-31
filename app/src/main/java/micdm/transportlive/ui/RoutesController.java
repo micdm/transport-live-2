@@ -16,11 +16,9 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
-import micdm.transportlive.data.BaseLoader.StateFail;
-import micdm.transportlive.data.BaseLoader.StateLoading;
-import micdm.transportlive.data.BaseLoader.StateSuccess;
-import micdm.transportlive.data.RoutesLoader;
+import micdm.transportlive.data.BaseLoader;
 import micdm.transportlive.misc.Irrelevant;
+import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.LoadingView;
 import micdm.transportlive.ui.views.RoutesView;
@@ -63,20 +61,20 @@ public class RoutesController extends BaseController implements RoutesPresenter.
     }
 
     private Disposable subscribeForLoadingState() {
-        Observable<RoutesLoader.State> states = presenterStore.getRoutesPresenter(this).getLoaderStates().observeOn(AndroidSchedulers.mainThread());
+        Observable<BaseLoader.Result<Collection<RouteGroup>>> results = presenterStore.getRoutesPresenter(this).getResults().observeOn(AndroidSchedulers.mainThread());
         return new CompositeDisposable(
-            states.ofType(StateLoading.class).subscribe(o -> {
+            results.filter(BaseLoader.Result::isLoading).subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);
                 routesView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            states.ofType(StateSuccess.class).subscribe(state -> {
+            results.filter(BaseLoader.Result::isSuccess).subscribe(state -> {
                 loadingView.setVisibility(View.GONE);
                 routesView.setVisibility(View.VISIBLE);
-                routesView.setRouteGroups(state.routeGroups);
+                routesView.setRouteGroups(state.data);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            states.ofType(StateFail.class).subscribe(o -> {
+            results.filter(BaseLoader.Result::isFail).subscribe(o -> {
                 loadingView.setVisibility(View.GONE);
                 routesView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.VISIBLE);

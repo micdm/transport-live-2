@@ -1,9 +1,14 @@
 package micdm.transportlive.ui;
 
+import java.util.Collection;
+
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import micdm.transportlive.data.BaseLoader;
+import micdm.transportlive.data.Loaders;
 import micdm.transportlive.data.RoutesLoader;
+import micdm.transportlive.models.RouteGroup;
 
 public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> implements RoutesLoader.Client {
 
@@ -14,11 +19,11 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> impleme
     }
 
     @Inject
-    RoutesLoader routesLoader;
+    Loaders loaders;
 
     @Override
     void initMore() {
-        routesLoader.attach(this);
+        loaders.getRoutesLoader().attach(this);
     }
 
     @Override
@@ -31,7 +36,12 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> impleme
         return getViewInput(View::getReloadRoutesRequests);
     }
 
-    Observable<RoutesLoader.State> getLoaderStates() {
-        return routesLoader.getData();
+    @Override
+    public Observable<Object> getCancelRoutesLoadingRequests() {
+        return Observable.empty();
+    }
+
+    Observable<BaseLoader.Result<Collection<RouteGroup>>> getResults() {
+        return loaders.getRoutesLoader().getData();
     }
 }

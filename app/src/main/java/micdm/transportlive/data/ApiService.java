@@ -13,4 +13,7 @@ interface ApiService {
 
     @GET("Navigation/GetAutoOnPathway")
     Single<Collection<GetVehiclesResponse>> getVehicles(@Query("pathwayId") String routeId);
+
+    @GET("PathwayGeoJson")
+    Single<GetPathResponse> getPath(@Query("pathwayId") String routeId);
 }

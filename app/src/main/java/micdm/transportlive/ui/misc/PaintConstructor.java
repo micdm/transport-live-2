@@ -7,11 +7,14 @@ import android.graphics.Paint;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 public class PaintConstructor {
 
-    private static final float SATURATION_VALUE = 0.57f;
-    private static final float VALUE_VALUE = 0.87f;
     private static final int SHADOW_SIZE = 5;
+
+    @Inject
+    ColorConstructor colorConstructor;
 
     private final Map<String, Paint> paints = new HashMap<>();
 
@@ -26,9 +29,7 @@ public class PaintConstructor {
 
     private Paint newPaint(String value) {
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        int hue = (int) (359 * (value.hashCode() & 0xFFFFFFFFL) / 0xFFFFFFFFL);
-        int color = Color.HSVToColor(new float[] {hue, SATURATION_VALUE, VALUE_VALUE});
-        paint.setColorFilter(new LightingColorFilter(Color.BLACK, color));
+        paint.setColorFilter(new LightingColorFilter(Color.BLACK, colorConstructor.getByString(value)));
         paint.setShadowLayer(SHADOW_SIZE, 0, 0, 0xFF333333);
         return paint;
     }

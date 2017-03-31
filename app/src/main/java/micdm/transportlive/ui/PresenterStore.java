@@ -13,7 +13,7 @@ class PresenterStore {
         T newInstance();
     }
 
-    private final Map<List<Object>, BasePresenter> presenters = new HashMap<>();
+    private final Map<List<Object>, BasePresenter<?>> presenters = new HashMap<>();
 
     RoutesPresenter getRoutesPresenter(RoutesPresenter.View view) {
         RoutesPresenter presenter = getOrCreate(Collections.singletonList(RoutesPresenter.class), RoutesPresenter::new);
@@ -33,6 +33,14 @@ class PresenterStore {
 
     VehiclesPresenter getVehiclesPresenter(VehiclesPresenter.View view) {
         VehiclesPresenter presenter = getOrCreate(Collections.singletonList(VehiclesPresenter.class), VehiclesPresenter::new);
+        ComponentHolder.getAppComponent().inject(presenter);
+        initPresenter(presenter);
+        handleView(presenter, view);
+        return presenter;
+    }
+
+    PathsPresenter getPathsPresenter(PathsPresenter.View view) {
+        PathsPresenter presenter = getOrCreate(Collections.singletonList(PathsPresenter.class), PathsPresenter::new);
         ComponentHolder.getAppComponent().inject(presenter);
         initPresenter(presenter);
         handleView(presenter, view);

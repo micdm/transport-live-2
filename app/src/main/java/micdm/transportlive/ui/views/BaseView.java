@@ -32,7 +32,7 @@ public abstract class BaseView extends FrameLayout {
         createViewHierarchy();
     }
 
-    protected void createViewHierarchy() {
+    private void createViewHierarchy() {
         inflateContent(layoutInflater);
         if (!isInEditMode()) {
             ButterKnife.bind(this);
@@ -40,9 +40,9 @@ public abstract class BaseView extends FrameLayout {
         }
     }
 
-    protected void inflateContent(LayoutInflater layoutInflater) {}
+    void inflateContent(LayoutInflater layoutInflater) {}
 
-    protected void setupViews() {}
+    void setupViews() {}
 
     @Override
     protected void onAttachedToWindow() {
@@ -52,7 +52,7 @@ public abstract class BaseView extends FrameLayout {
         }
     }
 
-    protected Disposable subscribeForEvents() {
+    Disposable subscribeForEvents() {
         return null;
     }
 
@@ -65,5 +65,5 @@ public abstract class BaseView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
-    protected void cleanup() {}
+    void cleanup() {}
 }

@@ -19,16 +19,16 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
-import micdm.transportlive.data.BaseLoader.StateFail;
-import micdm.transportlive.data.BaseLoader.StateLoading;
-import micdm.transportlive.data.BaseLoader.StateSuccess;
-import micdm.transportlive.data.RoutesLoader;
+import micdm.transportlive.data.BaseLoader;
+import micdm.transportlive.misc.Irrelevant;
+import micdm.transportlive.models.Path;
+import micdm.transportlive.models.RouteGroup;
+import micdm.transportlive.models.Vehicle;
 import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.CustomMapView;
 import micdm.transportlive.ui.views.LoadingView;
-import timber.log.Timber;
 
-public class VehiclesController extends BaseController implements VehiclesPresenter.View, SelectedRoutesPresenter.View {
+public class VehiclesController extends BaseController implements RoutesPresenter.View, VehiclesPresenter.View, SelectedRoutesPresenter.View, PathsPresenter.View {
 
     @Inject
     PresenterStore presenterStore;
@@ -62,27 +62,95 @@ public class VehiclesController extends BaseController implements VehiclesPresen
     @Override
     protected Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            subscribeForLoadingState(),
+            subscribeForData(),
             subscribeForNavigation()
         );
     }
 
-    private Disposable subscribeForLoadingState() {
-        Observable<RoutesLoader.State> states = presenterStore.getVehiclesPresenter(this).getLoaderStates().observeOn(AndroidSchedulers.mainThread());
+    private static class Watcher<T1, T2, T3> {
+
+        private static class Result<T1, T2, T3> {
+
+            private final T1 first;
+            private final T2 second;
+            private final T3 third;
+
+            private Result(T1 first, T2 second, T3 third) {
+                this.first = first;
+                this.second = second;
+                this.third = third;
+            }
+        }
+
+        private final Observable<BaseLoader.Result<T1>> first;
+        private final Observable<BaseLoader.Result<T2>> second;
+        private final Observable<BaseLoader.Result<T3>> third;
+
+        private Watcher(Observable<BaseLoader.Result<T1>> first, Observable<BaseLoader.Result<T2>> second, Observable<BaseLoader.Result<T3>> third) {
+            this.first = first;
+            this.second = second;
+            this.third = third;
+        }
+
+        private Observable<Object> getLoading() {
+            return Observable
+                .combineLatest(
+                    first,
+                    second,
+                    third,
+                    (a, b, c) -> a.isLoading() || b.isLoading() || c.isLoading()
+                )
+                .filter(value -> value)
+                .map(o -> Irrelevant.INSTANCE);
+        }
+
+        private Observable<Result<T1, T2, T3>> getSuccess() {
+            return Observable.combineLatest(
+                first.filter(BaseLoader.Result::isSuccess),
+                second.filter(BaseLoader.Result::isSuccess),
+                third.filter(BaseLoader.Result::isSuccess),
+                (a, b, c) -> new Result<>(a.getData(), b.getData(), c.getData())
+            );
+        }
+
+        private Observable<Object> getFail() {
+            return Observable
+                .combineLatest(
+                    first,
+                    second,
+                    third,
+                    (a, b, c) -> a.isFail() || b.isFail() || c.isFail()
+                )
+                .filter(value -> value)
+                .map(o -> Irrelevant.INSTANCE);
+        }
+    }
+
+    private Disposable subscribeForData() {
+        Watcher<Collection<RouteGroup>, Collection<Vehicle>, Collection<Path>> watcher = new Watcher<>(
+            presenterStore.getRoutesPresenter(this).getResults()
+                .observeOn(AndroidSchedulers.mainThread()),
+            presenterStore.getVehiclesPresenter(this).getResults()
+                .observeOn(AndroidSchedulers.mainThread()),
+            presenterStore.getPathsPresenter(this).getResults()
+                .observeOn(AndroidSchedulers.mainThread())
+
+        );
         return new CompositeDisposable(
-            states.ofType(StateLoading.class).subscribe(o -> {
+            watcher.getLoading().subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);
                 mapView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            states.ofType(StateSuccess.class).subscribe(state -> {
+            watcher.getSuccess().subscribe(result -> {
                 loadingView.setVisibility(View.GONE);
                 mapView.setVisibility(View.VISIBLE);
-                Timber.d("VEHICLECONTROLLER %s", VehiclesController.this);
-                mapView.setVehicles(state.routeGroups);
+                mapView.setRoutes(result.first);
+                mapView.setVehicles(result.second);
+                mapView.setPaths(result.third);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            states.ofType(StateFail.class).subscribe(o -> {
+            watcher.getFail().subscribe(o -> {
                 loadingView.setVisibility(View.GONE);
                 mapView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.VISIBLE);
@@ -94,6 +162,16 @@ public class VehiclesController extends BaseController implements VehiclesPresen
         return RxView.clicks(selectRoutesView).subscribe(o ->
             getRouter().pushController(RouterTransaction.with(new RoutesController()))
         );
+    }
+
+    @Override
+    public Observable<Object> getLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE);
+    }
+
+    @Override
+    public Observable<Object> getReloadRoutesRequests() {
+        return cannotLoadView.getRetryRequest();
     }
 
     @Override
@@ -112,5 +190,18 @@ public class VehiclesController extends BaseController implements VehiclesPresen
     @Override
     public Observable<Collection<String>> getSelectRoutesRequests() {
         return Observable.empty();
+    }
+
+    @Override
+    public Observable<Collection<String>> getLoadPathsRequests() {
+        return presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes();
+    }
+
+    @Override
+    public Observable<Collection<String>> getReloadPathsRequests() {
+        return cannotLoadView.getRetryRequest().withLatestFrom(
+            presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
+            (o, routes) -> routes
+        );
     }
 }

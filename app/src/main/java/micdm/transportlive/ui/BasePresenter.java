@@ -23,14 +23,13 @@ abstract class BasePresenter<T extends BasePresenter.View> {
     private final BehaviorSubject<Collection<T>> views = BehaviorSubject.createDefault(Collections.emptySet());
 
     private boolean isInitialized;
-    private Disposable eventSubscription;
 
     void init() {
         if (isInitialized) {
             throw new IllegalStateException(String.format("presenter %s already initialized", this));
         }
         initMore();
-        eventSubscription = subscribeForEvents();
+        subscribeForEvents();
         isInitialized = true;
     }
 

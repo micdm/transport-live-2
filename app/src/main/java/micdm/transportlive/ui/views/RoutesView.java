@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -89,10 +88,10 @@ public class RoutesView extends BaseView {
             return (routes == null) ? 0 : routes.size();
         }
 
-        void setRouteGroups(Map<String, RouteGroup> groups) {
+        void setRouteGroups(Collection<RouteGroup> groups) {
             routes = new ArrayList<>();
-            for (RouteGroup group: groups.values()) {
-                for (Route route: group.routes().values()) {
+            for (RouteGroup group: groups) {
+                for (Route route: group.routes()) {
                     routes.add(Pair.with(group, route));
                 }
             }
@@ -137,7 +136,7 @@ public class RoutesView extends BaseView {
         routesView.setAdapter(new Adapter(layoutInflater));
     }
 
-    public void setRouteGroups(Map<String, RouteGroup> groups) {
+    public void setRouteGroups(Collection<RouteGroup> groups) {
         ((Adapter) routesView.getAdapter()).setRouteGroups(groups);
     }
 

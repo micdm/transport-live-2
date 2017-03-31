@@ -5,9 +5,8 @@ import org.immutables.value.Value;
 import java.util.List;
 
 @Value.Immutable
-public interface RouteGroup {
+public interface RouteVehicles {
 
-    String id();
-    String name();
-    List<Route> routes();
+    String route();
+    List<Vehicle> vehicles();
 }
