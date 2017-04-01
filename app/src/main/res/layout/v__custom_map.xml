@@ -1,10 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:gravity="center">
+    android:layout_height="wrap_content">
     <com.google.android.gms.maps.MapView
         android:id="@+id/v__custom_map__map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
-</FrameLayout>
+    <LinearLayout
+        android:id="@+id/v__custom_map__no_vehicles"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="16dp"
+        android:padding="8dp"
+        android:gravity="center"
+        android:background="@drawable/no_vehicles_background">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_sleep"
+            android:tint="#fff"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:text="Кажется, весь транспорт в парке"
+            android:textAppearance="@style/TextAppearance.AppCompat.Subhead.Inverse"/>
+    </LinearLayout>
+</RelativeLayout>

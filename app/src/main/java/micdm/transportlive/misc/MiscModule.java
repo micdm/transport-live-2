@@ -11,7 +11,9 @@ public class MiscModule {
     @Provides
     @AppScope
     CommonFunctions provideCommonFunctions() {
-        return new CommonFunctions();
+        CommonFunctions instance = new CommonFunctions();
+        ComponentHolder.getAppComponent().inject(instance);
+        return instance;
     }
 
     @Provides

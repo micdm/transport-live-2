@@ -45,4 +45,5 @@ public interface AppComponent {
     void inject(VehiclesLoader target);
     void inject(VehiclesPresenter target);
     void inject(RoutesStore target);
+    void inject(CommonFunctions target);
 }

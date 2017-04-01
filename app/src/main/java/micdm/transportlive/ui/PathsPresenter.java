@@ -13,6 +13,7 @@ import micdm.transportlive.data.loaders.PathLoader;
 import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.models.Path;
+import micdm.transportlive.ui.misc.ResultWatcherN;
 
 public class PathsPresenter extends BasePresenter<PathsPresenter.View> implements PathLoader.Client {
 
@@ -79,27 +80,12 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
             for (String routeId: routeIds) {
                 observables.add(loaders.getPathLoader(routeId).getData());
             }
-            return Observable.combineLatest(observables, objects -> {
-                Collection<Result<Path>> results = new ArrayList<>(objects.length);
-                for (Object result: objects) {
-                    results.add((Result<Path>) result);
-                }
-                for (Result<Path> result: results) {
-                    if (result.isFail()) {
-                        return Result.newFail();
-                    }
-                }
-                for (Result<Path> result: results) {
-                    if (result.isLoading()) {
-                        return Result.newLoading();
-                    }
-                }
-                Collection<Path> paths = new ArrayList<>();
-                for (Result<Path> result: results) {
-                    paths.add(result.getData());
-                }
-                return Result.newSuccess(paths);
-            });
+            ResultWatcherN<Path> watcher = new ResultWatcherN<>(commonFunctions, observables);
+            return Observable.merge(
+                watcher.getLoading().compose(commonFunctions.toConst(Result.newLoading())),
+                watcher.getSuccess().map(Result::newSuccess),
+                watcher.getFail().compose(commonFunctions.toConst(Result.newFail()))
+            );
         });
     }
 }

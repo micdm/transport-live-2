@@ -17,6 +17,7 @@ import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
 import micdm.transportlive.data.loaders.Result;
+import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.ui.views.CannotLoadView;
@@ -25,6 +26,8 @@ import micdm.transportlive.ui.views.RoutesView;
 
 public class RoutesController extends BaseController implements RoutesPresenter.View, SelectedRoutesPresenter.View {
 
+    @Inject
+    CommonFunctions commonFunctions;
     @Inject
     PresenterStore presenterStore;
 
@@ -61,7 +64,9 @@ public class RoutesController extends BaseController implements RoutesPresenter.
     }
 
     private Disposable subscribeForLoadingState() {
-        Observable<Result<Collection<RouteGroup>>> results = presenterStore.getRoutesPresenter(this).getResults().observeOn(AndroidSchedulers.mainThread());
+        Observable<Result<Collection<RouteGroup>>> results =
+            presenterStore.getRoutesPresenter(this).getResults()
+                .compose(commonFunctions.toMainThread());
         return new CompositeDisposable(
             results.filter(Result::isLoading).subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);

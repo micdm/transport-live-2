@@ -5,13 +5,22 @@ import org.javatuples.Pair;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 
 public class CommonFunctions {
+
+    @Inject
+    @Named("mainThread")
+    Scheduler mainThreadScheduler;
 
     CommonFunctions() {
 
@@ -71,5 +80,17 @@ public class CommonFunctions {
 
     public ObservableTransformer<Object, Boolean> toFalse() {
         return observable -> observable.map(o -> false);
+    }
+
+    public ObservableTransformer<Object, Object> toNothing() {
+        return observable -> observable.map(o -> Irrelevant.INSTANCE);
+    }
+
+    public <T> ObservableTransformer<T, T> toMainThread() {
+        return observable -> Observable.create(source -> {
+            Disposable subscription = observable.observeOn(mainThreadScheduler)
+                .subscribe(source::onNext, source::onError, source::onComplete);
+            source.setDisposable(subscription);
+        });
     }
 }

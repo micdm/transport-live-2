@@ -14,6 +14,7 @@ import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.data.loaders.VehiclesLoader;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.models.Vehicle;
+import micdm.transportlive.ui.misc.ResultWatcherN;
 
 public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> implements VehiclesLoader.Client {
 
@@ -49,7 +50,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
     }
 
     private Observable<Collection<String>> getVehiclesToReload() {
-        return getViewInput(View::getLoadVehiclesRequests);
+        return getViewInput(View::getReloadVehiclesRequests);
     }
 
     private Observable<Collection<String>> getVehiclesToCancelLoad() {
@@ -64,7 +65,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
         return getVehiclesToLoad()
             .switchMap(routeIds ->
                 Observable
-                    .interval(5, TimeUnit.SECONDS)
+                    .interval(10, TimeUnit.SECONDS)
                     .switchMap(o -> Observable.fromIterable(routeIds))
             );
     }
@@ -85,27 +86,18 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
             for (String routeId: routeIds) {
                 observables.add(loaders.getVehiclesLoader(routeId).getData());
             }
-            return Observable.combineLatest(observables, objects -> {
-                Collection<Result<Collection<Vehicle>>> results = new ArrayList<>(objects.length);
-                for (Object result: objects) {
-                    results.add((Result<Collection<Vehicle>>) result);
-                }
-                for (Result<Collection<Vehicle>> result: results) {
-                    if (result.isFail()) {
-                        return Result.newFail();
+            ResultWatcherN<Collection<Vehicle>> watcher = new ResultWatcherN<>(commonFunctions, observables);
+            return Observable.merge(
+                watcher.getLoading().compose(commonFunctions.toConst(Result.newLoading())),
+                watcher.getSuccess().map(datas -> {
+                    Collection<Vehicle> vehicles = new ArrayList<>();
+                    for (Collection<Vehicle> data: datas) {
+                        vehicles.addAll(data);
                     }
-                }
-                for (Result<Collection<Vehicle>> result: results) {
-                    if (result.isLoading()) {
-                        return Result.newLoading();
-                    }
-                }
-                Collection<Vehicle> vehicles = new ArrayList<>();
-                for (Result<Collection<Vehicle>> result: results) {
-                    vehicles.addAll(result.getData());
-                }
-                return Result.newSuccess(vehicles);
-            });
+                    return Result.newSuccess(vehicles);
+                }),
+                watcher.getFail().compose(commonFunctions.toConst(Result.newFail()))
+            );
         });
     }
 }

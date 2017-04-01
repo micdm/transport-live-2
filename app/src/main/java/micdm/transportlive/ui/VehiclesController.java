@@ -14,21 +14,25 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
+import micdm.transportlive.data.loaders.Result;
+import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.models.Vehicle;
+import micdm.transportlive.ui.misc.ResultWatcher2;
 import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.CustomMapView;
 import micdm.transportlive.ui.views.LoadingView;
 
 public class VehiclesController extends BaseController implements RoutesPresenter.View, VehiclesPresenter.View, SelectedRoutesPresenter.View, PathsPresenter.View {
 
+    @Inject
+    CommonFunctions commonFunctions;
     @Inject
     PresenterStore presenterStore;
 
@@ -61,79 +65,19 @@ public class VehiclesController extends BaseController implements RoutesPresente
     @Override
     protected Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            subscribeForData(),
+            subscribeForRequiredData(),
+            subscribeForVehicles(),
             subscribeForNavigation()
         );
     }
 
-    private static class Watcher<T1, T2, T3> {
-
-        private static class Result<T1, T2, T3> {
-
-            private final T1 first;
-            private final T2 second;
-            private final T3 third;
-
-            private Result(T1 first, T2 second, T3 third) {
-                this.first = first;
-                this.second = second;
-                this.third = third;
-            }
-        }
-
-        private final Observable<micdm.transportlive.data.loaders.Result<T1>> first;
-        private final Observable<micdm.transportlive.data.loaders.Result<T2>> second;
-        private final Observable<micdm.transportlive.data.loaders.Result<T3>> third;
-
-        private Watcher(Observable<micdm.transportlive.data.loaders.Result<T1>> first, Observable<micdm.transportlive.data.loaders.Result<T2>> second, Observable<micdm.transportlive.data.loaders.Result<T3>> third) {
-            this.first = first;
-            this.second = second;
-            this.third = third;
-        }
-
-        private Observable<Object> getLoading() {
-            return Observable
-                .combineLatest(
-                    first,
-                    second,
-                    third,
-                    (a, b, c) -> a.isLoading() || b.isLoading() || c.isLoading()
-                )
-                .filter(value -> value)
-                .map(o -> Irrelevant.INSTANCE);
-        }
-
-        private Observable<Result<T1, T2, T3>> getSuccess() {
-            return Observable.combineLatest(
-                first.filter(micdm.transportlive.data.loaders.Result::isSuccess),
-                second.filter(micdm.transportlive.data.loaders.Result::isSuccess),
-                third.filter(micdm.transportlive.data.loaders.Result::isSuccess),
-                (a, b, c) -> new Result<>(a.getData(), b.getData(), c.getData())
-            );
-        }
-
-        private Observable<Object> getFail() {
-            return Observable
-                .combineLatest(
-                    first,
-                    second,
-                    third,
-                    (a, b, c) -> a.isFail() || b.isFail() || c.isFail()
-                )
-                .filter(value -> value)
-                .map(o -> Irrelevant.INSTANCE);
-        }
-    }
-
-    private Disposable subscribeForData() {
-        Watcher<Collection<RouteGroup>, Collection<Vehicle>, Collection<Path>> watcher = new Watcher<>(
+    private Disposable subscribeForRequiredData() {
+        ResultWatcher2<Collection<RouteGroup>, Collection<Path>> watcher = new ResultWatcher2<>(
+            commonFunctions,
             presenterStore.getRoutesPresenter(this).getResults()
-                .observeOn(AndroidSchedulers.mainThread()),
-            presenterStore.getVehiclesPresenter(this).getResults()
-                .observeOn(AndroidSchedulers.mainThread()),
+                .compose(commonFunctions.toMainThread()),
             presenterStore.getPathsPresenter(this).getResults()
-                .observeOn(AndroidSchedulers.mainThread())
-
+                .compose(commonFunctions.toMainThread())
         );
         return new CompositeDisposable(
             watcher.getLoading().subscribe(o -> {
@@ -145,8 +89,7 @@ public class VehiclesController extends BaseController implements RoutesPresente
                 loadingView.setVisibility(View.GONE);
                 mapView.setVisibility(View.VISIBLE);
                 mapView.setRoutes(result.first);
-                mapView.setVehicles(result.second);
-                mapView.setPaths(result.third);
+                mapView.setPaths(result.second);
                 cannotLoadView.setVisibility(View.GONE);
             }),
             watcher.getFail().subscribe(o -> {
@@ -154,6 +97,15 @@ public class VehiclesController extends BaseController implements RoutesPresente
                 mapView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.VISIBLE);
             })
+        );
+    }
+
+    private Disposable subscribeForVehicles() {
+        Observable<Result<Collection<Vehicle>>> common =
+            presenterStore.getVehiclesPresenter(this).getResults()
+                .compose(commonFunctions.toMainThread());
+        return new CompositeDisposable(
+            common.filter(Result::isSuccess).map(Result::getData).subscribe(mapView::setVehicles)
         );
     }
 
