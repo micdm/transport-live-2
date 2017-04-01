@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders.remote;
 
 import java.util.Collection;
 
@@ -11,15 +11,15 @@ public class ServerConnector {
     @Inject
     ApiService apiService;
 
-    Single<Collection<GetRoutesResponse>> getRoutes() {
+    public Single<Collection<GetRoutesResponse>> getRoutes() {
         return apiService.getRoutes();
     }
 
-    Single<Collection<GetVehiclesResponse>> getVehicles(String routeId) {
+    public Single<Collection<GetVehiclesResponse>> getVehicles(String routeId) {
         return apiService.getVehicles(routeId);
     }
 
-    Single<GetPathResponse> getPath(String routeId) {
+    public Single<GetPathResponse> getPath(String routeId) {
         return apiService.getPath(routeId);
     }
 }

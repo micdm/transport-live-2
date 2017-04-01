@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders;
 
 import java.util.HashMap;
 import java.util.Map;

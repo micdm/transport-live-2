@@ -19,7 +19,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
-import micdm.transportlive.data.BaseLoader;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.models.RouteGroup;
@@ -82,11 +81,11 @@ public class VehiclesController extends BaseController implements RoutesPresente
             }
         }
 
-        private final Observable<BaseLoader.Result<T1>> first;
-        private final Observable<BaseLoader.Result<T2>> second;
-        private final Observable<BaseLoader.Result<T3>> third;
+        private final Observable<micdm.transportlive.data.loaders.Result<T1>> first;
+        private final Observable<micdm.transportlive.data.loaders.Result<T2>> second;
+        private final Observable<micdm.transportlive.data.loaders.Result<T3>> third;
 
-        private Watcher(Observable<BaseLoader.Result<T1>> first, Observable<BaseLoader.Result<T2>> second, Observable<BaseLoader.Result<T3>> third) {
+        private Watcher(Observable<micdm.transportlive.data.loaders.Result<T1>> first, Observable<micdm.transportlive.data.loaders.Result<T2>> second, Observable<micdm.transportlive.data.loaders.Result<T3>> third) {
             this.first = first;
             this.second = second;
             this.third = third;
@@ -106,9 +105,9 @@ public class VehiclesController extends BaseController implements RoutesPresente
 
         private Observable<Result<T1, T2, T3>> getSuccess() {
             return Observable.combineLatest(
-                first.filter(BaseLoader.Result::isSuccess),
-                second.filter(BaseLoader.Result::isSuccess),
-                third.filter(BaseLoader.Result::isSuccess),
+                first.filter(micdm.transportlive.data.loaders.Result::isSuccess),
+                second.filter(micdm.transportlive.data.loaders.Result::isSuccess),
+                third.filter(micdm.transportlive.data.loaders.Result::isSuccess),
                 (a, b, c) -> new Result<>(a.getData(), b.getData(), c.getData())
             );
         }

@@ -1,4 +1,4 @@
-package micdm.transportlive.utils;
+package micdm.transportlive.misc;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,18 +14,8 @@ public class ObservableCache {
 
     private final Map<Object, Map<String, Observable<?>>> cache = new HashMap<>();
 
-    public <T> Observable<T> get(Object owner, String key, Observable<T> defaultValue) {
-        Map<String, Observable<?>> observables = cache.get(owner);
-        if (observables == null) {
-            observables = new HashMap<>();
-            cache.put(owner, observables);
-        }
-        Observable<T> result = (Observable<T>) observables.get(key);
-        if (result == null) {
-            result = defaultValue;
-            observables.put(key, defaultValue);
-        }
-        return result;
+    ObservableCache() {
+
     }
 
     public <T> Observable<T> get(Object owner, String key, Factory<T> factory) {

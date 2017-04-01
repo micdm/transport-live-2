@@ -2,15 +2,16 @@ package micdm.transportlive.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import micdm.transportlive.data.BaseLoader;
-import micdm.transportlive.data.Loaders;
-import micdm.transportlive.data.VehiclesLoader;
+import micdm.transportlive.data.loaders.Loaders;
+import micdm.transportlive.data.loaders.Result;
+import micdm.transportlive.data.loaders.VehiclesLoader;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.models.Vehicle;
 
@@ -60,7 +61,12 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
 
     @Override
     public Observable<String> getLoadVehiclesRequests() {
-        return getVehiclesToLoad().switchMap(Observable::fromIterable);
+        return getVehiclesToLoad()
+            .switchMap(routeIds ->
+                Observable
+                    .interval(5, TimeUnit.SECONDS)
+                    .switchMap(o -> Observable.fromIterable(routeIds))
+            );
     }
 
     @Override
@@ -73,32 +79,32 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
         return getVehiclesToCancelLoad().switchMap(Observable::fromIterable);
     }
 
-    Observable<BaseLoader.Result<Collection<Vehicle>>> getResults() {
+    Observable<Result<Collection<Vehicle>>> getResults() {
         return getVehiclesToLoad().switchMap(routeIds -> {
-            Collection<Observable<BaseLoader.Result<Collection<Vehicle>>>> observables = new ArrayList<>(routeIds.size());
+            Collection<Observable<Result<Collection<Vehicle>>>> observables = new ArrayList<>(routeIds.size());
             for (String routeId: routeIds) {
                 observables.add(loaders.getVehiclesLoader(routeId).getData());
             }
             return Observable.combineLatest(observables, objects -> {
-                Collection<BaseLoader.Result<Collection<Vehicle>>> results = new ArrayList<>(objects.length);
+                Collection<Result<Collection<Vehicle>>> results = new ArrayList<>(objects.length);
                 for (Object result: objects) {
-                    results.add((BaseLoader.Result<Collection<Vehicle>>) result);
+                    results.add((Result<Collection<Vehicle>>) result);
                 }
-                for (BaseLoader.Result<Collection<Vehicle>> result: results) {
+                for (Result<Collection<Vehicle>> result: results) {
                     if (result.isFail()) {
-                        return BaseLoader.Result.newFail();
+                        return Result.newFail();
                     }
                 }
-                for (BaseLoader.Result<Collection<Vehicle>> result: results) {
+                for (Result<Collection<Vehicle>> result: results) {
                     if (result.isLoading()) {
-                        return BaseLoader.Result.newLoading();
+                        return Result.newLoading();
                     }
                 }
                 Collection<Vehicle> vehicles = new ArrayList<>();
-                for (BaseLoader.Result<Collection<Vehicle>> result: results) {
+                for (Result<Collection<Vehicle>> result: results) {
                     vehicles.addAll(result.getData());
                 }
-                return BaseLoader.Result.newSuccess(vehicles);
+                return Result.newSuccess(vehicles);
             });
         });
     }

@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 
 import dagger.Module;
 import dagger.Provides;
-import micdm.transportlive.misc.CommonFunctions;
-import micdm.transportlive.utils.ObservableCache;
 
 @Module
 class AppModule {
@@ -29,17 +27,5 @@ class AppModule {
     @AppScope
     SharedPreferences provideSharedPreferences() {
         return app.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-    }
-
-    @Provides
-    @AppScope
-    CommonFunctions provideCommonFunctions() {
-        return new CommonFunctions();
-    }
-
-    @Provides
-    @AppScope
-    ObservableCache provideObservableCache() {
-        return new ObservableCache();
     }
 }

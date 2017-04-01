@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,6 +8,9 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import micdm.transportlive.data.loaders.remote.GetRoutesResponse;
+import micdm.transportlive.data.loaders.remote.ServerConnector;
+import micdm.transportlive.data.stores.RoutesStore;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutableRoute;
 import micdm.transportlive.models.ImmutableRouteGroup;
@@ -28,12 +31,17 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
     ServerConnector serverConnector;
 
     @Override
-    public void init() {
+    public String toString() {
+        return "RoutesLoader";
+    }
+
+    @Override
+    void init() {
         routesStore.attach(this);
     }
 
     @Override
-    protected Observable<Object> getLoadRequests() {
+    Observable<Object> getLoadRequests() {
         return clients.get()
             .flatMap(Client::getLoadRoutesRequests)
             .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
@@ -47,7 +55,7 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
     }
 
     @Override
-    protected Observable<Object> getCancelRequests() {
+    Observable<Object> getCancelRequests() {
         return clients.get()
             .flatMap(Client::getCancelRoutesLoadingRequests)
             .compose(commonFunctions.toConst(Irrelevant.INSTANCE));

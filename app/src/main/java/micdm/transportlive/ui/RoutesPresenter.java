@@ -5,9 +5,9 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import micdm.transportlive.data.BaseLoader;
-import micdm.transportlive.data.Loaders;
-import micdm.transportlive.data.RoutesLoader;
+import micdm.transportlive.data.loaders.Loaders;
+import micdm.transportlive.data.loaders.Result;
+import micdm.transportlive.data.loaders.RoutesLoader;
 import micdm.transportlive.models.RouteGroup;
 
 public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> implements RoutesLoader.Client {
@@ -41,7 +41,7 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> impleme
         return Observable.empty();
     }
 
-    Observable<BaseLoader.Result<Collection<RouteGroup>>> getResults() {
+    Observable<Result<Collection<RouteGroup>>> getResults() {
         return loaders.getRoutesLoader().getData();
     }
 }

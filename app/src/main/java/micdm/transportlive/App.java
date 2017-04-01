@@ -4,8 +4,8 @@ import android.app.Application;
 
 import javax.inject.Inject;
 
-import micdm.transportlive.data.PathsStore;
-import micdm.transportlive.data.SelectedRoutesStore;
+import micdm.transportlive.data.stores.PathsStore;
+import micdm.transportlive.data.stores.SelectedRoutesStore;
 import timber.log.Timber;
 
 public class App extends Application {

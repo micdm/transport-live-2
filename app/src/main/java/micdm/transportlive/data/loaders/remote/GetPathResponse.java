@@ -1,37 +1,37 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders.remote;
 
 import java.util.List;
 
-class GetPathResponse {
+public class GetPathResponse {
 
-    static class SegmentsGeoJson {
+    public static class SegmentsGeoJson {
 
-        static class Feature {
+        public static class Feature {
 
-            static class Geometry {
+            public static class Geometry {
 
-                final List<List<Float>> coordinates;
+                public final List<List<Float>> coordinates;
 
                 Geometry(List<List<Float>> coordinates) {
                     this.coordinates = coordinates;
                 }
             }
 
-            final Geometry geometry;
+            public final Geometry geometry;
 
             Feature(Geometry geometry) {
                 this.geometry = geometry;
             }
         }
 
-        final List<Feature> features;
+        public final List<Feature> features;
 
         SegmentsGeoJson(List<Feature> features) {
             this.features = features;
         }
     }
 
-    final SegmentsGeoJson SegmentsGeoJson;
+    public final SegmentsGeoJson SegmentsGeoJson;
 
     GetPathResponse(GetPathResponse.SegmentsGeoJson segmentsGeoJson) {
         SegmentsGeoJson = segmentsGeoJson;

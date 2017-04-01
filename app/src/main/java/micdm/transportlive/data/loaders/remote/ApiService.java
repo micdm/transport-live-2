@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders.remote;
 
 import java.util.Collection;
 

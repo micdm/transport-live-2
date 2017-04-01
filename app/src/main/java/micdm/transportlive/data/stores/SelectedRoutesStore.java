@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.stores;
 
 import android.content.SharedPreferences;
 
@@ -10,7 +10,8 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
-import micdm.transportlive.utils.ObservableCache;
+import micdm.transportlive.data.Clients;
+import micdm.transportlive.misc.ObservableCache;
 
 public class SelectedRoutesStore {
 
@@ -41,7 +42,7 @@ public class SelectedRoutesStore {
     }
 
     public Observable<Collection<String>> getSelectedRoutes() {
-        return observableCache.get(this, "getSelectedRoutes",
+        return observableCache.get(this, "getSelectedRoutes", () ->
             clients.get()
                 .flatMap(Client::getSelectRoutesRequests)
                 .startWith(hasValue() ? Observable.just(readValue()) : Observable.empty())

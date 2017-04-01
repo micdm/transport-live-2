@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,9 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import micdm.transportlive.data.loaders.remote.GetVehiclesResponse;
+import micdm.transportlive.data.loaders.remote.ServerConnector;
+import micdm.transportlive.data.stores.PathsStore;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutablePoint;
@@ -35,7 +38,12 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
     }
 
     @Override
-    protected Observable<Object> getLoadRequests() {
+    public String toString() {
+        return String.format("VehiclesLoader(routeId=%s)", routeId);
+    }
+
+    @Override
+    Observable<Object> getLoadRequests() {
         return clients.get()
             .flatMap(Client::getLoadVehiclesRequests)
             .filter(commonFunctions.isEqual(routeId))
@@ -51,7 +59,7 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
     }
 
     @Override
-    protected Observable<Object> getCancelRequests() {
+    Observable<Object> getCancelRequests() {
         return clients.get()
             .flatMap(Client::getCancelVehiclesLoadingRequests)
             .filter(commonFunctions.isEqual(routeId))
@@ -59,12 +67,12 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
     }
 
     @Override
-    protected Observable<Collection<Vehicle>> loadFromCache() {
+    Observable<Collection<Vehicle>> loadFromCache() {
         return Observable.empty();
     }
 
     @Override
-    protected Observable<Collection<Vehicle>> loadFromServer() {
+    Observable<Collection<Vehicle>> loadFromServer() {
         return serverConnector.getVehicles(routeId)
             .toObservable()
             .map(response -> {

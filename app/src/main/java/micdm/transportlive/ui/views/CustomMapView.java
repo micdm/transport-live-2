@@ -41,7 +41,7 @@ import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive.ui.misc.ColorConstructor;
 import micdm.transportlive.ui.misc.MarkerIconBuilder;
-import micdm.transportlive.utils.ObservableCache;
+import micdm.transportlive.misc.ObservableCache;
 
 public class CustomMapView extends BaseView {
 
@@ -201,7 +201,7 @@ public class CustomMapView extends BaseView {
     }
 
     private Observable<GoogleMap> getMap() {
-        return observableCache.get(this, "getMap",
+        return observableCache.get(this, "getMap", () ->
             Observable
                 .<GoogleMap>create(source -> mapView.getMapAsync(source::onNext))
                 .replay()

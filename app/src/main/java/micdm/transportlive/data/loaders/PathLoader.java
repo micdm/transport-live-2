@@ -1,10 +1,13 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import micdm.transportlive.data.loaders.remote.GetPathResponse;
+import micdm.transportlive.data.loaders.remote.ServerConnector;
+import micdm.transportlive.data.stores.PathsStore;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutablePath;
@@ -34,12 +37,17 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     }
 
     @Override
-    public void init() {
+    public String toString() {
+        return String.format("PathLoader(routeId=%s)", routeId);
+    }
+
+    @Override
+    void init() {
         pathsStore.attach(this);
     }
 
     @Override
-    protected Observable<Object> getLoadRequests() {
+    Observable<Object> getLoadRequests() {
         return clients.get()
             .flatMap(Client::getLoadPathRequests)
             .filter(commonFunctions.isEqual(routeId))
@@ -55,7 +63,7 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     }
 
     @Override
-    protected Observable<Object> getCancelRequests() {
+    Observable<Object> getCancelRequests() {
         return clients.get()
             .flatMap(Client::getCancelPathLoadingRequests)
             .filter(commonFunctions.isEqual(routeId))
@@ -63,12 +71,12 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     }
 
     @Override
-    protected Observable<Path> loadFromCache() {
+    Observable<Path> loadFromCache() {
         return pathsStore.getData(routeId);
     }
 
     @Override
-    protected Observable<Path> loadFromServer() {
+    Observable<Path> loadFromServer() {
         return serverConnector.getPath(routeId)
             .toObservable()
             .map(response -> {

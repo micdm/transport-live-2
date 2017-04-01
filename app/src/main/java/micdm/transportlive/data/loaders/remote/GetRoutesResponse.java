@@ -1,11 +1,11 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders.remote;
 
-class GetRoutesResponse {
+public class GetRoutesResponse {
 
-    static class Group {
+    public static class Group {
 
-        final String PathwayGroupId;
-        final String Name;
+        public final String PathwayGroupId;
+        public final String Name;
 
         Group(String pathwayGroupId, String name) {
             PathwayGroupId = pathwayGroupId;
@@ -13,11 +13,11 @@ class GetRoutesResponse {
         }
     }
 
-    final String PathwayId;
-    final String ItineraryFrom;
-    final String ItineraryTo;
-    final String Number;
-    final Group PathwayGroup;
+    public final String PathwayId;
+    public final String ItineraryFrom;
+    public final String ItineraryTo;
+    public final String Number;
+    public final Group PathwayGroup;
 
     GetRoutesResponse(String pathwayId, String itineraryFrom, String itineraryTo, String number, Group pathwayGroup) {
         PathwayId = pathwayId;

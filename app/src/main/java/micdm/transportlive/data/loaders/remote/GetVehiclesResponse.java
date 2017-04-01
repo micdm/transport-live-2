@@ -1,11 +1,11 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders.remote;
 
-class GetVehiclesResponse {
+public class GetVehiclesResponse {
 
-    static class Auto {
+    public static class Auto {
 
-        final String AutoId;
-        final String PathwayId;
+        public final String AutoId;
+        public final String PathwayId;
 
         Auto(String autoId, String pathwayId) {
             AutoId = autoId;
@@ -13,11 +13,11 @@ class GetVehiclesResponse {
         }
     }
 
-    static class Point {
+    public static class Point {
 
-        final float Lat;
-        final float Lon;
-        final float Dir;
+        public final float Lat;
+        public final float Lon;
+        public final float Dir;
 
         Point(float lat, float lon, float dir) {
             Lat = lat;
@@ -26,8 +26,8 @@ class GetVehiclesResponse {
         }
     }
 
-    final Auto Auto;
-    final Point Point;
+    public final Auto Auto;
+    public final Point Point;
 
     GetVehiclesResponse(Auto auto, GetVehiclesResponse.Point point) {
         Auto = auto;

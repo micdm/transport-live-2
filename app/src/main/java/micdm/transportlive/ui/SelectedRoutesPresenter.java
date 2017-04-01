@@ -5,7 +5,7 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import micdm.transportlive.data.SelectedRoutesStore;
+import micdm.transportlive.data.stores.SelectedRoutesStore;
 
 public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresenter.View> implements SelectedRoutesStore.Client {
 

@@ -5,18 +5,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-
-import org.joda.time.LocalDateTime;
-import org.joda.time.Period;
 
 import java.io.IOException;
 
 import dagger.Module;
 import dagger.Provides;
 import micdm.transportlive.AppScope;
-import micdm.transportlive.ComponentHolder;
-import micdm.transportlive.misc.Cache;
+import micdm.transportlive.data.loaders.LoaderModule;
+import micdm.transportlive.data.stores.StoreModule;
 import micdm.transportlive.models.ImmutablePath;
 import micdm.transportlive.models.ImmutablePoint;
 import micdm.transportlive.models.ImmutableRoute;
@@ -25,15 +21,8 @@ import micdm.transportlive.models.Path;
 import micdm.transportlive.models.Point;
 import micdm.transportlive.models.Route;
 import micdm.transportlive.models.RouteGroup;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
-import retrofit2.CallAdapter;
-import retrofit2.Converter;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-import timber.log.Timber;
 
-@Module
+@Module(includes = {LoaderModule.class, StoreModule.class})
 public class DataModule {
 
     private static class RouteGroupTypeAdapter extends TypeAdapter<RouteGroup> {
@@ -157,101 +146,11 @@ public class DataModule {
 
     @Provides
     @AppScope
-    Loaders provideLoaders() {
-        return new Loaders();
-    }
-
-    @Provides
-    @AppScope
-    ServerConnector provideServerConnector() {
-        ServerConnector instance = new ServerConnector();
-        ComponentHolder.getAppComponent().inject(instance);
-        return instance;
-    }
-
-    @Provides
-    @AppScope
-    ApiService provideApiService(Retrofit retrofit) {
-        return retrofit.create(ApiService.class);
-    }
-
-    @Provides
-    @AppScope
-    Retrofit provideRetrofit(OkHttpClient okHttpClient, Converter.Factory converterFactory, CallAdapter.Factory callAdapterFactory) {
-        return new Retrofit.Builder()
-            .baseUrl("http://gpt.incom.tomsk.ru/api/")
-            .client(okHttpClient)
-            .addConverterFactory(converterFactory)
-            .addCallAdapterFactory(callAdapterFactory)
-            .build();
-    }
-
-    @Provides
-    @AppScope
-    OkHttpClient provideOkHttpClient() {
-        return new OkHttpClient.Builder().addInterceptor(chain -> {
-            LocalDateTime now = LocalDateTime.now();
-            Response response = chain.proceed(chain.request());
-            Timber.d("Request %s completed with status %s in %sms", response.request().url(), response.code(), new Period(now, LocalDateTime.now()).getMillis());
-            return response;
-        }).build();
-    }
-
-    @Provides
-    @AppScope
-    Converter.Factory provideConverterFactory(Gson gson) {
-        return GsonConverterFactory.create(gson);
-    }
-
-    @Provides
-    @AppScope
     Gson provideGson() {
         return new GsonBuilder()
             .registerTypeAdapter(RouteGroup.class, new RouteGroupTypeAdapter())
             .registerTypeAdapter(Path.class, new PathTypeAdapter())
             .create();
-    }
-
-    @Provides
-    @AppScope
-    CallAdapter.Factory provideCallAdapterFactory() {
-        return RxJava2CallAdapterFactory.create();
-    }
-
-    @Provides
-    @AppScope
-    SelectedRoutesStore provideSelectedRoutesStore() {
-        SelectedRoutesStore instance = new SelectedRoutesStore();
-        ComponentHolder.getAppComponent().inject(instance);
-        instance.init();
-        return instance;
-    }
-
-    @Provides
-    @AppScope
-    RoutesStore provideRoutesStore() {
-        RoutesStore instance = new RoutesStore();
-        ComponentHolder.getAppComponent().inject(instance);
-        instance.init();
-        return instance;
-    }
-
-    @Provides
-    @AppScope
-    PathsStore providePathsStore() {
-        PathsStore instance = new PathsStore();
-        ComponentHolder.getAppComponent().inject(instance);
-        instance.init();
-        return instance;
-    }
-
-    @Provides
-    @AppScope
-    Cache provideCache() {
-        Cache instance = new Cache();
-        ComponentHolder.getAppComponent().inject(instance);
-        instance.init();
-        return instance;
     }
 }
 

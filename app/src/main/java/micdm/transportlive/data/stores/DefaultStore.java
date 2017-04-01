@@ -1,10 +1,11 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.stores;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
+import micdm.transportlive.data.Clients;
 import micdm.transportlive.misc.Cache;
 
 abstract class DefaultStore<Client, Data> {
@@ -34,7 +35,7 @@ abstract class DefaultStore<Client, Data> {
 
     abstract String serialize(Data data);
 
-    Observable<Data> getData(String entityId) {
+    public Observable<Data> getData(String entityId) {
         Data data = readData(entityId);
         return data == null ? Observable.empty() : Observable.just(data);
     }
@@ -49,7 +50,7 @@ abstract class DefaultStore<Client, Data> {
 
     abstract Data deserialize(String data);
 
-    void attach(Client client) {
+    public void attach(Client client) {
         clients.attach(client);
     }
 }

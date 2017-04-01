@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.loaders;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -8,15 +8,10 @@ import javax.inject.Named;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import micdm.transportlive.misc.CommonFunctions;
-import micdm.transportlive.utils.ObservableCache;
+import micdm.transportlive.misc.ObservableCache;
 import timber.log.Timber;
 
 abstract class DefaultLoader<Client, Data> extends BaseLoader<Client, Data> {
-
-    enum RequestMode {
-        REGULAR,
-        FORCED,
-    }
 
     @Inject
     CommonFunctions commonFunctions;
@@ -26,13 +21,16 @@ abstract class DefaultLoader<Client, Data> extends BaseLoader<Client, Data> {
     @Inject
     ObservableCache observableCache;
 
+    DefaultLoader() {
+
+    }
+
     @Override
     public Observable<Result<Data>> getData() {
         return observableCache.get(this, "getData", () -> {
             AtomicBoolean isLocked = new AtomicBoolean(false);
-            AtomicBoolean isSuccess = new AtomicBoolean(false);
             return getRequests()
-                .filter(requestMode -> !isLocked.get() && (requestMode == RequestMode.FORCED || !isSuccess.get()))
+                .filter(requestMode -> !isLocked.get())
                 .doOnNext(o -> isLocked.set(true))
                 .switchMap(requestMode ->
                     loadFromCache()
@@ -49,18 +47,20 @@ abstract class DefaultLoader<Client, Data> extends BaseLoader<Client, Data> {
                         )
                         .onErrorReturn(o -> Result.newFail())
                         .doOnNext(o -> isLocked.set(false))
-                        .doOnNext(o -> isSuccess.set(o.isSuccess()))
                         .startWith(Result.newLoading())
+                )
+                .doOnNext(result ->
+                    Timber.d("Loader %s produced result %s", this, result)
                 )
                 .replay(1)
                 .autoConnect();
         });
     }
 
-    private Observable<RequestMode> getRequests() {
+    private Observable<Object> getRequests() {
         return Observable.merge(
-            getLoadRequests().compose(commonFunctions.toConst(RequestMode.REGULAR)),
-            getReloadRequests().compose(commonFunctions.toConst(RequestMode.FORCED))
+            getLoadRequests(),
+            getReloadRequests()
         );
     }
 

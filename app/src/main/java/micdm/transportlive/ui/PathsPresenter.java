@@ -8,9 +8,9 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import micdm.transportlive.data.BaseLoader;
-import micdm.transportlive.data.Loaders;
-import micdm.transportlive.data.PathLoader;
+import micdm.transportlive.data.loaders.Loaders;
+import micdm.transportlive.data.loaders.PathLoader;
+import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.models.Path;
 
@@ -73,32 +73,32 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
         return getPathsToCancelLoad().switchMap(Observable::fromIterable);
     }
 
-    Observable<BaseLoader.Result<Collection<Path>>> getResults() {
+    Observable<Result<Collection<Path>>> getResults() {
         return getPathsToLoad().switchMap(routeIds -> {
-            Collection<Observable<BaseLoader.Result<Path>>> observables = new ArrayList<>(routeIds.size());
+            Collection<Observable<Result<Path>>> observables = new ArrayList<>(routeIds.size());
             for (String routeId: routeIds) {
                 observables.add(loaders.getPathLoader(routeId).getData());
             }
             return Observable.combineLatest(observables, objects -> {
-                Collection<BaseLoader.Result<Path>> results = new ArrayList<>(objects.length);
+                Collection<Result<Path>> results = new ArrayList<>(objects.length);
                 for (Object result: objects) {
-                    results.add((BaseLoader.Result<Path>) result);
+                    results.add((Result<Path>) result);
                 }
-                for (BaseLoader.Result<Path> result: results) {
+                for (Result<Path> result: results) {
                     if (result.isFail()) {
-                        return BaseLoader.Result.newFail();
+                        return Result.newFail();
                     }
                 }
-                for (BaseLoader.Result<Path> result: results) {
+                for (Result<Path> result: results) {
                     if (result.isLoading()) {
-                        return BaseLoader.Result.newLoading();
+                        return Result.newLoading();
                     }
                 }
                 Collection<Path> paths = new ArrayList<>();
-                for (BaseLoader.Result<Path> result: results) {
+                for (Result<Path> result: results) {
                     paths.add(result.getData());
                 }
-                return BaseLoader.Result.newSuccess(paths);
+                return Result.newSuccess(paths);
             });
         });
     }

@@ -16,7 +16,11 @@ public class Cache {
 
     private DiskLruCache cache;
 
-    public void init() {
+    Cache() {
+
+    }
+
+    void init() {
         try {
             cache = DiskLruCache.open(app.getCacheDir(), 1, 1, Integer.MAX_VALUE);
         } catch (IOException e) {

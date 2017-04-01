@@ -16,7 +16,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
-import micdm.transportlive.data.BaseLoader;
+import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.ui.views.CannotLoadView;
@@ -61,20 +61,20 @@ public class RoutesController extends BaseController implements RoutesPresenter.
     }
 
     private Disposable subscribeForLoadingState() {
-        Observable<BaseLoader.Result<Collection<RouteGroup>>> results = presenterStore.getRoutesPresenter(this).getResults().observeOn(AndroidSchedulers.mainThread());
+        Observable<Result<Collection<RouteGroup>>> results = presenterStore.getRoutesPresenter(this).getResults().observeOn(AndroidSchedulers.mainThread());
         return new CompositeDisposable(
-            results.filter(BaseLoader.Result::isLoading).subscribe(o -> {
+            results.filter(Result::isLoading).subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);
                 routesView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            results.filter(BaseLoader.Result::isSuccess).subscribe(state -> {
+            results.filter(Result::isSuccess).subscribe(state -> {
                 loadingView.setVisibility(View.GONE);
                 routesView.setVisibility(View.VISIBLE);
                 routesView.setRouteGroups(state.data);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            results.filter(BaseLoader.Result::isFail).subscribe(o -> {
+            results.filter(Result::isFail).subscribe(o -> {
                 loadingView.setVisibility(View.GONE);
                 routesView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.VISIBLE);

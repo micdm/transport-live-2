@@ -2,15 +2,16 @@ package micdm.transportlive;
 
 import dagger.Component;
 import micdm.transportlive.data.DataModule;
-import micdm.transportlive.data.PathLoader;
-import micdm.transportlive.data.PathsStore;
-import micdm.transportlive.data.RoutesLoader;
-import micdm.transportlive.data.RoutesStore;
-import micdm.transportlive.data.SelectedRoutesStore;
-import micdm.transportlive.data.ServerConnector;
-import micdm.transportlive.data.VehiclesLoader;
+import micdm.transportlive.data.loaders.PathLoader;
+import micdm.transportlive.data.stores.PathsStore;
+import micdm.transportlive.data.loaders.RoutesLoader;
+import micdm.transportlive.data.stores.RoutesStore;
+import micdm.transportlive.data.stores.SelectedRoutesStore;
+import micdm.transportlive.data.loaders.remote.ServerConnector;
+import micdm.transportlive.data.loaders.VehiclesLoader;
 import micdm.transportlive.misc.Cache;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.MiscModule;
 import micdm.transportlive.ui.PathsPresenter;
 import micdm.transportlive.ui.RoutesController;
 import micdm.transportlive.ui.RoutesPresenter;
@@ -21,7 +22,7 @@ import micdm.transportlive.ui.VehiclesPresenter;
 import micdm.transportlive.ui.misc.PaintConstructor;
 
 @AppScope
-@Component(modules = {AppModule.class, DataModule.class, RxModule.class, UiModule.class})
+@Component(modules = {AppModule.class, DataModule.class, MiscModule.class, RxModule.class, UiModule.class})
 public interface AppComponent {
 
     ActivityComponent.Builder activityComponentBuilder();

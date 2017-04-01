@@ -1,4 +1,4 @@
-package micdm.transportlive.data;
+package micdm.transportlive.data.stores;
 
 import com.google.gson.Gson;
 
