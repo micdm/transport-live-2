@@ -12,7 +12,7 @@ import micdm.transportlive.models.RouteGroup;
 
 public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> implements RoutesLoader.Client {
 
-    interface View extends BasePresenter.View {
+    public interface View extends BasePresenter.View {
 
         Observable<Object> getLoadRoutesRequests();
     }
@@ -30,7 +30,7 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> impleme
         return getViewInput(View::getLoadRoutesRequests);
     }
 
-    Observable<Result<Collection<RouteGroup>>> getResults() {
+    public Observable<Result<Collection<RouteGroup>>> getResults() {
         return loaders.getRoutesLoader().getData();
     }
 }

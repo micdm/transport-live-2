@@ -7,6 +7,7 @@ import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.CustomMapView;
 import micdm.transportlive.ui.views.LoadingView;
 import micdm.transportlive.ui.views.RoutesView;
+import micdm.transportlive.ui.views.SearchRouteView;
 
 @ActivityScope
 @Subcomponent(modules = {ActivityModule.class})
@@ -19,6 +20,7 @@ public interface ActivityComponent {
     void inject(RoutesView target);
     void inject(MarkerIconBuilder target);
     void inject(VehiclesController target);
+    void inject(SearchRouteView target);
 
     @Subcomponent.Builder
     interface Builder {

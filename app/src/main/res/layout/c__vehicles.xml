@@ -1,28 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <micdm.transportlive.ui.views.LoadingView
         android:id="@+id/v__vehicles__loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
-    <micdm.transportlive.ui.views.CustomMapView
-        android:id="@+id/v__vehicles__map"
+        android:layout_gravity="center"/>
+    <RelativeLayout
+        android:id="@+id/v__vehicles__loaded"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent">
+        <micdm.transportlive.ui.views.CustomMapView
+            android:id="@+id/v__vehicles__map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        <micdm.transportlive.ui.views.SearchRouteView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"/>
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/v__vehicles__select_routes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_bus"
+            android:tint="#fff"/>
+    </RelativeLayout>
     <micdm.transportlive.ui.views.CannotLoadView
         android:id="@+id/v__vehicles__cannot_load"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/v__vehicles__select_routes"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_bus"
-        android:tint="#fff"/>
-</RelativeLayout>
+        android:layout_gravity="center"/>
+</FrameLayout>

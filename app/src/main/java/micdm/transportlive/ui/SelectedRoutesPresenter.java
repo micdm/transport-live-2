@@ -9,7 +9,7 @@ import micdm.transportlive.data.stores.SelectedRoutesStore;
 
 public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresenter.View> implements SelectedRoutesStore.Client {
 
-    interface View extends BasePresenter.View {
+    public interface View extends BasePresenter.View {
 
         Observable<Collection<String>> getSelectRoutesRequests();
     }
@@ -22,7 +22,7 @@ public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresent
         selectedRoutesStore.attach(this);
     }
 
-    Observable<Collection<String>> getSelectedRoutes() {
+    public Observable<Collection<String>> getSelectedRoutes() {
         return selectedRoutesStore.getSelectedRoutes();
     }
 

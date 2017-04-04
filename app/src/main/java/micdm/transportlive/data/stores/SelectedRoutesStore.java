@@ -3,6 +3,7 @@ package micdm.transportlive.data.stores;
 import android.content.SharedPreferences;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 import javax.inject.Inject;
@@ -44,7 +45,7 @@ public class SelectedRoutesStore {
         return observableCache.get("getSelectedRoutes", () ->
             clients.get()
                 .flatMap(Client::getSelectRoutesRequests)
-                .startWith(hasValue() ? Observable.just(readValue()) : Observable.empty())
+                .startWith(Observable.just(hasValue() ? readValue() : Collections.emptyList()))
                 .replay(1)
                 .autoConnect()
         );

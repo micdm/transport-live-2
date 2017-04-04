@@ -46,6 +46,8 @@ public class VehiclesController extends BaseController implements RoutesPresente
 
     @BindView(R.id.v__vehicles__loading)
     LoadingView loadingView;
+    @BindView(R.id.v__vehicles__loaded)
+    View loadedView;
     @BindView(R.id.v__vehicles__map)
     CustomMapView mapView;
     @BindView(R.id.v__vehicles__cannot_load)
@@ -66,7 +68,7 @@ public class VehiclesController extends BaseController implements RoutesPresente
     @Override
     protected void setupViews() {
         loadingView.setVisibility(View.GONE);
-        mapView.setVisibility(View.GONE);
+        loadedView.setVisibility(View.GONE);
         cannotLoadView.setVisibility(View.GONE);
     }
 
@@ -87,18 +89,18 @@ public class VehiclesController extends BaseController implements RoutesPresente
         return new CompositeDisposable(
             common.filter(Result::isLoading).subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);
-                mapView.setVisibility(View.GONE);
+                loadedView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.GONE);
             }),
             common.filter(Result::isSuccess).map(Result::getData).subscribe(groups -> {
                 loadingView.setVisibility(View.GONE);
-                mapView.setVisibility(View.VISIBLE);
+                loadedView.setVisibility(View.VISIBLE);
                 mapView.setRoutes(groups);
                 cannotLoadView.setVisibility(View.GONE);
             }),
             common.filter(Result::isFail).subscribe(o -> {
                 loadingView.setVisibility(View.GONE);
-                mapView.setVisibility(View.GONE);
+                loadedView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.VISIBLE);
             })
         );

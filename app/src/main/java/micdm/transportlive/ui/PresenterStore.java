@@ -7,7 +7,7 @@ import java.util.Map;
 
 import micdm.transportlive.ComponentHolder;
 
-class PresenterStore {
+public class PresenterStore {
 
     private interface PresenterFactory<T extends BasePresenter> {
         T newInstance();
@@ -15,7 +15,7 @@ class PresenterStore {
 
     private final Map<List<Object>, BasePresenter<?>> presenters = new HashMap<>();
 
-    RoutesPresenter getRoutesPresenter(RoutesPresenter.View view) {
+    public RoutesPresenter getRoutesPresenter(RoutesPresenter.View view) {
         RoutesPresenter presenter = getOrCreate(Collections.singletonList(RoutesPresenter.class), RoutesPresenter::new);
         ComponentHolder.getAppComponent().inject(presenter);
         initPresenter(presenter);
@@ -23,7 +23,7 @@ class PresenterStore {
         return presenter;
     }
 
-    SelectedRoutesPresenter getSelectedRoutesPresenter(SelectedRoutesPresenter.View view) {
+    public SelectedRoutesPresenter getSelectedRoutesPresenter(SelectedRoutesPresenter.View view) {
         SelectedRoutesPresenter presenter = getOrCreate(Collections.singletonList(SelectedRoutesPresenter.class), SelectedRoutesPresenter::new);
         ComponentHolder.getAppComponent().inject(presenter);
         initPresenter(presenter);
@@ -31,7 +31,7 @@ class PresenterStore {
         return presenter;
     }
 
-    VehiclesPresenter getVehiclesPresenter(VehiclesPresenter.View view) {
+    public VehiclesPresenter getVehiclesPresenter(VehiclesPresenter.View view) {
         VehiclesPresenter presenter = getOrCreate(Collections.singletonList(VehiclesPresenter.class), VehiclesPresenter::new);
         ComponentHolder.getAppComponent().inject(presenter);
         initPresenter(presenter);
@@ -39,7 +39,7 @@ class PresenterStore {
         return presenter;
     }
 
-    PathsPresenter getPathsPresenter(PathsPresenter.View view) {
+    public PathsPresenter getPathsPresenter(PathsPresenter.View view) {
         PathsPresenter presenter = getOrCreate(Collections.singletonList(PathsPresenter.class), PathsPresenter::new);
         ComponentHolder.getAppComponent().inject(presenter);
         initPresenter(presenter);
