@@ -13,11 +13,11 @@ import micdm.transportlive.misc.Cache;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.MiscModule;
 import micdm.transportlive.ui.PathsPresenter;
-import micdm.transportlive.ui.RoutesController;
 import micdm.transportlive.ui.RoutesPresenter;
 import micdm.transportlive.ui.SelectedRoutesPresenter;
 import micdm.transportlive.ui.UiModule;
 import micdm.transportlive.ui.VehiclesPresenter;
+import micdm.transportlive.ui.misc.MiscFunctions;
 import micdm.transportlive.ui.misc.PaintConstructor;
 
 @AppScope
@@ -34,7 +34,6 @@ public interface AppComponent {
     void inject(PathLoader target);
     void inject(PathsPresenter target);
     void inject(PathsStore target);
-    void inject(RoutesController target);
     void inject(RoutesLoader target);
     void inject(RoutesPresenter target);
     void inject(SelectedRoutesPresenter target);
@@ -44,4 +43,5 @@ public interface AppComponent {
     void inject(VehiclesPresenter target);
     void inject(RoutesStore target);
     void inject(CommonFunctions target);
+    void inject(MiscFunctions target);
 }

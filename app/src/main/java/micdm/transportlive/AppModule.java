@@ -2,6 +2,7 @@ package micdm.transportlive;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 
 import dagger.Module;
 import dagger.Provides;
@@ -27,5 +28,11 @@ class AppModule {
     @AppScope
     SharedPreferences provideSharedPreferences() {
         return app.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+    }
+
+    @Provides
+    @AppScope
+    Resources provideResources(App app) {
+        return app.getResources();
     }
 }

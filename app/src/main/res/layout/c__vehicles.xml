@@ -15,19 +15,15 @@
             android:id="@+id/v__vehicles__map"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
+        <micdm.transportlive.ui.views.SelectedRoutesView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="64dp"
+            android:layout_alignParentRight="true"/>
         <micdm.transportlive.ui.views.SearchRouteView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"/>
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/v__vehicles__select_routes"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="16dp"
-            android:src="@drawable/ic_bus"
-            android:tint="#fff"/>
     </RelativeLayout>
     <micdm.transportlive.ui.views.CannotLoadView
         android:id="@+id/v__vehicles__cannot_load"

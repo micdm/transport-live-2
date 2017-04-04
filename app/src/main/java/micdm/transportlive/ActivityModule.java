@@ -2,7 +2,6 @@ package micdm.transportlive;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -49,12 +48,6 @@ class ActivityModule {
     @ActivityScope
     ActivityLifecycleWatcher provideActivityLifecycleWatcher() {
         return new ActivityLifecycleWatcher();
-    }
-
-    @Provides
-    @ActivityScope
-    Resources provideResources(Context context) {
-        return context.getResources();
     }
 
     @Provides

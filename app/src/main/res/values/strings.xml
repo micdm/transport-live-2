@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="route_group_types">
+        <item>Троллейбус</item>
+        <item>Трамвай</item>
+        <item>Автобус</item>
+    </string-array>
     <string name="v__cannot_load__message">Не получилось загрузить данные</string>
     <string name="v__cannot_load__retry">Ещё раз</string>
     <string name="v__loading__message">Загрузка…</string>
-    <string name="v__search_route__input">Номер маршрута…</string>
+    <string name="v__search_route__input">Номер, конечная остановка…</string>
 </resources>

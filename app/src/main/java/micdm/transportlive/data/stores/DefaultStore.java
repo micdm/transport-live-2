@@ -6,6 +6,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.misc.Clients;
 import micdm.transportlive.misc.Cache;
+import timber.log.Timber;
 
 abstract class DefaultStore<Client, Data> {
 
@@ -44,7 +45,12 @@ abstract class DefaultStore<Client, Data> {
         if (data == null) {
             return null;
         }
-        return deserialize(data);
+        try {
+            return deserialize(data);
+        } catch (Exception e) {
+            Timber.w(e, "Cannot deserialize data");
+            return null;
+        }
     }
 
     abstract Data deserialize(String data);

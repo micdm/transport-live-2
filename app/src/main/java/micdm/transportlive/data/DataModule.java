@@ -31,7 +31,7 @@ public class DataModule {
         public void write(JsonWriter out, RouteGroup group) throws IOException {
             out.beginObject();
             out.name("id").value(group.id());
-            out.name("name").value(group.name());
+            out.name("type").value(group.type().toString());
             out.name("routes");
             out.beginArray();
             for (Route route: group.routes()) {
@@ -59,8 +59,17 @@ public class DataModule {
                 if (name.equals("id")) {
                     builder.id(in.nextString());
                 }
-                if (name.equals("name")) {
-                    builder.name(in.nextString());
+                if (name.equals("type")) {
+                    String type = in.nextString();
+                    if (type.equals("TROLLEYBUS")) {
+                        builder.type(RouteGroup.Type.TROLLEYBUS);
+                    } else if (type.equals("TRAM")) {
+                        builder.type(RouteGroup.Type.TRAM);
+                    } else if (type.equals("BUS")) {
+                        builder.type(RouteGroup.Type.BUS);
+                    } else {
+                        throw new IllegalStateException(String.format("unknown route group type %s", type));
+                    }
                 }
                 if (name.equals("routes")) {
                     in.beginArray();

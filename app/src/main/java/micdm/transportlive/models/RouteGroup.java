@@ -7,7 +7,13 @@ import java.util.List;
 @Value.Immutable
 public interface RouteGroup {
 
+    enum Type {
+        TROLLEYBUS,
+        TRAM,
+        BUS,
+    }
+
     String id();
-    String name();
+    Type type();
     List<Route> routes();
 }

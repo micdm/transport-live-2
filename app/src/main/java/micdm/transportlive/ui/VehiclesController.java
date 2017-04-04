@@ -5,9 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.bluelinelabs.conductor.RouterTransaction;
-import com.jakewharton.rxbinding2.view.RxView;
-
 import org.joda.time.Duration;
 
 import java.util.Collection;
@@ -52,8 +49,6 @@ public class VehiclesController extends BaseController implements RoutesPresente
     CustomMapView mapView;
     @BindView(R.id.v__vehicles__cannot_load)
     CannotLoadView cannotLoadView;
-    @BindView(R.id.v__vehicles__select_routes)
-    View selectRoutesView;
 
     public VehiclesController() {
         ComponentHolder.getActivityComponent().inject(this);
@@ -77,8 +72,7 @@ public class VehiclesController extends BaseController implements RoutesPresente
         return new CompositeDisposable(
             subscribeForRequiredData(),
             subscribeForPaths(),
-            subscribeForVehicles(),
-            subscribeForNavigation()
+            subscribeForVehicles()
         );
     }
 
@@ -127,12 +121,6 @@ public class VehiclesController extends BaseController implements RoutesPresente
                 .filter(Result::isSuccess)
                 .map(Result::getData)
                 .subscribe(mapView::setVehicles)
-        );
-    }
-
-    private Disposable subscribeForNavigation() {
-        return RxView.clicks(selectRoutesView).subscribe(o ->
-            getRouter().pushController(RouterTransaction.with(new RoutesController()))
         );
     }
 

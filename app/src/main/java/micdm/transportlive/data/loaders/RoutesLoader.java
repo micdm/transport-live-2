@@ -62,7 +62,7 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
                     if (groupBuilder == null) {
                         groupBuilder = ImmutableRouteGroup.builder()
                             .id(groupId)
-                            .name(item.PathwayGroup.Name);
+                            .type(getRouteGroupType(groupId));
                         builders.put(groupId, groupBuilder);
                     }
                     String routeId = item.PathwayId;
@@ -81,6 +81,19 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
                 }
                 return groups;
             });
+    }
+
+    private RouteGroup.Type getRouteGroupType(String id) {
+        if (id.equals("a944360f-2771-4de0-a63a-4f3f2e628840")) {
+            return RouteGroup.Type.TROLLEYBUS;
+        }
+        if (id.equals("093dcae3-e14d-4fc4-8f52-e1c869a1a087")) {
+            return RouteGroup.Type.TRAM;
+        }
+        if (id.equals("cf0d566a-d077-40d7-8ad7-b6f1afa98de6"))  {
+            return RouteGroup.Type.BUS;
+        }
+        throw new IllegalStateException(String.format("unknown route group %s", id));
     }
 
     @Override
