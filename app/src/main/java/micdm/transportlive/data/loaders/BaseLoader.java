@@ -1,12 +1,11 @@
 package micdm.transportlive.data.loaders;
 
 import io.reactivex.Observable;
-import micdm.transportlive.ComponentHolder;
-import micdm.transportlive.data.Clients;
+import micdm.transportlive.misc.Clients;
 
 public abstract class BaseLoader<Client, Data> {
 
-    final Clients<Client> clients = new Clients<>(ComponentHolder.getAppComponent().getCommonFunctions());
+    final Clients<Client> clients = new Clients<>();
 
     void init() {
 

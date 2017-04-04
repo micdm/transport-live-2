@@ -20,8 +20,6 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
     public interface Client {
 
         Observable<String> getLoadVehiclesRequests();
-        Observable<String> getReloadVehiclesRequests();
-        Observable<String> getCancelVehiclesLoadingRequests();
     }
 
     @Inject
@@ -46,22 +44,6 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
     Observable<Object> getLoadRequests() {
         return clients.get()
             .flatMap(Client::getLoadVehiclesRequests)
-            .filter(commonFunctions.isEqual(routeId))
-            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
-    }
-
-    @Override
-    Observable<Object> getReloadRequests() {
-        return clients.get()
-            .flatMap(Client::getReloadVehiclesRequests)
-            .filter(commonFunctions.isEqual(routeId))
-            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
-    }
-
-    @Override
-    Observable<Object> getCancelRequests() {
-        return clients.get()
-            .flatMap(Client::getCancelVehiclesLoadingRequests)
             .filter(commonFunctions.isEqual(routeId))
             .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
     }

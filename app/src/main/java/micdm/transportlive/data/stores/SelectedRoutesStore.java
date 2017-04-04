@@ -9,8 +9,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import micdm.transportlive.ComponentHolder;
-import micdm.transportlive.data.Clients;
+import micdm.transportlive.misc.Clients;
 import micdm.transportlive.misc.ObservableCache;
 
 public class SelectedRoutesStore {
@@ -27,7 +26,7 @@ public class SelectedRoutesStore {
     @Inject
     SharedPreferences sharedPreferences;
 
-    private final Clients<Client> clients = new Clients<>(ComponentHolder.getAppComponent().getCommonFunctions());
+    private final Clients<Client> clients = new Clients<>();
 
     void init() {
         subscribeForSelectedRoutes();
@@ -42,7 +41,7 @@ public class SelectedRoutesStore {
     }
 
     public Observable<Collection<String>> getSelectedRoutes() {
-        return observableCache.get(this, "getSelectedRoutes", () ->
+        return observableCache.get("getSelectedRoutes", () ->
             clients.get()
                 .flatMap(Client::getSelectRoutesRequests)
                 .startWith(hasValue() ? Observable.just(readValue()) : Observable.empty())

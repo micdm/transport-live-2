@@ -19,8 +19,6 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     public interface Client {
 
         Observable<String> getLoadPathRequests();
-        Observable<String> getReloadPathRequests();
-        Observable<String> getCancelPathLoadingRequests();
     }
 
     @Inject
@@ -50,22 +48,6 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     Observable<Object> getLoadRequests() {
         return clients.get()
             .flatMap(Client::getLoadPathRequests)
-            .filter(commonFunctions.isEqual(routeId))
-            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
-    }
-
-    @Override
-    Observable<Object> getReloadRequests() {
-        return clients.get()
-            .flatMap(Client::getReloadPathRequests)
-            .filter(commonFunctions.isEqual(routeId))
-            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
-    }
-
-    @Override
-    Observable<Object> getCancelRequests() {
-        return clients.get()
-            .flatMap(Client::getCancelPathLoadingRequests)
             .filter(commonFunctions.isEqual(routeId))
             .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
     }

@@ -26,7 +26,6 @@ public class MiscModule {
     }
 
     @Provides
-    @AppScope
     ObservableCache provideObservableCache() {
         return new ObservableCache();
     }

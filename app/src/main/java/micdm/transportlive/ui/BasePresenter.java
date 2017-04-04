@@ -1,14 +1,13 @@
 package micdm.transportlive.ui;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
-import io.reactivex.subjects.BehaviorSubject;
+import micdm.transportlive.misc.Clients;
 
 abstract class BasePresenter<T extends BasePresenter.View> {
 
@@ -19,7 +18,11 @@ abstract class BasePresenter<T extends BasePresenter.View> {
         boolean isAttached();
     }
 
-    private final BehaviorSubject<Collection<T>> views = BehaviorSubject.createDefault(Collections.emptySet());
+    @Inject
+    @Named("mainThread")
+    Scheduler mainThreadScheduler;
+
+    private final Clients<T> clients = new Clients<>();
 
     private boolean isInitialized;
 
@@ -45,24 +48,20 @@ abstract class BasePresenter<T extends BasePresenter.View> {
     }
 
     void attachView(T view) {
-        Set<T> views = new HashSet<>(this.views.getValue());
-        views.add(view);
-        this.views.onNext(views);
+        clients.attach(view);
     }
 
     void detachView(T view) {
-        Set<T> views = new HashSet<>(this.views.getValue());
-        views.remove(view);
-        this.views.onNext(views);
+        clients.detach(view);
     }
 
     boolean hasView(T view) {
-        return views.getValue().contains(view);
+        return clients.has(view);
     }
 
     <R> Observable<R> getViewInput(Function<T, Observable<R>> callback) {
-        return views
-            .switchMap(Observable::fromIterable)
+        return clients.get()
+            .observeOn(mainThreadScheduler)
             .flatMap(callback);
     }
 }

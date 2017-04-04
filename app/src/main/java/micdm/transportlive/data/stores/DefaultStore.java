@@ -4,8 +4,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import micdm.transportlive.ComponentHolder;
-import micdm.transportlive.data.Clients;
+import micdm.transportlive.misc.Clients;
 import micdm.transportlive.misc.Cache;
 
 abstract class DefaultStore<Client, Data> {
@@ -13,7 +12,7 @@ abstract class DefaultStore<Client, Data> {
     @Inject
     Cache cache;
 
-    final Clients<Client> clients = new Clients<>(ComponentHolder.getAppComponent().getCommonFunctions());
+    final Clients<Client> clients = new Clients<>();
 
     void init() {
         subscribeForData();

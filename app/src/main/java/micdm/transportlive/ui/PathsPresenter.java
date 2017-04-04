@@ -2,12 +2,14 @@ package micdm.transportlive.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import micdm.transportlive.data.loaders.Loaders;
 import micdm.transportlive.data.loaders.PathLoader;
 import micdm.transportlive.data.loaders.Result;
@@ -20,7 +22,6 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
     interface View extends BasePresenter.View {
 
         Observable<Collection<String>> getLoadPathsRequests();
-        Observable<Collection<String>> getReloadPathsRequests();
     }
 
     @Inject
@@ -31,61 +32,61 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            getPathsToLoad().subscribe(routeIds -> {
-                for (String routeId: routeIds) {
-                    loaders.getPathLoader(routeId).attach(this);
-                }
-            }),
-            getPathsToCancelLoad().subscribe(routeIds -> {
-                for (String routeId: routeIds) {
-                    loaders.getPathLoader(routeId).detach(this);
-                }
-            })
+            getPathLoadersToAttach().subscribe(loader -> loader.attach(this)),
+            getPathLoadersToDetach().subscribe(loader -> loader.detach(this))
         );
     }
 
-    private Observable<Collection<String>> getPathsToLoad() {
-        return getViewInput(View::getLoadPathsRequests);
+    private Observable<PathLoader> getPathLoadersToAttach() {
+        Observable<Collection<String>> common = getViewInput(View::getLoadPathsRequests);
+        return commonFunctions
+            .getDelta(
+                common
+                    .compose(commonFunctions.getPrevious())
+                    .startWith(Collections.<String>emptyList()),
+                common
+            )
+            .switchMap(Observable::fromIterable)
+            .map(loaders::getPathLoader);
     }
 
-    private Observable<Collection<String>> getPathsToReload() {
-        return getViewInput(View::getReloadPathsRequests);
-    }
-
-    private Observable<Collection<String>> getPathsToCancelLoad() {
-        return commonFunctions.getDelta(
-            getViewInput(View::getLoadPathsRequests).skip(1),
-            getViewInput(View::getLoadPathsRequests).compose(commonFunctions.getPrevious())
-        );
+    private Observable<PathLoader> getPathLoadersToDetach() {
+        Observable<Collection<String>> common = getViewInput(View::getLoadPathsRequests);
+        return commonFunctions
+            .getDelta(
+                common.skip(1),
+                common.compose(commonFunctions.getPrevious())
+            )
+            .switchMap(Observable::fromIterable)
+            .map(loaders::getPathLoader);
     }
 
     @Override
     public Observable<String> getLoadPathRequests() {
-        return getPathsToLoad().switchMap(Observable::fromIterable);
-    }
-
-    @Override
-    public Observable<String> getReloadPathRequests() {
-        return getPathsToReload().switchMap(Observable::fromIterable);
-    }
-
-    @Override
-    public Observable<String> getCancelPathLoadingRequests() {
-        return getPathsToCancelLoad().switchMap(Observable::fromIterable);
+        return getViewInput(View::getLoadPathsRequests).switchMap(Observable::fromIterable);
     }
 
     Observable<Result<Collection<Path>>> getResults() {
-        return getPathsToLoad().switchMap(routeIds -> {
-            Collection<Observable<Result<Path>>> observables = new ArrayList<>(routeIds.size());
-            for (String routeId: routeIds) {
-                observables.add(loaders.getPathLoader(routeId).getData());
-            }
-            ResultWatcherN<Path> watcher = new ResultWatcherN<>(commonFunctions, observables);
-            return Observable.merge(
-                watcher.getLoading().compose(commonFunctions.toConst(Result.newLoading())),
-                watcher.getSuccess().map(Result::newSuccess),
-                watcher.getFail().compose(commonFunctions.toConst(Result.newFail()))
-            );
-        });
+        return Observable
+            .<Consumer<Collection<PathLoader>>>merge(
+                getPathLoadersToAttach().map(loader -> accumulated -> accumulated.add(loader)),
+                getPathLoadersToDetach().map(loader -> accumulated -> accumulated.remove(loader))
+            )
+            .scan(new ArrayList<PathLoader>(), (accumulated, handler) -> {
+                handler.accept(accumulated);
+                return accumulated;
+            })
+            .switchMap(loaders -> {
+                Collection<Observable<Result<Path>>> observables = new ArrayList<>(loaders.size());
+                for (PathLoader loader: loaders) {
+                    observables.add(loader.getData());
+                }
+                ResultWatcherN<Path> watcher = new ResultWatcherN<>(commonFunctions, observables);
+                return Observable.merge(
+                    watcher.getLoading().map(o -> Result.newLoading()),
+                    watcher.getSuccess().map(Result::newSuccess),
+                    watcher.getFail().map(o -> Result.newFail())
+                );
+            });
     }
 }

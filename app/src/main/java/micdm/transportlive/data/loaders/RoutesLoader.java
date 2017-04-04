@@ -21,8 +21,6 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
     public interface Client {
 
         Observable<Object> getLoadRoutesRequests();
-        Observable<Object> getReloadRoutesRequests();
-        Observable<Object> getCancelRoutesLoadingRequests();
     }
 
     @Inject
@@ -44,20 +42,6 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
     Observable<Object> getLoadRequests() {
         return clients.get()
             .flatMap(Client::getLoadRoutesRequests)
-            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
-    }
-
-    @Override
-    Observable<Object> getReloadRequests() {
-        return clients.get()
-            .flatMap(Client::getReloadRoutesRequests)
-            .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
-    }
-
-    @Override
-    Observable<Object> getCancelRequests() {
-        return clients.get()
-            .flatMap(Client::getCancelRoutesLoadingRequests)
             .compose(commonFunctions.toConst(Irrelevant.INSTANCE));
     }
 

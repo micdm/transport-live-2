@@ -6,7 +6,6 @@ public class Result<T> {
         LOADING,
         SUCCESS,
         FAIL,
-        CANCELED,
     }
 
     public static <T> Result<T> newLoading() {
@@ -19,10 +18,6 @@ public class Result<T> {
 
     public static <T> Result<T> newFail() {
         return new Result<>(State.FAIL);
-    }
-
-    public static <T> Result<T> newCanceled() {
-        return new Result<>(State.CANCELED);
     }
 
     private final State state;
@@ -52,10 +47,6 @@ public class Result<T> {
 
     public boolean isFail() {
         return state == State.FAIL;
-    }
-
-    public boolean isCanceled() {
-        return state == State.CANCELED;
     }
 
     public T getData() {

@@ -193,14 +193,14 @@ public class CustomMapView extends BaseView {
     @Override
     protected Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            subscribeForWindowEvents(),
+            subscribeForActivityEvents(),
             subscribeForMap(),
             subscribeForVehicles(),
             subscribeForPaths()
         );
     }
 
-    private Disposable subscribeForWindowEvents() {
+    private Disposable subscribeForActivityEvents() {
         return new CompositeDisposable(
             activityLifecycleWatcher.getState(Stage.CREATE)
                 .subscribe(state -> mapView.onCreate(state.extra)),
@@ -264,7 +264,7 @@ public class CustomMapView extends BaseView {
     }
 
     private Observable<GoogleMap> getMap() {
-        return observableCache.get(this, "getMap", () ->
+        return observableCache.get("getMap", () ->
             Observable
                 .<GoogleMap>create(source -> mapView.getMapAsync(source::onNext))
                 .replay()
@@ -282,10 +282,5 @@ public class CustomMapView extends BaseView {
 
     public void setPaths(Collection<Path> paths) {
         this.paths.onNext(paths);
-    }
-
-    @Override
-    protected void cleanup() {
-        observableCache.clear(this);
     }
 }

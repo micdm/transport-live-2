@@ -8,7 +8,10 @@ import android.view.ViewGroup;
 import com.bluelinelabs.conductor.RouterTransaction;
 import com.jakewharton.rxbinding2.view.RxView;
 
+import org.joda.time.Duration;
+
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -24,13 +27,18 @@ import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.models.Vehicle;
-import micdm.transportlive.ui.misc.ResultWatcher2;
+import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
+import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.CustomMapView;
 import micdm.transportlive.ui.views.LoadingView;
 
 public class VehiclesController extends BaseController implements RoutesPresenter.View, VehiclesPresenter.View, SelectedRoutesPresenter.View, PathsPresenter.View {
 
+    private static final Duration LOAD_VEHICLES_INTERVAL = Duration.standardSeconds(10);
+
+    @Inject
+    ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
     CommonFunctions commonFunctions;
     @Inject
@@ -46,7 +54,7 @@ public class VehiclesController extends BaseController implements RoutesPresente
     View selectRoutesView;
 
     public VehiclesController() {
-        ComponentHolder.getAppComponent().inject(this);
+        ComponentHolder.getActivityComponent().inject(this);
     }
 
     @NonNull
@@ -66,37 +74,45 @@ public class VehiclesController extends BaseController implements RoutesPresente
     protected Disposable subscribeForEvents() {
         return new CompositeDisposable(
             subscribeForRequiredData(),
+            subscribeForPaths(),
             subscribeForVehicles(),
             subscribeForNavigation()
         );
     }
 
     private Disposable subscribeForRequiredData() {
-        ResultWatcher2<Collection<RouteGroup>, Collection<Path>> watcher = new ResultWatcher2<>(
-            commonFunctions,
+        Observable<Result<Collection<RouteGroup>>> common =
             presenterStore.getRoutesPresenter(this).getResults()
-                .compose(commonFunctions.toMainThread()),
-            presenterStore.getPathsPresenter(this).getResults()
-                .compose(commonFunctions.toMainThread())
-        );
+                .compose(commonFunctions.toMainThread());
         return new CompositeDisposable(
-            watcher.getLoading().subscribe(o -> {
+            common.filter(Result::isLoading).subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);
                 mapView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            watcher.getSuccess().subscribe(result -> {
+            common.filter(Result::isSuccess).map(Result::getData).subscribe(groups -> {
                 loadingView.setVisibility(View.GONE);
                 mapView.setVisibility(View.VISIBLE);
-                mapView.setRoutes(result.first);
-                mapView.setPaths(result.second);
+                mapView.setRoutes(groups);
                 cannotLoadView.setVisibility(View.GONE);
             }),
-            watcher.getFail().subscribe(o -> {
+            common.filter(Result::isFail).subscribe(o -> {
                 loadingView.setVisibility(View.GONE);
                 mapView.setVisibility(View.GONE);
                 cannotLoadView.setVisibility(View.VISIBLE);
             })
+        );
+    }
+
+    private Disposable subscribeForPaths() {
+        Observable<Result<Collection<Path>>> common =
+            presenterStore.getPathsPresenter(this).getResults()
+                .compose(commonFunctions.toMainThread());
+        return new CompositeDisposable(
+            common
+                .filter(Result::isSuccess)
+                .map(Result::getData)
+                .subscribe(mapView::setPaths)
         );
     }
 
@@ -105,7 +121,10 @@ public class VehiclesController extends BaseController implements RoutesPresente
             presenterStore.getVehiclesPresenter(this).getResults()
                 .compose(commonFunctions.toMainThread());
         return new CompositeDisposable(
-            common.filter(Result::isSuccess).map(Result::getData).subscribe(mapView::setVehicles)
+            common
+                .filter(Result::isSuccess)
+                .map(Result::getData)
+                .subscribe(mapView::setVehicles)
         );
     }
 
@@ -117,25 +136,21 @@ public class VehiclesController extends BaseController implements RoutesPresente
 
     @Override
     public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Object> getReloadRoutesRequests() {
-        return cannotLoadView.getRetryRequest();
+        return cannotLoadView.getRetryRequest().startWith(Irrelevant.INSTANCE);
     }
 
     @Override
     public Observable<Collection<String>> getLoadVehiclesRequests() {
-        return presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes();
-    }
-
-    @Override
-    public Observable<Collection<String>> getReloadVehiclesRequests() {
-        return cannotLoadView.getRetryRequest().withLatestFrom(
-            presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
-            (o, routes) -> routes
-        );
+        return activityLifecycleWatcher.getState(Stage.RESUME, true)
+            .switchMap(o ->
+                presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes()
+            )
+            .switchMap(routeIds ->
+                Observable
+                    .interval(0, LOAD_VEHICLES_INTERVAL.getStandardSeconds(), TimeUnit.SECONDS)
+                    .compose(commonFunctions.toConst(routeIds))
+                    .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true))
+            );
     }
 
     @Override
@@ -145,14 +160,8 @@ public class VehiclesController extends BaseController implements RoutesPresente
 
     @Override
     public Observable<Collection<String>> getLoadPathsRequests() {
-        return presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes();
-    }
-
-    @Override
-    public Observable<Collection<String>> getReloadPathsRequests() {
-        return cannotLoadView.getRetryRequest().withLatestFrom(
-            presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
-            (o, routes) -> routes
-        );
+        return cannotLoadView.getRetryRequest()
+            .startWith(Irrelevant.INSTANCE)
+            .switchMap(o -> presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes());
     }
 }

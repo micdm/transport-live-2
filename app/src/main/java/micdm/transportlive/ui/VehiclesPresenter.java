@@ -2,13 +2,14 @@ package micdm.transportlive.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import micdm.transportlive.data.loaders.Loaders;
 import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.data.loaders.VehiclesLoader;
@@ -21,7 +22,6 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
     interface View extends BasePresenter.View {
 
         Observable<Collection<String>> getLoadVehiclesRequests();
-        Observable<Collection<String>> getReloadVehiclesRequests();
     }
 
     @Inject
@@ -32,72 +32,68 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            getVehiclesToLoad().subscribe(routeIds -> {
-                for (String routeId: routeIds) {
-                    loaders.getVehiclesLoader(routeId).attach(this);
-                }
-            }),
-            getVehiclesToCancelLoad().subscribe(routeIds -> {
-                for (String routeId: routeIds) {
-                    loaders.getVehiclesLoader(routeId).detach(this);
-                }
-            })
+            getVehiclesLoadersToAttach().subscribe(loader -> loader.attach(this)),
+            getVehiclesLoadersToDetach().subscribe(loader -> loader.detach(this))
         );
     }
 
-    private Observable<Collection<String>> getVehiclesToLoad() {
-        return getViewInput(View::getLoadVehiclesRequests);
+    private Observable<VehiclesLoader> getVehiclesLoadersToAttach() {
+        Observable<Collection<String>> common = getViewInput(View::getLoadVehiclesRequests);
+        return commonFunctions
+            .getDelta(
+                common
+                    .compose(commonFunctions.getPrevious())
+                    .startWith(Collections.<String>emptyList()),
+                common
+            )
+            .switchMap(Observable::fromIterable)
+            .map(loaders::getVehiclesLoader);
     }
 
-    private Observable<Collection<String>> getVehiclesToReload() {
-        return getViewInput(View::getReloadVehiclesRequests);
-    }
-
-    private Observable<Collection<String>> getVehiclesToCancelLoad() {
-        return commonFunctions.getDelta(
-            getViewInput(View::getLoadVehiclesRequests).skip(1),
-            getViewInput(View::getLoadVehiclesRequests).compose(commonFunctions.getPrevious())
-        );
+    private Observable<VehiclesLoader> getVehiclesLoadersToDetach() {
+        Observable<Collection<String>> common = getViewInput(View::getLoadVehiclesRequests);
+        return commonFunctions
+            .getDelta(
+                common.skip(1),
+                common.compose(commonFunctions.getPrevious())
+            )
+            .switchMap(Observable::fromIterable)
+            .map(loaders::getVehiclesLoader);
     }
 
     @Override
     public Observable<String> getLoadVehiclesRequests() {
-        return getVehiclesToLoad()
-            .switchMap(routeIds ->
-                Observable
-                    .interval(10, TimeUnit.SECONDS)
-                    .switchMap(o -> Observable.fromIterable(routeIds))
-            );
-    }
-
-    @Override
-    public Observable<String> getReloadVehiclesRequests() {
-        return getVehiclesToReload().switchMap(Observable::fromIterable);
-    }
-
-    @Override
-    public Observable<String> getCancelVehiclesLoadingRequests() {
-        return getVehiclesToCancelLoad().switchMap(Observable::fromIterable);
+        return getViewInput(View::getLoadVehiclesRequests).switchMap(Observable::fromIterable);
     }
 
     Observable<Result<Collection<Vehicle>>> getResults() {
-        return getVehiclesToLoad().switchMap(routeIds -> {
-            Collection<Observable<Result<Collection<Vehicle>>>> observables = new ArrayList<>(routeIds.size());
-            for (String routeId: routeIds) {
-                observables.add(loaders.getVehiclesLoader(routeId).getData());
-            }
-            ResultWatcherN<Collection<Vehicle>> watcher = new ResultWatcherN<>(commonFunctions, observables);
-            return Observable.merge(
-                watcher.getLoading().compose(commonFunctions.toConst(Result.newLoading())),
-                watcher.getSuccess().map(datas -> {
-                    Collection<Vehicle> vehicles = new ArrayList<>();
-                    for (Collection<Vehicle> data: datas) {
-                        vehicles.addAll(data);
-                    }
-                    return Result.newSuccess(vehicles);
-                }),
-                watcher.getFail().compose(commonFunctions.toConst(Result.newFail()))
-            );
-        });
+        return Observable
+            .<Consumer<Collection<VehiclesLoader>>>merge(
+                getVehiclesLoadersToAttach().map(loader -> accumulated -> accumulated.add(loader)),
+                getVehiclesLoadersToDetach().map(loader -> accumulated -> accumulated.remove(loader))
+            )
+            .scan(new ArrayList<VehiclesLoader>(), (accumulated, handler) -> {
+                handler.accept(accumulated);
+                return accumulated;
+            })
+            .skip(1)
+            .switchMap(loaders -> {
+                Collection<Observable<Result<Collection<Vehicle>>>> observables = new ArrayList<>(loaders.size());
+                for (VehiclesLoader loader: loaders) {
+                    observables.add(loader.getData());
+                }
+                ResultWatcherN<Collection<Vehicle>> watcher = new ResultWatcherN<>(commonFunctions, observables);
+                return Observable.merge(
+                    watcher.getLoading().compose(commonFunctions.toConst(Result.newLoading())),
+                    watcher.getSuccess().map(datas -> {
+                        Collection<Vehicle> vehicles = new ArrayList<>();
+                        for (Collection<Vehicle> data: datas) {
+                            vehicles.addAll(data);
+                        }
+                        return Result.newSuccess(vehicles);
+                    }),
+                    watcher.getFail().compose(commonFunctions.toConst(Result.newFail()))
+                );
+            });
     }
 }

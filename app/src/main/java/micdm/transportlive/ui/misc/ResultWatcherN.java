@@ -1,6 +1,7 @@
 package micdm.transportlive.ui.misc;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -10,9 +11,9 @@ import micdm.transportlive.misc.CommonFunctions;
 public class ResultWatcherN<T> {
 
     private final CommonFunctions commonFunctions;
-    private final Iterable<Observable<Result<T>>> observables;
+    private final Collection<Observable<Result<T>>> observables;
 
-    public ResultWatcherN(CommonFunctions commonFunctions, Iterable<Observable<Result<T>>> observables) {
+    public ResultWatcherN(CommonFunctions commonFunctions, Collection<Observable<Result<T>>> observables) {
         this.commonFunctions = commonFunctions;
         this.observables = observables;
     }

@@ -11,7 +11,6 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.ComponentHolder;
@@ -93,12 +92,7 @@ public class RoutesController extends BaseController implements RoutesPresenter.
 
     @Override
     public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Object> getReloadRoutesRequests() {
-        return cannotLoadView.getRetryRequest();
+        return cannotLoadView.getRetryRequest().startWith(Irrelevant.INSTANCE);
     }
 
     @Override

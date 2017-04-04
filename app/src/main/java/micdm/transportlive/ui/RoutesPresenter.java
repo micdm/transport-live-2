@@ -15,7 +15,6 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> impleme
     interface View extends BasePresenter.View {
 
         Observable<Object> getLoadRoutesRequests();
-        Observable<Object> getReloadRoutesRequests();
     }
 
     @Inject
@@ -29,16 +28,6 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> impleme
     @Override
     public Observable<Object> getLoadRoutesRequests() {
         return getViewInput(View::getLoadRoutesRequests);
-    }
-
-    @Override
-    public Observable<Object> getReloadRoutesRequests() {
-        return getViewInput(View::getReloadRoutesRequests);
-    }
-
-    @Override
-    public Observable<Object> getCancelRoutesLoadingRequests() {
-        return Observable.empty();
     }
 
     Observable<Result<Collection<RouteGroup>>> getResults() {

@@ -2,6 +2,8 @@ package micdm.transportlive.misc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.Observable;
 
@@ -12,27 +14,24 @@ public class ObservableCache {
         Observable<T> newInstance();
     }
 
-    private final Map<Object, Map<String, Observable<?>>> cache = new HashMap<>();
+    private final Lock lock = new ReentrantLock();
+    private final Map<String, Observable<?>> observables = new HashMap<>();
 
     ObservableCache() {
 
     }
 
-    public <T> Observable<T> get(Object owner, String key, Factory<T> factory) {
-        Map<String, Observable<?>> observables = cache.get(owner);
-        if (observables == null) {
-            observables = new HashMap<>();
-            cache.put(owner, observables);
+    public <T> Observable<T> get(String key, Factory<T> factory) {
+        lock.lock();
+        try {
+            Observable<T> result = (Observable<T>) observables.get(key);
+            if (result == null) {
+                result = factory.newInstance();
+                observables.put(key, result);
+            }
+            return result;
+        } finally {
+            lock.unlock();
         }
-        Observable<T> result = (Observable<T>) observables.get(key);
-        if (result == null) {
-            result = factory.newInstance();
-            observables.put(key, result);
-        }
-        return result;
-    }
-
-    public void clear(Object owner) {
-        cache.remove(owner);
     }
 }
