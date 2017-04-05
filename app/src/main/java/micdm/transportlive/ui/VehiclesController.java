@@ -34,6 +34,8 @@ import micdm.transportlive.ui.views.LoadingView;
 public class VehiclesController extends BaseController implements RoutesPresenter.View, VehiclesPresenter.View, SelectedRoutesPresenter.View, PathsPresenter.View {
 
     private static final Duration LOAD_VEHICLES_INTERVAL = Duration.standardSeconds(10);
+    private static final int MAX_ROUTE_COUNT_WITH_NO_PENALTY = 3;
+    private static final Duration LOAD_VEHICLES_PENALTY_INTERVAL = Duration.standardSeconds(5);
 
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
@@ -136,12 +138,18 @@ public class VehiclesController extends BaseController implements RoutesPresente
             .switchMap(o ->
                 presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes()
             )
-            .switchMap(routeIds ->
-                Observable
-                    .interval(0, LOAD_VEHICLES_INTERVAL.getStandardSeconds(), TimeUnit.SECONDS)
+            .switchMap(routeIds -> {
+                Duration interval;
+                if (routeIds.size() > MAX_ROUTE_COUNT_WITH_NO_PENALTY) {
+                    interval = LOAD_VEHICLES_PENALTY_INTERVAL.multipliedBy(routeIds.size());
+                } else {
+                    interval = LOAD_VEHICLES_INTERVAL;
+                }
+                return Observable
+                    .interval(0, interval.getStandardSeconds(), TimeUnit.SECONDS)
                     .compose(commonFunctions.toConst(routeIds))
-                    .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true))
-            );
+                    .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
+            });
     }
 
     @Override
