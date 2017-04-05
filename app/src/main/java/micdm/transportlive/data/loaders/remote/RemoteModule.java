@@ -1,5 +1,7 @@
 package micdm.transportlive.data.loaders.remote;
 
+import android.os.Build;
+
 import com.google.gson.Gson;
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
@@ -9,8 +11,10 @@ import org.joda.time.Period;
 import dagger.Module;
 import dagger.Provides;
 import micdm.transportlive.AppScope;
+import micdm.transportlive.BuildConfig;
 import micdm.transportlive.ComponentHolder;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.Response;
 import retrofit2.CallAdapter;
 import retrofit2.Converter;
@@ -49,12 +53,20 @@ public class RemoteModule {
     @Provides
     @AppScope
     OkHttpClient provideOkHttpClient() {
-        return new OkHttpClient.Builder().addInterceptor(chain -> {
-            LocalDateTime now = LocalDateTime.now();
-            Response response = chain.proceed(chain.request());
-            Timber.d("Request %s completed with status %s in %sms", response.request().url(), response.code(), new Period(now, LocalDateTime.now()).getMillis());
-            return response;
-        }).build();
+        return new OkHttpClient.Builder()
+            .addInterceptor(chain -> {
+                LocalDateTime now = LocalDateTime.now();
+                Response response = chain.proceed(chain.request());
+                Timber.d("Request %s completed with status %s in %sms", response.request().url(), response.code(), new Period(now, LocalDateTime.now()).getMillis());
+                return response;
+            })
+            .addInterceptor(chain -> {
+                Request request = chain.request().newBuilder()
+                    .addHeader("User-Agent", String.format("%s %s @ Android %s", BuildConfig.APPLICATION_ID, BuildConfig.VERSION_NAME, Build.VERSION.RELEASE))
+                    .build();
+                return chain.proceed(request);
+            })
+            .build();
     }
 
     @Provides
