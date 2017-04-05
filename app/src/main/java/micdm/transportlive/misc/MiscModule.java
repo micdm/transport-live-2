@@ -26,6 +26,12 @@ public class MiscModule {
     }
 
     @Provides
+    @AppScope
+    IdFactory provideIdFactory() {
+        return new IdFactory();
+    }
+
+    @Provides
     ObservableCache provideObservableCache() {
         return new ObservableCache();
     }

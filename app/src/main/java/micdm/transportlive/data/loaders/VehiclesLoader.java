@@ -10,6 +10,8 @@ import micdm.transportlive.data.loaders.remote.GetVehiclesResponse;
 import micdm.transportlive.data.loaders.remote.ServerConnector;
 import micdm.transportlive.data.stores.PathsStore;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
+import micdm.transportlive.misc.IdFactory;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutablePoint;
 import micdm.transportlive.models.ImmutableVehicle;
@@ -19,19 +21,21 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
 
     public interface Client {
 
-        Observable<String> getLoadVehiclesRequests();
+        Observable<Id> getLoadVehiclesRequests();
     }
 
     @Inject
     CommonFunctions commonFunctions;
     @Inject
+    IdFactory idFactory;
+    @Inject
     PathsStore pathsStore;
     @Inject
     ServerConnector serverConnector;
 
-    private final String routeId;
+    private final Id routeId;
 
-    VehiclesLoader(String routeId) {
+    VehiclesLoader(Id routeId) {
         this.routeId = routeId;
     }
 
@@ -62,8 +66,8 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
                 for (GetVehiclesResponse item: response) {
                     result.add(
                         ImmutableVehicle.builder()
-                            .id(item.Auto.AutoId)
-                            .route(item.Auto.PathwayId)
+                            .id(idFactory.newInstance(item.Auto.AutoId))
+                            .routeId(idFactory.newInstance(item.Auto.PathwayId))
                             .position(
                                 ImmutablePoint.builder()
                                     .latitude(item.Point.Lat)

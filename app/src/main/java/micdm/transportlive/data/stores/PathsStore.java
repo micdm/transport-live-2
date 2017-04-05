@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.models.Path;
 
 public class PathsStore extends DefaultStore<PathsStore.Client, Path> {
@@ -23,13 +24,13 @@ public class PathsStore extends DefaultStore<PathsStore.Client, Path> {
     }
 
     @Override
-    String getEntityId(Path path) {
-        return path.route();
+    Id getEntityId(Path path) {
+        return path.routeId();
     }
 
     @Override
-    String getKey(String entityId) {
-        return String.format("path_%s", entityId);
+    String getKey(Id entityId) {
+        return String.format("path_%s", entityId.getOriginal());
     }
 
     @Override

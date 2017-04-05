@@ -32,6 +32,7 @@ import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
 import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Route;
 import micdm.transportlive.models.RouteGroup;
@@ -70,16 +71,17 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
         private final MiscFunctions miscFunctions;
         private final Resources resources;
 
-        private final Subject<String> selectRouteRequests = PublishSubject.create();
+        private final Subject<Id> selectRouteRequests = PublishSubject.create();
         private List<RouteInfo> routes = Collections.emptyList();
 
         Adapter(LayoutInflater layoutInflater, MiscFunctions miscFunctions, Resources resources) {
             this.layoutInflater = layoutInflater;
             this.miscFunctions = miscFunctions;
             this.resources = resources;
+            setHasStableIds(true);
         }
 
-        Observable<String> getSelectRouteRequests() {
+        Observable<Id> getSelectRouteRequests() {
             return selectRouteRequests;
         }
 
@@ -99,6 +101,11 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
         @Override
         public int getItemCount() {
             return routes.size();
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return routes.get(position).route.id().getNumeric();
         }
 
         void setRoutes(List<RouteInfo> routes) {
@@ -213,10 +220,10 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     }
 
     @Override
-    public Observable<Collection<String>> getSelectRoutesRequests() {
+    public Observable<Collection<Id>> getSelectRoutesRequests() {
         return presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes().switchMap(routeIds ->
             ((Adapter) itemsView.getAdapter()).getSelectRouteRequests().map(routeId -> {
-                Collection<String> result = new HashSet<>(routeIds);
+                Collection<Id> result = new HashSet<>(routeIds);
                 result.add(routeId);
                 return result;
             })

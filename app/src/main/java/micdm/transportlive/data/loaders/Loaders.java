@@ -6,14 +6,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import micdm.transportlive.ComponentHolder;
+import micdm.transportlive.misc.Id;
 
 public class Loaders {
 
     private final Lock lock = new ReentrantLock();
 
     private RoutesLoader routesLoader;
-    private final Map<String, PathLoader> pathLoaders = new HashMap<>();
-    private final Map<String, VehiclesLoader> vehiclesLoaders = new HashMap<>();
+    private final Map<Id, PathLoader> pathLoaders = new HashMap<>();
+    private final Map<Id, VehiclesLoader> vehiclesLoaders = new HashMap<>();
 
     public RoutesLoader getRoutesLoader() {
         lock.lock();
@@ -29,7 +30,7 @@ public class Loaders {
         }
     }
 
-    public PathLoader getPathLoader(String routeId) {
+    public PathLoader getPathLoader(Id routeId) {
         lock.lock();
         try {
             PathLoader loader = pathLoaders.get(routeId);
@@ -45,7 +46,7 @@ public class Loaders {
         }
     }
 
-    public VehiclesLoader getVehiclesLoader(String routeId) {
+    public VehiclesLoader getVehiclesLoader(Id routeId) {
         lock.lock();
         try {
             VehiclesLoader loader = vehiclesLoaders.get(routeId);

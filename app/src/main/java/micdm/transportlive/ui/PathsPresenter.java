@@ -14,6 +14,7 @@ import micdm.transportlive.data.loaders.Loaders;
 import micdm.transportlive.data.loaders.PathLoader;
 import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.ui.misc.ResultWatcherN;
 
@@ -21,7 +22,7 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
 
     interface View extends BasePresenter.View {
 
-        Observable<Collection<String>> getLoadPathsRequests();
+        Observable<Collection<Id>> getLoadPathsRequests();
     }
 
     @Inject
@@ -38,12 +39,12 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
     }
 
     private Observable<PathLoader> getPathLoadersToAttach() {
-        Observable<Collection<String>> common = getViewInput(View::getLoadPathsRequests);
+        Observable<Collection<Id>> common = getViewInput(View::getLoadPathsRequests);
         return commonFunctions
             .getDelta(
                 common
                     .compose(commonFunctions.getPrevious())
-                    .startWith(Collections.<String>emptyList()),
+                    .startWith(Collections.<Id>emptyList()),
                 common
             )
             .switchMap(Observable::fromIterable)
@@ -51,7 +52,7 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
     }
 
     private Observable<PathLoader> getPathLoadersToDetach() {
-        Observable<Collection<String>> common = getViewInput(View::getLoadPathsRequests);
+        Observable<Collection<Id>> common = getViewInput(View::getLoadPathsRequests);
         return commonFunctions
             .getDelta(
                 common.skip(1),
@@ -62,7 +63,7 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
     }
 
     @Override
-    public Observable<String> getLoadPathRequests() {
+    public Observable<Id> getLoadPathRequests() {
         return getViewInput(View::getLoadPathsRequests).switchMap(Observable::fromIterable);
     }
 

@@ -34,6 +34,7 @@ import io.reactivex.subjects.Subject;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.ObservableCache;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.models.Point;
@@ -63,7 +64,7 @@ public class CustomMapView extends BaseView {
 
         private final MarkerIconBuilder markerIconBuilder;
         private final GoogleMap map;
-        private Map<String, VehicleMarker> markers = new HashMap<>();
+        private Map<Id, VehicleMarker> markers = new HashMap<>();
 
         VehicleMarkerHandler(MarkerIconBuilder markerIconBuilder, GoogleMap map) {
             this.markerIconBuilder = markerIconBuilder;
@@ -71,7 +72,7 @@ public class CustomMapView extends BaseView {
         }
 
         void handle(Collection<RouteGroup> groups, Collection<Vehicle> vehicles) {
-            Collection<String> outdated = new HashSet<>(markers.keySet());
+            Collection<Id> outdated = new HashSet<>(markers.keySet());
             for (Vehicle vehicle: vehicles) {
                 VehicleMarker vehicleMarker = markers.get(vehicle.id());
                 if (vehicleMarker == null) {
@@ -93,17 +94,17 @@ public class CustomMapView extends BaseView {
                     vehicleMarker.bitmapWrapper.recycle();
                     vehicleMarker.bitmapWrapper = null;
                 }
-                Route route = getRouteById(groups, vehicle.route());
-                vehicleMarker.bitmapWrapper = markerIconBuilder.build(route.id(), route.number(), vehicle.direction());
+                Route route = getRouteById(groups, vehicle.routeId());
+                vehicleMarker.bitmapWrapper = markerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
                 vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
             }
-            for (String vehicleId: outdated) {
+            for (Id vehicleId: outdated) {
                 markers.get(vehicleId).marker.remove();
                 markers.remove(vehicleId);
             }
         }
 
-        private Route getRouteById(Collection<RouteGroup> groups, String routeId) {
+        private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
             for (RouteGroup group: groups) {
                 for (Route route: group.routes()) {
                     if (route.id().equals(routeId)) {
@@ -111,7 +112,7 @@ public class CustomMapView extends BaseView {
                     }
                 }
             }
-            throw new IllegalStateException(String.format("cannot find route %s", routeId));
+            throw new IllegalStateException(String.format("cannot find routeId %s", routeId));
         }
     }
 
@@ -119,7 +120,7 @@ public class CustomMapView extends BaseView {
 
         private final ColorConstructor colorConstructor;
         private final GoogleMap map;
-        private Map<String, Polyline> polylines = new HashMap<>();
+        private Map<Id, Polyline> polylines = new HashMap<>();
 
         PathPolylineHandler(ColorConstructor colorConstructor, GoogleMap map) {
             this.colorConstructor = colorConstructor;
@@ -127,22 +128,22 @@ public class CustomMapView extends BaseView {
         }
 
         void handle(Collection<Path> paths) {
-            Collection<String> outdated = new HashSet<>(polylines.keySet());
+            Collection<Id> outdated = new HashSet<>(polylines.keySet());
             for (Path path: paths) {
-                Polyline polyline = polylines.get(path.route());
+                Polyline polyline = polylines.get(path.routeId());
                 if (polyline == null) {
                     PolylineOptions options = new PolylineOptions()
-                        .color(colorConstructor.getByString(path.route()) & 0x55FFFFFF)
+                        .color(colorConstructor.getByString(path.routeId().getOriginal()) & 0x55FFFFFF)
                         .width(4);
                     for (Point point : path.points()) {
                         options.add(new LatLng(point.latitude(), point.longitude()));
                     }
-                    polylines.put(path.route(), map.addPolyline(options));
+                    polylines.put(path.routeId(), map.addPolyline(options));
                 } else {
-                    outdated.remove(path.route());
+                    outdated.remove(path.routeId());
                 }
             }
-            for (String routeId: outdated) {
+            for (Id routeId: outdated) {
                 polylines.get(routeId).remove();
                 polylines.remove(routeId);
             }

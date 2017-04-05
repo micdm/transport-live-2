@@ -9,6 +9,7 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.models.RouteGroup;
 
 public class RoutesStore extends DefaultStore<RoutesStore.Client, Collection<RouteGroup>> {
@@ -27,12 +28,12 @@ public class RoutesStore extends DefaultStore<RoutesStore.Client, Collection<Rou
     }
 
     @Override
-    String getEntityId(Collection<RouteGroup> routes) {
-        return "";
+    Id getEntityId(Collection<RouteGroup> routes) {
+        return null;
     }
 
     @Override
-    String getKey(String entityId) {
+    String getKey(Id entityId) {
         return "routes";
     }
 

@@ -20,6 +20,7 @@ import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
 import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.models.RouteGroup;
@@ -130,7 +131,7 @@ public class VehiclesController extends BaseController implements RoutesPresente
     }
 
     @Override
-    public Observable<Collection<String>> getLoadVehiclesRequests() {
+    public Observable<Collection<Id>> getLoadVehiclesRequests() {
         return activityLifecycleWatcher.getState(Stage.RESUME, true)
             .switchMap(o ->
                 presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes()
@@ -144,12 +145,12 @@ public class VehiclesController extends BaseController implements RoutesPresente
     }
 
     @Override
-    public Observable<Collection<String>> getSelectRoutesRequests() {
+    public Observable<Collection<Id>> getSelectRoutesRequests() {
         return Observable.empty();
     }
 
     @Override
-    public Observable<Collection<String>> getLoadPathsRequests() {
+    public Observable<Collection<Id>> getLoadPathsRequests() {
         return cannotLoadView.getRetryRequest()
             .startWith(Irrelevant.INSTANCE)
             .switchMap(o -> presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes());

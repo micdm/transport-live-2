@@ -2,10 +2,12 @@ package micdm.transportlive.models;
 
 import org.immutables.value.Value;
 
+import micdm.transportlive.misc.Id;
+
 @Value.Immutable
 public interface Route {
 
-    String id();
+    Id id();
     String number();
     String source();
     String destination();

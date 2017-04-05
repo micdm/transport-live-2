@@ -11,6 +11,7 @@ import io.reactivex.Observable;
 import micdm.transportlive.data.loaders.remote.GetRoutesResponse;
 import micdm.transportlive.data.loaders.remote.ServerConnector;
 import micdm.transportlive.data.stores.RoutesStore;
+import micdm.transportlive.misc.IdFactory;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutableRoute;
 import micdm.transportlive.models.ImmutableRouteGroup;
@@ -23,6 +24,8 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
         Observable<Object> getLoadRoutesRequests();
     }
 
+    @Inject
+    IdFactory idFactory;
     @Inject
     RoutesStore routesStore;
     @Inject
@@ -47,7 +50,7 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
 
     @Override
     Observable<Collection<RouteGroup>> loadFromCache() {
-        return routesStore.getData(""); //TODO: туповато
+        return routesStore.getData(null); //TODO: туповато
     }
 
     @Override
@@ -61,14 +64,14 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
                     ImmutableRouteGroup.Builder groupBuilder = builders.get(groupId);
                     if (groupBuilder == null) {
                         groupBuilder = ImmutableRouteGroup.builder()
-                            .id(groupId)
+                            .id(idFactory.newInstance(groupId))
                             .type(getRouteGroupType(groupId));
                         builders.put(groupId, groupBuilder);
                     }
                     String routeId = item.PathwayId;
                     groupBuilder.addRoutes(
                         ImmutableRoute.builder()
-                            .id(routeId)
+                            .id(idFactory.newInstance(routeId))
                             .source(item.ItineraryFrom)
                             .destination(item.ItineraryTo)
                             .number(item.Number)
@@ -93,7 +96,7 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
         if (id.equals("cf0d566a-d077-40d7-8ad7-b6f1afa98de6"))  {
             return RouteGroup.Type.BUS;
         }
-        throw new IllegalStateException(String.format("unknown route group %s", id));
+        throw new IllegalStateException(String.format("unknown routeId group %s", id));
     }
 
     @Override

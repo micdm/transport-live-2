@@ -14,6 +14,7 @@ import micdm.transportlive.data.loaders.Loaders;
 import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.data.loaders.VehiclesLoader;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.models.Vehicle;
 import micdm.transportlive.ui.misc.ResultWatcherN;
 
@@ -21,7 +22,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
 
     interface View extends BasePresenter.View {
 
-        Observable<Collection<String>> getLoadVehiclesRequests();
+        Observable<Collection<Id>> getLoadVehiclesRequests();
     }
 
     @Inject
@@ -38,12 +39,12 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
     }
 
     private Observable<VehiclesLoader> getVehiclesLoadersToAttach() {
-        Observable<Collection<String>> common = getViewInput(View::getLoadVehiclesRequests);
+        Observable<Collection<Id>> common = getViewInput(View::getLoadVehiclesRequests);
         return commonFunctions
             .getDelta(
                 common
                     .compose(commonFunctions.getPrevious())
-                    .startWith(Collections.<String>emptyList()),
+                    .startWith(Collections.<Id>emptyList()),
                 common
             )
             .switchMap(Observable::fromIterable)
@@ -51,7 +52,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
     }
 
     private Observable<VehiclesLoader> getVehiclesLoadersToDetach() {
-        Observable<Collection<String>> common = getViewInput(View::getLoadVehiclesRequests);
+        Observable<Collection<Id>> common = getViewInput(View::getLoadVehiclesRequests);
         return commonFunctions
             .getDelta(
                 common.skip(1),
@@ -62,7 +63,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
     }
 
     @Override
-    public Observable<String> getLoadVehiclesRequests() {
+    public Observable<Id> getLoadVehiclesRequests() {
         return getViewInput(View::getLoadVehiclesRequests).switchMap(Observable::fromIterable);
     }
 

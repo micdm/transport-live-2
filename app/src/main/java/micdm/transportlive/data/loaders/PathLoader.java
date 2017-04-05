@@ -9,6 +9,7 @@ import micdm.transportlive.data.loaders.remote.GetPathResponse;
 import micdm.transportlive.data.loaders.remote.ServerConnector;
 import micdm.transportlive.data.stores.PathsStore;
 import micdm.transportlive.misc.CommonFunctions;
+import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.ImmutablePath;
 import micdm.transportlive.models.ImmutablePoint;
@@ -18,7 +19,7 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
 
     public interface Client {
 
-        Observable<String> getLoadPathRequests();
+        Observable<Id> getLoadPathRequests();
     }
 
     @Inject
@@ -28,9 +29,9 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     @Inject
     ServerConnector serverConnector;
 
-    private final String routeId;
+    private final Id routeId;
 
-    PathLoader(String routeId) {
+    PathLoader(Id routeId) {
         this.routeId = routeId;
     }
 
@@ -62,7 +63,7 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
         return serverConnector.getPath(routeId)
             .toObservable()
             .map(response -> {
-                ImmutablePath.Builder builder = ImmutablePath.builder().route(routeId);
+                ImmutablePath.Builder builder = ImmutablePath.builder().routeId(routeId);
                 for (GetPathResponse.SegmentsGeoJson.Feature feature: response.SegmentsGeoJson.features) {
                     for (List<Float> values: feature.geometry.coordinates){
                         builder.addPoints(

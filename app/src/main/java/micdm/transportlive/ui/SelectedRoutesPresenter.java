@@ -6,12 +6,13 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import micdm.transportlive.data.stores.SelectedRoutesStore;
+import micdm.transportlive.misc.Id;
 
 public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresenter.View> implements SelectedRoutesStore.Client {
 
     public interface View extends BasePresenter.View {
 
-        Observable<Collection<String>> getSelectRoutesRequests();
+        Observable<Collection<Id>> getSelectRoutesRequests();
     }
 
     @Inject
@@ -22,12 +23,12 @@ public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresent
         selectedRoutesStore.attach(this);
     }
 
-    public Observable<Collection<String>> getSelectedRoutes() {
+    public Observable<Collection<Id>> getSelectedRoutes() {
         return selectedRoutesStore.getSelectedRoutes();
     }
 
     @Override
-    public Observable<Collection<String>> getSelectRoutesRequests() {
+    public Observable<Collection<Id>> getSelectRoutesRequests() {
         return getViewInput(View::getSelectRoutesRequests);
     }
 }

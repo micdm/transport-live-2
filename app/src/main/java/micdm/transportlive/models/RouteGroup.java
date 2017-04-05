@@ -4,6 +4,8 @@ import org.immutables.value.Value;
 
 import java.util.List;
 
+import micdm.transportlive.misc.Id;
+
 @Value.Immutable
 public interface RouteGroup {
 
@@ -13,7 +15,7 @@ public interface RouteGroup {
         BUS,
     }
 
-    String id();
+    Id id();
     Type type();
     List<Route> routes();
 }

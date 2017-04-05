@@ -5,6 +5,7 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Single;
+import micdm.transportlive.misc.Id;
 
 public class ServerConnector {
 
@@ -15,11 +16,11 @@ public class ServerConnector {
         return apiService.getRoutes();
     }
 
-    public Single<Collection<GetVehiclesResponse>> getVehicles(String routeId) {
-        return apiService.getVehicles(routeId);
+    public Single<Collection<GetVehiclesResponse>> getVehicles(Id routeId) {
+        return apiService.getVehicles(routeId.getOriginal());
     }
 
-    public Single<GetPathResponse> getPath(String routeId) {
-        return apiService.getPath(routeId);
+    public Single<GetPathResponse> getPath(Id routeId) {
+        return apiService.getPath(routeId.getOriginal());
     }
 }

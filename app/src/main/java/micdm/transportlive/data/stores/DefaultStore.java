@@ -6,6 +6,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive.misc.Clients;
 import micdm.transportlive.misc.Cache;
+import micdm.transportlive.misc.Id;
 import timber.log.Timber;
 
 abstract class DefaultStore<Client, Data> {
@@ -29,18 +30,18 @@ abstract class DefaultStore<Client, Data> {
         cache.put(getKey(getEntityId(data)), serialize(data));
     }
 
-    abstract String getEntityId(Data data);
+    abstract Id getEntityId(Data data);
 
-    abstract String getKey(String entityId);
+    abstract String getKey(Id entityId);
 
     abstract String serialize(Data data);
 
-    public Observable<Data> getData(String entityId) {
+    public Observable<Data> getData(Id entityId) {
         Data data = readData(entityId);
         return data == null ? Observable.empty() : Observable.just(data);
     }
 
-    private Data readData(String entityId) {
+    private Data readData(Id entityId) {
         String data = cache.get(getKey(entityId));
         if (data == null) {
             return null;

@@ -13,6 +13,7 @@ import dagger.Provides;
 import micdm.transportlive.AppScope;
 import micdm.transportlive.data.loaders.LoaderModule;
 import micdm.transportlive.data.stores.StoreModule;
+import micdm.transportlive.misc.IdFactory;
 import micdm.transportlive.models.ImmutablePath;
 import micdm.transportlive.models.ImmutablePoint;
 import micdm.transportlive.models.ImmutableRoute;
@@ -27,10 +28,16 @@ public class DataModule {
 
     private static class RouteGroupTypeAdapter extends TypeAdapter<RouteGroup> {
 
+        private final IdFactory idFactory;
+
+        private RouteGroupTypeAdapter(IdFactory idFactory) {
+            this.idFactory = idFactory;
+        }
+
         @Override
         public void write(JsonWriter out, RouteGroup group) throws IOException {
             out.beginObject();
-            out.name("id").value(group.id());
+            out.name("id").value(group.id().getOriginal());
             out.name("type").value(group.type().toString());
             out.name("routes");
             out.beginArray();
@@ -43,7 +50,7 @@ public class DataModule {
 
         private void writeRoute(JsonWriter out, Route route) throws IOException {
             out.beginObject();
-            out.name("id").value(route.id());
+            out.name("id").value(route.id().getOriginal());
             out.name("number").value(route.number());
             out.name("source").value(route.source());
             out.name("destination").value(route.destination());
@@ -57,7 +64,7 @@ public class DataModule {
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("id")) {
-                    builder.id(in.nextString());
+                    builder.id(idFactory.newInstance(in.nextString()));
                 }
                 if (name.equals("type")) {
                     String type = in.nextString();
@@ -68,7 +75,7 @@ public class DataModule {
                     } else if (type.equals("BUS")) {
                         builder.type(RouteGroup.Type.BUS);
                     } else {
-                        throw new IllegalStateException(String.format("unknown route group type %s", type));
+                        throw new IllegalStateException(String.format("unknown routeId group type %s", type));
                     }
                 }
                 if (name.equals("routes")) {
@@ -89,7 +96,7 @@ public class DataModule {
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("id")) {
-                    builder.id(in.nextString());
+                    builder.id(idFactory.newInstance(in.nextString()));
                 }
                 if (name.equals("number")) {
                     builder.number(in.nextString());
@@ -108,10 +115,16 @@ public class DataModule {
 
     private static class PathTypeAdapter extends TypeAdapter<Path> {
 
+        private final IdFactory idFactory;
+
+        private PathTypeAdapter(IdFactory idFactory) {
+            this.idFactory = idFactory;
+        }
+
         @Override
         public void write(JsonWriter out, Path path) throws IOException {
             out.beginObject();
-            out.name("route").value(path.route());
+            out.name("routeId").value(path.routeId().getOriginal());
             out.name("points").beginArray();
             for (Point point: path.points()) {
                 out
@@ -130,8 +143,8 @@ public class DataModule {
             ImmutablePath.Builder builder = ImmutablePath.builder();
             while (in.hasNext()) {
                 String name = in.nextName();
-                if (name.equals("route")) {
-                    builder.route(in.nextString());
+                if (name.equals("routeId")) {
+                    builder.routeId(idFactory.newInstance(in.nextString()));
                 }
                 if (name.equals("points")) {
                     in.beginArray();
@@ -155,10 +168,10 @@ public class DataModule {
 
     @Provides
     @AppScope
-    Gson provideGson() {
+    Gson provideGson(IdFactory idFactory) {
         return new GsonBuilder()
-            .registerTypeAdapter(RouteGroup.class, new RouteGroupTypeAdapter())
-            .registerTypeAdapter(Path.class, new PathTypeAdapter())
+            .registerTypeAdapter(RouteGroup.class, new RouteGroupTypeAdapter(idFactory))
+            .registerTypeAdapter(Path.class, new PathTypeAdapter(idFactory))
             .create();
     }
 }
