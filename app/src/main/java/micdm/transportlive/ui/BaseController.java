@@ -9,19 +9,19 @@ import com.bluelinelabs.conductor.Controller;
 
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
-import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive.misc.Irrelevant;
 
-abstract class BaseController extends Controller implements BasePresenter.View {
+abstract class BaseController extends Controller {
 
     private final Subject<Object> attaches = PublishSubject.create();
     private final Subject<Object> detaches = PublishSubject.create();
 
     private Unbinder viewUnbinder;
-    private Disposable eventSubscription;
+    private CompositeDisposable subscription;
 
     @NonNull
     @Override
@@ -41,8 +41,31 @@ abstract class BaseController extends Controller implements BasePresenter.View {
 
     @Override
     protected void onAttach(@NonNull View view) {
-        eventSubscription = subscribeForEvents();
+        subscription = new CompositeDisposable(
+            subscribeForAttach(),
+            subscribeForDetach()
+        );
+        Disposable eventSubscription = subscribeForEvents();
+        if (eventSubscription != null) {
+            subscription.add(eventSubscription);
+        }
         attaches.onNext(Irrelevant.INSTANCE);
+    }
+
+    private Disposable subscribeForAttach() {
+        return attaches.subscribe(o -> attachToPresenters());
+    }
+
+    void attachToPresenters() {
+
+    }
+
+    private Disposable subscribeForDetach() {
+        return detaches.subscribe(o -> detachFromPresenters());
+    }
+
+    void detachFromPresenters() {
+
     }
 
     protected Disposable subscribeForEvents() {
@@ -52,8 +75,8 @@ abstract class BaseController extends Controller implements BasePresenter.View {
     @Override
     protected void onDetach(@NonNull View view) {
         detaches.onNext(Irrelevant.INSTANCE);
-        if (eventSubscription != null) {
-            eventSubscription.dispose();
+        if (subscription != null) {
+            subscription.dispose();
         }
     }
 
@@ -62,15 +85,5 @@ abstract class BaseController extends Controller implements BasePresenter.View {
         if (viewUnbinder != null) {
             viewUnbinder.unbind();
         }
-    }
-
-    @Override
-    public Observable<Object> getAttaches() {
-        return attaches;
-    }
-
-    @Override
-    public Observable<Object> getDetaches() {
-        return detaches;
     }
 }

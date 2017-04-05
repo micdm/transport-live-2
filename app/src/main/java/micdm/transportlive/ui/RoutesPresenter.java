@@ -12,7 +12,7 @@ import micdm.transportlive.models.RouteGroup;
 
 public class RoutesPresenter extends BasePresenter<RoutesPresenter.View> implements RoutesLoader.Client {
 
-    public interface View extends BasePresenter.View {
+    public interface View {
 
         Observable<Object> getLoadRoutesRequests();
     }

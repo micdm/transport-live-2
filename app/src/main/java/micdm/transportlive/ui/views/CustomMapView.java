@@ -17,11 +17,14 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.javatuples.Pair;
+import org.joda.time.Duration;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -29,24 +32,28 @@ import butterknife.BindView;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.BehaviorSubject;
-import io.reactivex.subjects.Subject;
 import micdm.transportlive.ComponentHolder;
 import micdm.transportlive.R;
+import micdm.transportlive.data.loaders.Result;
 import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.Id;
+import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.misc.ObservableCache;
 import micdm.transportlive.models.Path;
 import micdm.transportlive.models.Point;
 import micdm.transportlive.models.Route;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.models.Vehicle;
+import micdm.transportlive.ui.PathsPresenter;
+import micdm.transportlive.ui.RoutesPresenter;
+import micdm.transportlive.ui.SelectedRoutesPresenter;
+import micdm.transportlive.ui.VehiclesPresenter;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive.ui.misc.ColorConstructor;
 import micdm.transportlive.ui.misc.MarkerIconBuilder;
 
-public class CustomMapView extends BaseView {
+public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, VehiclesPresenter.View {
 
     private static class VehicleMarkerHandler {
 
@@ -150,6 +157,10 @@ public class CustomMapView extends BaseView {
         }
     }
 
+    private static final Duration LOAD_VEHICLES_INTERVAL = Duration.standardSeconds(10);
+    private static final int MAX_ROUTE_COUNT_WITH_NO_PENALTY = 3;
+    private static final Duration LOAD_VEHICLES_PENALTY_INTERVAL = Duration.standardSeconds(5);
+
     private static final double CAMERA_LATITUDE = 56.488881;
     private static final double CAMERA_LONGITUDE = 84.987703;
     private static final int CAMERA_ZOOM = 12;
@@ -164,15 +175,19 @@ public class CustomMapView extends BaseView {
     MarkerIconBuilder markerIconBuilder;
     @Inject
     ObservableCache observableCache;
+    @Inject
+    PathsPresenter pathsPresenter;
+    @Inject
+    RoutesPresenter routesPresenter;
+    @Inject
+    SelectedRoutesPresenter selectedRoutesPresenter;
+    @Inject
+    VehiclesPresenter vehiclesPresenter;
 
     @BindView(R.id.v__custom_map__no_vehicles)
     View noVehiclesView;
     @BindView(R.id.v__custom_map__map)
     MapView mapView;
-
-    private final Subject<Collection<RouteGroup>> groups = BehaviorSubject.create();
-    private final Subject<Collection<Vehicle>> vehicles = BehaviorSubject.create();
-    private final Subject<Collection<Path>> paths = BehaviorSubject.create();
 
     public CustomMapView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -235,18 +250,36 @@ public class CustomMapView extends BaseView {
             getMap()
                 .switchMap(map ->
                     Observable.combineLatest(
-                        groups.distinctUntilChanged(),
-                        vehicles.distinctUntilChanged(),
+                        routesPresenter.getResults()
+                            .filter(Result::isSuccess)
+                            .map(Result::getData)
+                            .distinctUntilChanged(),
+                        Observable.merge(
+                            vehiclesPresenter.getResults()
+                                .filter(Result::isSuccess)
+                                .map(Result::getData),
+                            selectedRoutesPresenter.getSelectedRoutes()
+                                .filter(Collection::isEmpty)
+                                .map(o -> Collections.<Vehicle>emptyList())
+                        ).distinctUntilChanged(),
                         Pair::with
                     )
+                    .compose(commonFunctions.toMainThread())
                     .scan(new VehicleMarkerHandler(markerIconBuilder, map), (accumulated, pair) -> {
                         accumulated.handle(pair.getValue0(), pair.getValue1());
                         return accumulated;
                     })
                 )
                 .subscribe(),
-            vehicles
-                .map(Collection::isEmpty)
+            Observable
+                .combineLatest(
+                    vehiclesPresenter.getResults()
+                        .filter(Result::isSuccess)
+                        .map(Result::getData),
+                    selectedRoutesPresenter.getSelectedRoutes(),
+                    (vehicles, routeIds) -> vehicles.isEmpty() && !routeIds.isEmpty()
+                )
+                .compose(commonFunctions.toMainThread())
                 .subscribe(isEmpty -> noVehiclesView.setVisibility(isEmpty ? VISIBLE : GONE))
         );
     }
@@ -254,8 +287,11 @@ public class CustomMapView extends BaseView {
     private Disposable subscribeForPaths() {
         return getMap()
             .switchMap(map ->
-                paths
+                pathsPresenter.getResults()
+                    .filter(Result::isSuccess)
+                    .map(Result::getData)
                     .distinctUntilChanged()
+                    .compose(commonFunctions.toMainThread())
                     .scan(new PathPolylineHandler(colorConstructor, map), (accumulated, paths) -> {
                         accumulated.handle(paths);
                         return accumulated;
@@ -273,15 +309,47 @@ public class CustomMapView extends BaseView {
         );
     }
 
-    public void setRoutes(Collection<RouteGroup> groups) {
-        this.groups.onNext(groups);
+    @Override
+    void attachToPresenters() {
+        routesPresenter.attach(this);
+        pathsPresenter.attach(this);
+        vehiclesPresenter.attach(this);
     }
 
-    public void setVehicles(Collection<Vehicle> vehicles) {
-        this.vehicles.onNext(vehicles);
+    @Override
+    void detachFromPresenters() {
+        routesPresenter.detach(this);
+        pathsPresenter.detach(this);
+        vehiclesPresenter.detach(this);
     }
 
-    public void setPaths(Collection<Path> paths) {
-        this.paths.onNext(paths);
+    @Override
+    public Observable<Object> getLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE);
+    }
+
+    @Override
+    public Observable<Collection<Id>> getLoadPathsRequests() {
+        return selectedRoutesPresenter.getSelectedRoutes();
+    }
+
+    @Override
+    public Observable<Collection<Id>> getLoadVehiclesRequests() {
+        return activityLifecycleWatcher.getState(Stage.RESUME, true)
+            .switchMap(o ->
+                selectedRoutesPresenter.getSelectedRoutes()
+            )
+            .switchMap(routeIds -> {
+                Duration interval;
+                if (routeIds.size() > MAX_ROUTE_COUNT_WITH_NO_PENALTY) {
+                    interval = LOAD_VEHICLES_PENALTY_INTERVAL.multipliedBy(routeIds.size());
+                } else {
+                    interval = LOAD_VEHICLES_INTERVAL;
+                }
+                return Observable
+                    .interval(0, interval.getStandardSeconds(), TimeUnit.SECONDS)
+                    .compose(commonFunctions.toConst(routeIds))
+                    .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
+            });
     }
 }

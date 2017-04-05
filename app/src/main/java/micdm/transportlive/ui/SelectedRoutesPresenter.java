@@ -10,7 +10,7 @@ import micdm.transportlive.misc.Id;
 
 public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresenter.View> implements SelectedRoutesStore.Client {
 
-    public interface View extends BasePresenter.View {
+    public interface View {
 
         Observable<Collection<Id>> getSelectRoutesRequests();
     }

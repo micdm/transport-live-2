@@ -15,7 +15,7 @@ public abstract class BaseView extends FrameLayout {
     @Inject
     LayoutInflater layoutInflater;
 
-    private Disposable eventSubscription;
+    private Disposable subscription;
 
     public BaseView(Context context) {
         super(context);
@@ -48,7 +48,8 @@ public abstract class BaseView extends FrameLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
-            eventSubscription = subscribeForEvents();
+            subscription = subscribeForEvents();
+            onAttach();
         }
     }
 
@@ -56,14 +57,20 @@ public abstract class BaseView extends FrameLayout {
         return null;
     }
 
+    void onAttach() {
+
+    }
+
     @Override
     protected void onDetachedFromWindow() {
-        if (eventSubscription != null) {
-            eventSubscription.dispose();
+        onDetach();
+        if (subscription != null) {
+            subscription.dispose();
         }
-        cleanup();
         super.onDetachedFromWindow();
     }
 
-    void cleanup() {}
+    void onDetach() {
+
+    }
 }

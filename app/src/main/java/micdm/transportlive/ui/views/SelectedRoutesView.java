@@ -12,8 +12,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.jakewharton.rxbinding2.view.RxView;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,12 +36,11 @@ import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Route;
 import micdm.transportlive.models.RouteGroup;
-import micdm.transportlive.ui.PresenterStore;
 import micdm.transportlive.ui.RoutesPresenter;
 import micdm.transportlive.ui.SelectedRoutesPresenter;
 import micdm.transportlive.ui.misc.ColorConstructor;
 
-public class SelectedRoutesView extends BaseView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
+public class SelectedRoutesView extends PresentedView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
 
     private static class RouteInfo {
 
@@ -153,7 +150,9 @@ public class SelectedRoutesView extends BaseView implements RoutesPresenter.View
     @Inject
     LayoutInflater layoutInflater;
     @Inject
-    PresenterStore presenterStore;
+    RoutesPresenter routesPresenter;
+    @Inject
+    SelectedRoutesPresenter selectedRoutesPresenter;
 
     @BindView(R.id.v__selected_routes__items)
     RecyclerView itemsView;
@@ -187,10 +186,10 @@ public class SelectedRoutesView extends BaseView implements RoutesPresenter.View
     private Disposable subscribeForSelectedRoutes() {
         return Observable
             .combineLatest(
-                presenterStore.getRoutesPresenter(this).getResults()
+                routesPresenter.getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
+                selectedRoutesPresenter.getSelectedRoutes(),
                 (groups, routeIds) -> {
                     List<RouteInfo> routes = new ArrayList<>();
                     for (RouteGroup group: groups) {
@@ -229,23 +228,20 @@ public class SelectedRoutesView extends BaseView implements RoutesPresenter.View
     }
 
     @Override
-    public Observable<Object> getAttaches() {
-        return RxView.attaches(this);
+    void attachToPresenters() {
+        routesPresenter.attach(this);
+        selectedRoutesPresenter.attach(this);
     }
 
     @Override
-    public Observable<Object> getDetaches() {
-        return RxView.detaches(this);
-    }
-
-    @Override
-    public boolean isAttached() {
-        return true;
+    void detachFromPresenters() {
+        routesPresenter.detach(this);
+        selectedRoutesPresenter.detach(this);
     }
 
     @Override
     public Observable<Collection<Id>> getSelectRoutesRequests() {
-        return presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes().switchMap(routeIds ->
+        return selectedRoutesPresenter.getSelectedRoutes().switchMap(routeIds ->
             ((Adapter) itemsView.getAdapter()).getSelectRouteRequests().map(routeId -> {
                 Collection<Id> result = new HashSet<>(routeIds);
                 result.remove(routeId);

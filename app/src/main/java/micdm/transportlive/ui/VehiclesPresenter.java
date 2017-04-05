@@ -20,7 +20,7 @@ import micdm.transportlive.ui.misc.ResultWatcherN;
 
 public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> implements VehiclesLoader.Client {
 
-    interface View extends BasePresenter.View {
+    public interface View {
 
         Observable<Collection<Id>> getLoadVehiclesRequests();
     }
@@ -67,7 +67,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View> imp
         return getViewInput(View::getLoadVehiclesRequests).switchMap(Observable::fromIterable);
     }
 
-    Observable<Result<Collection<Vehicle>>> getResults() {
+    public Observable<Result<Collection<Vehicle>>> getResults() {
         return Observable
             .<Consumer<Collection<VehiclesLoader>>>merge(
                 getVehiclesLoadersToAttach().map(loader -> accumulated -> accumulated.add(loader)),

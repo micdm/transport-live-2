@@ -20,7 +20,7 @@ import micdm.transportlive.ui.misc.ResultWatcherN;
 
 public class PathsPresenter extends BasePresenter<PathsPresenter.View> implements PathLoader.Client {
 
-    interface View extends BasePresenter.View {
+    public interface View {
 
         Observable<Collection<Id>> getLoadPathsRequests();
     }
@@ -67,7 +67,7 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View> implement
         return getViewInput(View::getLoadPathsRequests).switchMap(Observable::fromIterable);
     }
 
-    Observable<Result<Collection<Path>>> getResults() {
+    public Observable<Result<Collection<Path>>> getResults() {
         return Observable
             .<Consumer<Collection<PathLoader>>>merge(
                 getPathLoadersToAttach().map(loader -> accumulated -> accumulated.add(loader)),

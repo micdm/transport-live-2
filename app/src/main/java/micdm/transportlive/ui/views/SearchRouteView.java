@@ -10,8 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.jakewharton.rxbinding2.view.RxView;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,12 +33,11 @@ import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.Route;
 import micdm.transportlive.models.RouteGroup;
-import micdm.transportlive.ui.PresenterStore;
 import micdm.transportlive.ui.RoutesPresenter;
 import micdm.transportlive.ui.SelectedRoutesPresenter;
 import micdm.transportlive.ui.misc.MiscFunctions;
 
-public class SearchRouteView extends BaseView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
+public class SearchRouteView extends PresentedView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
 
     private static class RouteInfo {
 
@@ -120,9 +117,11 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     @Inject
     MiscFunctions miscFunctions;
     @Inject
-    PresenterStore presenterStore;
-    @Inject
     Resources resources;
+    @Inject
+    RoutesPresenter routesPresenter;
+    @Inject
+    SelectedRoutesPresenter selectedRoutesPresenter;
 
     @BindView(R.id.v__search_route__input)
     ClearableEditText inputView;
@@ -158,14 +157,14 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     private Disposable subscribeForRoutes() {
         return Observable
             .combineLatest(
-                presenterStore.getRoutesPresenter(this).getResults()
+                routesPresenter.getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
+                selectedRoutesPresenter.getSelectedRoutes(),
                 inputView.getText()
                     .map(text -> text.toString().toLowerCase()),
                 (groups, routeIds, search) -> {
-                    if (search.length() == 0) {
+                    if (search.isEmpty()) {
                         return Collections.<RouteInfo>emptyList();
                     }
                     List<RouteInfo> routes = new ArrayList<>();
@@ -199,18 +198,15 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     }
 
     @Override
-    public Observable<Object> getAttaches() {
-        return RxView.attaches(this);
+    void attachToPresenters() {
+        routesPresenter.attach(this);
+        selectedRoutesPresenter.attach(this);
     }
 
     @Override
-    public Observable<Object> getDetaches() {
-        return RxView.detaches(this);
-    }
-
-    @Override
-    public boolean isAttached() {
-        return true;
+    void detachFromPresenters() {
+        routesPresenter.detach(this);
+        selectedRoutesPresenter.detach(this);
     }
 
     @Override
@@ -220,7 +216,7 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
 
     @Override
     public Observable<Collection<Id>> getSelectRoutesRequests() {
-        return presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes().switchMap(routeIds ->
+        return selectedRoutesPresenter.getSelectedRoutes().switchMap(routeIds ->
             ((Adapter) itemsView.getAdapter()).getSelectRouteRequests().map(routeId -> {
                 Collection<Id> result = new HashSet<>(routeIds);
                 result.add(routeId);
