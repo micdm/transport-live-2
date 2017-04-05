@@ -9,4 +9,5 @@
     <string name="v__cannot_load__retry">Ещё раз</string>
     <string name="v__loading__message">Загрузка…</string>
     <string name="v__search_route__input">Номер, конечная остановка…</string>
+    <string name="v__search_route__route">%1$s №%2$s (%3$s → %4$s)</string>
 </resources>

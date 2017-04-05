@@ -1,6 +1,7 @@
 package micdm.transportlive.ui.views;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
@@ -67,13 +68,15 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
 
         private final LayoutInflater layoutInflater;
         private final MiscFunctions miscFunctions;
+        private final Resources resources;
 
         private final Subject<String> selectRouteRequests = PublishSubject.create();
         private List<RouteInfo> routes = Collections.emptyList();
 
-        Adapter(LayoutInflater layoutInflater, MiscFunctions miscFunctions) {
+        Adapter(LayoutInflater layoutInflater, MiscFunctions miscFunctions, Resources resources) {
             this.layoutInflater = layoutInflater;
             this.miscFunctions = miscFunctions;
+            this.resources = resources;
         }
 
         Observable<String> getSelectRouteRequests() {
@@ -89,8 +92,8 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
         public void onBindViewHolder(ViewHolder holder, int position) {
             RouteInfo info = routes.get(position);
             holder.itemView.setOnClickListener(o -> selectRouteRequests.onNext(info.route.id()));
-            holder.nameView.setText(String.format("%s %s (%s -> %s)", info.route.number(), miscFunctions.getRouteGroupName(info.group),
-                                                  info.route.source(), info.route.destination()));
+            holder.nameView.setText(resources.getString(R.string.v__search_route__route, miscFunctions.getRouteGroupName(info.group),
+                                                        info.route.number(), info.route.source(), info.route.destination()));
         }
 
         @Override
@@ -112,6 +115,8 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     MiscFunctions miscFunctions;
     @Inject
     PresenterStore presenterStore;
+    @Inject
+    Resources resources;
 
     @BindView(R.id.v__search_route__input)
     TextView inputView;
@@ -133,7 +138,7 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     @Override
     void setupViews() {
         itemsView.setLayoutManager(new LinearLayoutManager(getContext()));
-        itemsView.setAdapter(new Adapter(layoutInflater, miscFunctions));
+        itemsView.setAdapter(new Adapter(layoutInflater, miscFunctions, resources));
     }
 
     @Override
@@ -151,7 +156,8 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
                     .filter(Result::isSuccess)
                     .map(Result::getData),
                 presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
-                RxTextView.textChanges(inputView),
+                RxTextView.textChanges(inputView)
+                    .map(text -> text.toString().toLowerCase()),
                 (groups, routeIds, search) -> {
                     if (search.length() == 0) {
                         return Collections.<RouteInfo>emptyList();
@@ -159,16 +165,9 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
                     List<RouteInfo> routes = new ArrayList<>();
                     for (RouteGroup group: groups) {
                         for (Route route: group.routes()) {
-                            if (routeIds.contains(route.id())) {
-                                continue;
+                            if ((isRouteGroupMatchesSearch(group, search) || isRouteMatchesSearch(route, search)) && !routeIds.contains(route.id())) {
+                                routes.add(new RouteInfo(group, route));
                             }
-                            if (!miscFunctions.getRouteGroupName(group).toString().contains(search) &&
-                                !route.source().contains(search) &&
-                                !route.destination().contains(search) &&
-                                !route.number().contains(search)) {
-                                continue;
-                            }
-                            routes.add(new RouteInfo(group, route));
                         }
                     }
                     return routes;
@@ -176,6 +175,16 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
             )
             .compose(commonFunctions.toMainThread())
             .subscribe(((Adapter) itemsView.getAdapter())::setRoutes);
+    }
+
+    private boolean isRouteGroupMatchesSearch(RouteGroup group, CharSequence search) {
+        return miscFunctions.getRouteGroupName(group).toString().toLowerCase().contains(search);
+    }
+
+    private boolean isRouteMatchesSearch(Route route, CharSequence search) {
+        return route.number().contains(search) ||
+            route.source().toLowerCase().contains(search) ||
+            route.destination().toLowerCase().contains(search);
     }
 
     private Disposable subscribeForSelection() {
