@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.jakewharton.rxbinding2.view.RxView;
-import com.jakewharton.rxbinding2.widget.RxTextView;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,7 +125,7 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
     Resources resources;
 
     @BindView(R.id.v__search_route__input)
-    TextView inputView;
+    ClearableEditText inputView;
     @BindView(R.id.v__search_route__items)
     RecyclerView itemsView;
 
@@ -163,7 +162,7 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
                     .filter(Result::isSuccess)
                     .map(Result::getData),
                 presenterStore.getSelectedRoutesPresenter(this).getSelectedRoutes(),
-                RxTextView.textChanges(inputView)
+                inputView.getText()
                     .map(text -> text.toString().toLowerCase()),
                 (groups, routeIds, search) -> {
                     if (search.length() == 0) {
@@ -196,7 +195,7 @@ public class SearchRouteView extends BaseView implements RoutesPresenter.View, S
 
     private Disposable subscribeForSelection() {
         return ((Adapter) itemsView.getAdapter()).getSelectRouteRequests()
-            .subscribe(o -> inputView.setText(""));
+            .subscribe(o -> inputView.clear());
     }
 
     @Override
