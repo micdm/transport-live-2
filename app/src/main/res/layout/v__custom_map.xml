@@ -12,7 +12,9 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_centerHorizontal="true"
-        android:layout_margin="16dp"
+        android:layout_alignParentBottom="true"
+        android:translationY="-8dp"
+        android:layout_margin="8dp"
         android:padding="8dp"
         android:gravity="center"
         android:background="@drawable/no_vehicles_background">
@@ -25,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
-            android:text="Кажется, весь транспорт в парке"
-            android:textAppearance="@style/TextAppearance.AppCompat.Subhead.Inverse"/>
+            android:textAppearance="@style/TextAppearance.AppCompat.Subhead.Inverse"
+            android:text="@string/v__custom_map__no_vehicles"/>
     </LinearLayout>
 </RelativeLayout>
