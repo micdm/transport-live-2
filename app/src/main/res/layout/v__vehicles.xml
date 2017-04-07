@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <micdm.transportlive.ui.views.LoadingView
+    <micdm.transportlive2.ui.views.LoadingView
         android:id="@+id/v__vehicles__loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -11,27 +11,27 @@
         android:id="@+id/v__vehicles__loaded"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <micdm.transportlive.ui.views.CustomMapView
+        <micdm.transportlive2.ui.views.CustomMapView
             android:id="@+id/v__vehicles__map"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
-        <micdm.transportlive.ui.views.SelectedRoutesView
+        <micdm.transportlive2.ui.views.SelectedRoutesView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="64dp"
             android:layout_alignParentRight="true"/>
-        <micdm.transportlive.ui.views.SearchRouteView
+        <micdm.transportlive2.ui.views.SearchRouteView
             android:id="@+id/v__vehicles__search_route"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"/>
     </RelativeLayout>
-    <micdm.transportlive.ui.views.CannotLoadView
+    <micdm.transportlive2.ui.views.CannotLoadView
         android:id="@+id/v__vehicles__cannot_load"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"/>
-    <micdm.transportlive.ui.views.AboutView
+    <micdm.transportlive2.ui.views.AboutView
         android:id="@+id/v__vehicles__about"
         android:layout_width="300dp"
         android:layout_height="wrap_content"

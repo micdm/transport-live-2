@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
-        <micdm.transportlive.ui.views.ClearableEditText
+        <micdm.transportlive2.ui.views.ClearableEditText
             android:id="@+id/v__search_route__input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
