@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.RelativeLayout;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -238,11 +239,20 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     }
 
     private Disposable subscribeForMap() {
-        return getMap().subscribe(map ->
+        return getMap().subscribe(map -> {
+            moveCompass();
             map.moveCamera(
                 CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(CAMERA_LATITUDE, CAMERA_LONGITUDE), CAMERA_ZOOM))
-            )
-        );
+            );
+        });
+    }
+
+    // HACK: есть какой-нибудь более мягкий способ подвинуть встроенный компас?
+    private void moveCompass() {
+        View view = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("5"));
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) view.getLayoutParams();
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        layoutParams.setMargins(0, 160, 30, 0);
     }
 
     private Disposable subscribeForVehicles() {
