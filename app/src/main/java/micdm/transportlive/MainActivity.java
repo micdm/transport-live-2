@@ -2,15 +2,9 @@ package micdm.transportlive;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.ViewGroup;
-
-import com.bluelinelabs.conductor.Conductor;
-import com.bluelinelabs.conductor.Router;
-import com.bluelinelabs.conductor.RouterTransaction;
 
 import javax.inject.Inject;
 
-import micdm.transportlive.ui.VehiclesController;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher.Stage;
 
@@ -19,8 +13,6 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
 
-    private Router router;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,7 +20,6 @@ public class MainActivity extends AppCompatActivity {
         ComponentHolder.getActivityComponent().inject(this);
         activityLifecycleWatcher.setState(Stage.CREATE, savedInstanceState);
         setContentView(R.layout.a__main);
-        router = initRouter(savedInstanceState);
     }
 
     private void setupActivityComponent() {
@@ -37,14 +28,6 @@ public class MainActivity extends AppCompatActivity {
                 .activityModule(new ActivityModule(this))
                 .build()
         );
-    }
-
-    private Router initRouter(Bundle savedInstanceState) {
-        Router router = Conductor.attachRouter(this, (ViewGroup) findViewById(R.id.v__main__container), savedInstanceState);
-        if (!router.hasRootController()) {
-            router.setRoot(RouterTransaction.with(new VehiclesController()));
-        }
-        return router;
     }
 
     @Override
@@ -81,13 +64,6 @@ public class MainActivity extends AppCompatActivity {
     public void onLowMemory() {
         super.onLowMemory();
         activityLifecycleWatcher.setState(Stage.LOW_MEMORY);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (!router.handleBack()) {
-            super.onBackPressed();
-        }
     }
 
     @Override

@@ -1,9 +1,9 @@
-package micdm.transportlive.ui;
+package micdm.transportlive.ui.views;
 
-import android.support.annotation.NonNull;
+import android.content.Context;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import java.util.Collection;
 
@@ -20,17 +20,12 @@ import micdm.transportlive.misc.CommonFunctions;
 import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.RouteGroup;
-import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
-import micdm.transportlive.ui.views.AboutView;
-import micdm.transportlive.ui.views.CannotLoadView;
-import micdm.transportlive.ui.views.CustomMapView;
-import micdm.transportlive.ui.views.LoadingView;
-import micdm.transportlive.ui.views.SearchRouteView;
+import micdm.transportlive.ui.PathsPresenter;
+import micdm.transportlive.ui.RoutesPresenter;
+import micdm.transportlive.ui.SelectedRoutesPresenter;
 
-public class VehiclesController extends BaseController implements RoutesPresenter.View, PathsPresenter.View {
+public class VehiclesView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View {
 
-    @Inject
-    ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
     CommonFunctions commonFunctions;
     @Inject
@@ -44,8 +39,6 @@ public class VehiclesController extends BaseController implements RoutesPresente
     LoadingView loadingView;
     @BindView(R.id.v__vehicles__loaded)
     View loadedView;
-    @BindView(R.id.v__vehicles__map)
-    CustomMapView mapView;
     @BindView(R.id.v__vehicles__search_route)
     SearchRouteView searchRouteView;
     @BindView(R.id.v__vehicles__cannot_load)
@@ -53,14 +46,16 @@ public class VehiclesController extends BaseController implements RoutesPresente
     @BindView(R.id.v__vehicles__about)
     AboutView aboutView;
 
-    public VehiclesController() {
-        ComponentHolder.getActivityComponent().inject(this);
+    public VehiclesView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        if (!isInEditMode()) {
+            ComponentHolder.getActivityComponent().inject(this);
+        }
     }
 
-    @NonNull
     @Override
-    View inflateContent(@NonNull LayoutInflater inflater, @NonNull ViewGroup container) {
-        return inflater.inflate(R.layout.c__vehicles, container, false);
+    void inflateContent(LayoutInflater layoutInflater) {
+        layoutInflater.inflate(R.layout.v__vehicles, this);
     }
 
     @Override
