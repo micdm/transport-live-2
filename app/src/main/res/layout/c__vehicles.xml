@@ -21,6 +21,7 @@
             android:layout_marginTop="64dp"
             android:layout_alignParentRight="true"/>
         <micdm.transportlive.ui.views.SearchRouteView
+            android:id="@+id/v__vehicles__search_route"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"/>
@@ -28,6 +29,11 @@
     <micdm.transportlive.ui.views.CannotLoadView
         android:id="@+id/v__vehicles__cannot_load"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"/>
+    <micdm.transportlive.ui.views.AboutView
+        android:id="@+id/v__vehicles__about"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"/>
 </FrameLayout>

@@ -21,9 +21,11 @@ import micdm.transportlive.misc.Id;
 import micdm.transportlive.misc.Irrelevant;
 import micdm.transportlive.models.RouteGroup;
 import micdm.transportlive.ui.misc.ActivityLifecycleWatcher;
+import micdm.transportlive.ui.views.AboutView;
 import micdm.transportlive.ui.views.CannotLoadView;
 import micdm.transportlive.ui.views.CustomMapView;
 import micdm.transportlive.ui.views.LoadingView;
+import micdm.transportlive.ui.views.SearchRouteView;
 
 public class VehiclesController extends BaseController implements RoutesPresenter.View, PathsPresenter.View {
 
@@ -44,8 +46,12 @@ public class VehiclesController extends BaseController implements RoutesPresente
     View loadedView;
     @BindView(R.id.v__vehicles__map)
     CustomMapView mapView;
+    @BindView(R.id.v__vehicles__search_route)
+    SearchRouteView searchRouteView;
     @BindView(R.id.v__vehicles__cannot_load)
     CannotLoadView cannotLoadView;
+    @BindView(R.id.v__vehicles__about)
+    AboutView aboutView;
 
     public VehiclesController() {
         ComponentHolder.getActivityComponent().inject(this);
@@ -62,6 +68,7 @@ public class VehiclesController extends BaseController implements RoutesPresente
         loadingView.setVisibility(View.GONE);
         loadedView.setVisibility(View.GONE);
         cannotLoadView.setVisibility(View.GONE);
+        aboutView.setVisibility(View.GONE);
     }
 
     @Override
@@ -78,7 +85,19 @@ public class VehiclesController extends BaseController implements RoutesPresente
 
     @Override
     protected Disposable subscribeForEvents() {
-        return subscribeForRequiredData();
+        return new CompositeDisposable(
+            subscribeForAbout(),
+            subscribeForRequiredData()
+        );
+    }
+
+    private Disposable subscribeForAbout() {
+        return Observable
+            .merge(
+                searchRouteView.getGoToAboutRequests().map(o -> View.VISIBLE),
+                aboutView.getCloseRequests().map(o -> View.GONE)
+            )
+            .subscribe(aboutView::setVisibility);
     }
 
     private Disposable subscribeForRequiredData() {
