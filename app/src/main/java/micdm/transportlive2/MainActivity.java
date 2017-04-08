@@ -1,6 +1,7 @@
 package micdm.transportlive2;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 
 import javax.inject.Inject;
@@ -8,6 +9,7 @@ import javax.inject.Inject;
 import micdm.transportlive2.misc.AnalyticsTracker;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
+import micdm.transportlive2.ui.misc.PermissionChecker;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -15,6 +17,8 @@ public class MainActivity extends AppCompatActivity {
     ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
     AnalyticsTracker analyticsTracker;
+    @Inject
+    PermissionChecker permissionChecker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +72,13 @@ public class MainActivity extends AppCompatActivity {
     public void onLowMemory() {
         super.onLowMemory();
         activityLifecycleWatcher.setState(Stage.LOW_MEMORY);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (permissionChecker.isResultAcceptable(requestCode)) {
+            permissionChecker.setResults(permissions, grantResults);
+        }
     }
 
     @Override

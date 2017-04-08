@@ -1,14 +1,16 @@
 package micdm.transportlive2.ui.views;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.RelativeLayout;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -53,6 +55,7 @@ import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.MarkerIconBuilder;
+import micdm.transportlive2.ui.misc.PermissionChecker;
 
 public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, VehiclesPresenter.View {
 
@@ -179,6 +182,10 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     PathsPresenter pathsPresenter;
     @Inject
+    PermissionChecker permissionChecker;
+    @Inject
+    Resources resources;
+    @Inject
     RoutesPresenter routesPresenter;
     @Inject
     SelectedRoutesPresenter selectedRoutesPresenter;
@@ -239,20 +246,24 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     }
 
     private Disposable subscribeForMap() {
-        return getMap().subscribe(map -> {
-            moveCompass();
-            map.moveCamera(
-                CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(CAMERA_LATITUDE, CAMERA_LONGITUDE), CAMERA_ZOOM))
-            );
-        });
-    }
-
-    // HACK: есть какой-нибудь более мягкий способ подвинуть встроенный компас?
-    private void moveCompass() {
-        View view = ((View) mapView.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("5"));
-        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) view.getLayoutParams();
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-        layoutParams.setMargins(0, 160, 30, 0);
+        return new CompositeDisposable(
+            getMap().subscribe(map -> {
+                UiSettings uiSettings = map.getUiSettings();
+                uiSettings.setMapToolbarEnabled(false);
+                uiSettings.setZoomControlsEnabled(true);
+                map.setPadding(0, (int) resources.getDimension(R.dimen.map_top_padding), 0, 0);
+                map.moveCamera(
+                    CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(CAMERA_LATITUDE, CAMERA_LONGITUDE), CAMERA_ZOOM))
+                );
+            }),
+            Observable
+                .combineLatest(
+                    getMap(),
+                    permissionChecker.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION),
+                    commonFunctions::wrap
+                )
+                .subscribe(commonFunctions.unwrap(GoogleMap::setMyLocationEnabled))
+        );
     }
 
     private Disposable subscribeForVehicles() {
