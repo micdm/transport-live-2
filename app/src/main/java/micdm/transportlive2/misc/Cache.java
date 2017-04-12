@@ -16,9 +16,7 @@ public class Cache {
 
     private DiskLruCache cache;
 
-    Cache() {
-
-    }
+    Cache() {}
 
     void init() {
         try {

@@ -11,7 +11,7 @@ import android.support.v4.util.Pools;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-public class MarkerIconBuilder {
+public class VehicleMarkerIconBuilder {
 
     public class BitmapWrapper {
 
@@ -40,6 +40,7 @@ public class MarkerIconBuilder {
     private final Pools.Pool<BitmapWrapper> bitmaps = new Pools.SimplePool<>(BITMAP_POOL_SIZE);
 
     @Inject
+    @Named("vehicleIcon")
     Bitmap original;
     @Inject
     PaintConstructor paintConstructor;

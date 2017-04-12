@@ -2,14 +2,12 @@ package micdm.transportlive2.models;
 
 import org.immutables.value.Value;
 
-import java.util.List;
-
 import micdm.transportlive2.misc.Id;
 
 @Value.Immutable
-public interface Path {
+public interface Station {
 
-    Id routeId();
-    List<Point> points();
-    List<Station> stations();
+    Id id();
+    String name();
+    Point location();
 }

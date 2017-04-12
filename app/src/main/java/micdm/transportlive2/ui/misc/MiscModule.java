@@ -29,4 +29,12 @@ public class MiscModule {
         ComponentHolder.getAppComponent().inject(instance);
         return instance;
     }
+
+    @Provides
+    @AppScope
+    VehicleMarkerIconBuilder provideVehicleMarkerIconBuilder() {
+        VehicleMarkerIconBuilder instance = new VehicleMarkerIconBuilder();
+        ComponentHolder.getAppComponent().inject(instance);
+        return instance;
+    }
 }

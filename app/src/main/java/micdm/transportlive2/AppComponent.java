@@ -19,6 +19,7 @@ import micdm.transportlive2.ui.UiModule;
 import micdm.transportlive2.ui.VehiclesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 import micdm.transportlive2.ui.misc.PaintConstructor;
+import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 
 @AppScope
 @Component(modules = {AppModule.class, DataModule.class, MiscModule.class, RxModule.class, UiModule.class})
@@ -44,4 +45,5 @@ public interface AppComponent {
     void inject(RoutesStore target);
     void inject(CommonFunctions target);
     void inject(MiscFunctions target);
+    void inject(VehicleMarkerIconBuilder target);
 }

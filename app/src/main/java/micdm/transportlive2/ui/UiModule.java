@@ -1,9 +1,22 @@
 package micdm.transportlive2.ui;
 
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
+
+import javax.inject.Named;
+
 import dagger.Module;
 import dagger.Provides;
+import micdm.transportlive2.App;
 import micdm.transportlive2.AppScope;
 import micdm.transportlive2.ComponentHolder;
+import micdm.transportlive2.R;
 import micdm.transportlive2.ui.misc.MiscModule;
 
 @Module(includes = {MiscModule.class})
@@ -43,5 +56,44 @@ public class UiModule {
         ComponentHolder.getAppComponent().inject(instance);
         instance.init();
         return instance;
+    }
+
+    @Provides
+    @AppScope
+    @Named("vehicleIcon")
+    Bitmap provideVehicleIcon(App app) {
+        Drawable drawable = ContextCompat.getDrawable(app, R.drawable.ic_vehicle);
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
+    }
+
+    @Provides
+    @AppScope
+    @Named("stationIcon")
+    Bitmap provideStationIcon(App app, Resources resources) {
+        Drawable drawable = ContextCompat.getDrawable(app, R.drawable.ic_station);
+        Bitmap bitmap = Bitmap.createBitmap(resources.getDimensionPixelSize(R.dimen.station_marker_size),
+                                            resources.getDimensionPixelSize(R.dimen.station_marker_size),
+                                            Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.setColorFilter(resources.getColor(R.color.station_icon), PorterDuff.Mode.SRC_ATOP);
+        drawable.draw(canvas);
+        return bitmap;
+    }
+
+
+    @Provides
+    @Named("vehicleIconText")
+    @AppScope
+    Paint provideVehicleIconTextPaint(@Named("vehicleIcon") Bitmap vehicleIcon) {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.WHITE);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(vehicleIcon.getWidth() * 0.25f);
+        return paint;
     }
 }

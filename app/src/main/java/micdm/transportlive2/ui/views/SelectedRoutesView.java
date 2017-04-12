@@ -171,6 +171,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
 
     @Override
     void setupViews() {
+        // TODO: анимация? чтоб размер изменялся после удаления элементов
         itemsView.setLayoutManager(new LinearLayoutManager(getContext()));
         itemsView.setAdapter(new Adapter(colorConstructor, layoutInflater, getResources()));
     }

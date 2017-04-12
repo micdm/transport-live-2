@@ -10,9 +10,11 @@ import micdm.transportlive2.data.loaders.remote.ServerConnector;
 import micdm.transportlive2.data.stores.PathsStore;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
+import micdm.transportlive2.misc.IdFactory;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.ImmutablePath;
 import micdm.transportlive2.models.ImmutablePoint;
+import micdm.transportlive2.models.ImmutableStation;
 import micdm.transportlive2.models.Path;
 
 public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implements PathsStore.Client {
@@ -24,6 +26,8 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
 
     @Inject
     CommonFunctions commonFunctions;
+    @Inject
+    IdFactory idFactory;
     @Inject
     PathsStore pathsStore;
     @Inject
@@ -73,6 +77,20 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
                                 .build()
                         );
                     }
+                }
+                for (GetPathResponse.StopPointsGeoJson.Feature feature: response.StopPointsGeoJson.features) {
+                    builder.addStations(
+                        ImmutableStation.builder()
+                            .id(idFactory.newInstance(feature.properties.mid))
+                            .name(feature.properties.name)
+                            .location(
+                                ImmutablePoint.builder()
+                                    .latitude(feature.geometry.coordinates.get(1))
+                                    .longitude(feature.geometry.coordinates.get(0))
+                                    .build()
+                            )
+                            .build()
+                    );
                 }
                 return builder.build();
             });

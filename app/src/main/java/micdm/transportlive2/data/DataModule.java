@@ -18,10 +18,12 @@ import micdm.transportlive2.models.ImmutablePath;
 import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutableRoute;
 import micdm.transportlive2.models.ImmutableRouteGroup;
+import micdm.transportlive2.models.ImmutableStation;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
+import micdm.transportlive2.models.Station;
 
 @Module(includes = {LoaderModule.class, StoreModule.class})
 public class DataModule {
@@ -127,13 +129,30 @@ public class DataModule {
             out.name("routeId").value(path.routeId().getOriginal());
             out.name("points").beginArray();
             for (Point point: path.points()) {
-                out
-                    .beginArray()
-                    .value(point.latitude())
-                    .value(point.longitude())
-                    .endArray();
+                writePoint(out, point);
             }
             out.endArray();
+            out.name("stations").beginArray();
+            for (Station station: path.stations()) {
+                writeStation(out, station);
+            }
+            out.endArray();
+            out.endObject();
+        }
+
+        private void writePoint(JsonWriter out, Point point) throws IOException {
+            out.beginArray()
+                .value(point.latitude())
+                .value(point.longitude())
+            .endArray();
+        }
+
+        private void writeStation(JsonWriter out, Station station) throws IOException {
+            out.beginObject()
+                .name("id").value(station.id().getOriginal())
+                .name("name").value(station.name())
+                .name("location");
+            writePoint(out, station.location());
             out.endObject();
         }
 
@@ -149,16 +168,45 @@ public class DataModule {
                 if (name.equals("points")) {
                     in.beginArray();
                     while (in.hasNext()) {
-                        in.beginArray();
-                        builder.addPoints(
-                            ImmutablePoint.builder()
-                                .latitude((float) in.nextDouble())
-                                .longitude((float) in.nextDouble())
-                                .build()
-                        );
-                        in.endArray();
+                        builder.addPoints(readPoint(in));
                     }
                     in.endArray();
+                }
+                if (name.equals("stations")) {
+                    in.beginArray();
+                    while (in.hasNext()) {
+                        builder.addStations(readStation(in));
+                    }
+                    in.endArray();
+                }
+            }
+            in.endObject();
+            return builder.build();
+        }
+
+        private Point readPoint(JsonReader in) throws IOException {
+            in.beginArray();
+            ImmutablePoint.Builder builder =
+                ImmutablePoint.builder()
+                    .latitude((float) in.nextDouble())
+                    .longitude((float) in.nextDouble());
+            in.endArray();
+            return builder.build();
+        }
+
+        private Station readStation(JsonReader in) throws IOException {
+            in.beginObject();
+            ImmutableStation.Builder builder = ImmutableStation.builder();
+            while (in.hasNext()) {
+                String name = in.nextName();
+                if (name.equals("id")) {
+                    builder.id(idFactory.newInstance(in.nextString()));
+                }
+                if (name.equals("name")) {
+                    builder.name(in.nextString());
+                }
+                if (name.equals("location")) {
+                    builder.location(readPoint(in));
                 }
             }
             in.endObject();

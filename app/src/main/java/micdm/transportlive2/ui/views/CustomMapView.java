@@ -3,6 +3,7 @@ package micdm.transportlive2.ui.views;
 import android.Manifest;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
@@ -46,6 +48,7 @@ import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
+import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
@@ -54,18 +57,18 @@ import micdm.transportlive2.ui.VehiclesPresenter;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;
-import micdm.transportlive2.ui.misc.MarkerIconBuilder;
 import micdm.transportlive2.ui.misc.PermissionChecker;
+import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 
 public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, VehiclesPresenter.View {
 
-    private static class VehicleMarkerHandler {
+    private static class VehicleHandler {
 
         private static class VehicleMarker {
 
             Vehicle vehicle;
             Marker marker;
-            MarkerIconBuilder.BitmapWrapper bitmapWrapper;
+            VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
 
             private VehicleMarker(Vehicle vehicle, Marker marker) {
                 this.vehicle = vehicle;
@@ -73,12 +76,12 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             }
         }
 
-        private final MarkerIconBuilder markerIconBuilder;
+        private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
         private final GoogleMap map;
         private Map<Id, VehicleMarker> markers = new HashMap<>();
 
-        VehicleMarkerHandler(MarkerIconBuilder markerIconBuilder, GoogleMap map) {
-            this.markerIconBuilder = markerIconBuilder;
+        VehicleHandler(VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
+            this.vehicleMarkerIconBuilder = vehicleMarkerIconBuilder;
             this.map = map;
         }
 
@@ -90,7 +93,8 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     MarkerOptions options = new MarkerOptions()
                         .anchor(0.5f, 0.5f)
                         .flat(true)
-                        .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()));
+                        .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()))
+                        .zIndex(1);
                     vehicleMarker = new VehicleMarker(vehicle, map.addMarker(options));
                     markers.put(vehicle.id(), vehicleMarker);
                 } else {
@@ -106,12 +110,11 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     vehicleMarker.bitmapWrapper = null;
                 }
                 Route route = getRouteById(groups, vehicle.routeId());
-                vehicleMarker.bitmapWrapper = markerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
+                vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
                 vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
             }
-            for (Id vehicleId: outdated) {
-                markers.get(vehicleId).marker.remove();
-                markers.remove(vehicleId);
+            for (Id id: outdated) {
+                markers.remove(id).marker.remove();
             }
         }
 
@@ -127,13 +130,13 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
         }
     }
 
-    private static class PathPolylineHandler {
+    private static class PathHandler {
 
         private final ColorConstructor colorConstructor;
         private final GoogleMap map;
         private Map<Id, Polyline> polylines = new HashMap<>();
 
-        PathPolylineHandler(ColorConstructor colorConstructor, GoogleMap map) {
+        PathHandler(ColorConstructor colorConstructor, GoogleMap map) {
             this.colorConstructor = colorConstructor;
             this.map = map;
         }
@@ -141,23 +144,64 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
         void handle(Collection<Path> paths) {
             Collection<Id> outdated = new HashSet<>(polylines.keySet());
             for (Path path: paths) {
-                Polyline polyline = polylines.get(path.routeId());
-                if (polyline == null) {
-                    PolylineOptions options = new PolylineOptions()
-                        .color(colorConstructor.getByString(path.routeId().getOriginal()) & 0x55FFFFFF)
-                        .width(4);
-                    for (Point point : path.points()) {
-                        options.add(new LatLng(point.latitude(), point.longitude()));
-                    }
-                    polylines.put(path.routeId(), map.addPolyline(options));
+                if (!polylines.containsKey(path.routeId())) {
+                    polylines.put(path.routeId(), newPolyline(path));
                 } else {
                     outdated.remove(path.routeId());
                 }
             }
-            for (Id routeId: outdated) {
-                polylines.get(routeId).remove();
-                polylines.remove(routeId);
+            for (Id id: outdated) {
+                polylines.remove(id).remove();
             }
+        }
+
+        private Polyline newPolyline(Path path) {
+            PolylineOptions options = new PolylineOptions()
+                .color(colorConstructor.getByString(path.routeId().getOriginal()) & 0x55FFFFFF)
+                .width(4);
+            for (Point point : path.points()) {
+                options.add(new LatLng(point.latitude(), point.longitude()));
+            }
+            return map.addPolyline(options);
+        }
+    }
+
+    private static class StationHandler {
+
+        private final Bitmap icon;
+        private final GoogleMap map;
+        private Map<Id, Marker> markers = new HashMap<>();
+
+        StationHandler(Bitmap icon, GoogleMap map) {
+            this.icon = icon;
+            this.map = map;
+        }
+
+        void handle(Collection<Path> paths) {
+            Collection<Id> outdated = new HashSet<>(markers.keySet());
+            for (Path path: paths) {
+                for (Station station: path.stations()) {
+                    if (!markers.containsKey(station.id())) {
+                        markers.put(station.id(), newMarker(station));
+                    } else {
+                        outdated.remove(station.id());
+                    }
+                }
+            }
+            for (Id id: outdated) {
+                markers.remove(id).remove();
+            }
+        }
+
+        private Marker newMarker(Station station) {
+            return map.addMarker(
+                new MarkerOptions()
+                    .anchor(0.5f, 0.5f)
+                    .flat(true)
+                    .icon(BitmapDescriptorFactory.fromBitmap(icon))
+                    .position(new LatLng(station.location().latitude(), station.location().longitude()))
+                    .title(station.name())
+            );
         }
     }
 
@@ -172,11 +216,12 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
+    @Named("stationIcon")
+    Bitmap stationIcon;
+    @Inject
     ColorConstructor colorConstructor;
     @Inject
     CommonFunctions commonFunctions;
-    @Inject
-    MarkerIconBuilder markerIconBuilder;
     @Inject
     ObservableCache observableCache;
     @Inject
@@ -189,6 +234,8 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     RoutesPresenter routesPresenter;
     @Inject
     SelectedRoutesPresenter selectedRoutesPresenter;
+    @Inject
+    VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
     @Inject
     VehiclesPresenter vehiclesPresenter;
 
@@ -251,7 +298,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 UiSettings uiSettings = map.getUiSettings();
                 uiSettings.setMapToolbarEnabled(false);
                 uiSettings.setZoomControlsEnabled(true);
-                map.setPadding(0, (int) resources.getDimension(R.dimen.map_top_padding), 0, 0);
+                map.setPadding(0, resources.getDimensionPixelSize(R.dimen.map_top_padding), 0, 0);
                 map.moveCamera(
                     CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(CAMERA_LATITUDE, CAMERA_LONGITUDE), CAMERA_ZOOM))
                 );
@@ -286,7 +333,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                         Pair::with
                     )
                     .compose(commonFunctions.toMainThread())
-                    .scan(new VehicleMarkerHandler(markerIconBuilder, map), (accumulated, pair) -> {
+                    .scan(new VehicleHandler(vehicleMarkerIconBuilder, map), (accumulated, pair) -> {
                         accumulated.handle(pair.getValue0(), pair.getValue1());
                         return accumulated;
                     })
@@ -307,17 +354,31 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     private Disposable subscribeForPaths() {
         return getMap()
-            .switchMap(map ->
-                pathsPresenter.getResults()
-                    .filter(Result::isSuccess)
-                    .map(Result::getData)
-                    .distinctUntilChanged()
-                    .compose(commonFunctions.toMainThread())
-                    .scan(new PathPolylineHandler(colorConstructor, map), (accumulated, paths) -> {
+            .switchMap(map -> {
+                Observable<Collection<Path>> common =
+                    Observable
+                        .merge(
+                            pathsPresenter.getResults()
+                                .filter(Result::isSuccess)
+                                .map(Result::getData),
+                            selectedRoutesPresenter.getSelectedRoutes()
+                                .filter(Collection::isEmpty)
+                                .map(o -> Collections.<Path>emptyList())
+                        )
+                        .distinctUntilChanged()
+                        .compose(commonFunctions.toMainThread())
+                        .share();
+                return Observable.merge(
+                    common.scan(new PathHandler(colorConstructor, map), (accumulated, paths) -> {
+                        accumulated.handle(paths);
+                        return accumulated;
+                    }),
+                    common.scan(new StationHandler(stationIcon, map), (accumulated, paths) -> {
                         accumulated.handle(paths);
                         return accumulated;
                     })
-            )
+                );
+            })
             .subscribe();
     }
 
