@@ -3,13 +3,11 @@ package micdm.transportlive2.data.loaders;
 import io.reactivex.Observable;
 import micdm.transportlive2.misc.Clients;
 
-public abstract class BaseLoader<Client, Data> {
+abstract class BaseLoader<Client, Data> {
 
     final Clients<Client> clients = new Clients<>();
 
-    void init() {
-
-    }
+    void init() {}
 
     public void attach(Client client) {
         clients.attach(client);

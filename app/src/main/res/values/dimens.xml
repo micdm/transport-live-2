@@ -2,5 +2,6 @@
 <resources>
     <dimen name="selected_routes_offset">52dp</dimen>
     <dimen name="map_top_padding">52dp</dimen>
-    <dimen name="station_marker_size">12dp</dimen>
+    <dimen name="station_marker_size">24dp</dimen>
+    <dimen name="station_marker_padding">6dp</dimen>
 </resources>

@@ -2,63 +2,53 @@ package micdm.transportlive2.data.loaders;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import micdm.transportlive2.ComponentHolder;
+import micdm.transportlive2.misc.Container;
 import micdm.transportlive2.misc.Id;
 
-public class Loaders {
+public class Loaders extends Container<BaseLoader> {
 
-    private final Lock lock = new ReentrantLock();
-
-    private RoutesLoader routesLoader;
+    private final Map<Id, RoutesLoader> routesLoaders = new HashMap<>();
     private final Map<Id, PathLoader> pathLoaders = new HashMap<>();
     private final Map<Id, VehiclesLoader> vehiclesLoaders = new HashMap<>();
+    private final Map<Id, ForecastLoader> forecastLoaders = new HashMap<>();
 
     public RoutesLoader getRoutesLoader() {
-        lock.lock();
-        try {
-            if (routesLoader == null) {
-                routesLoader = new RoutesLoader();
-                ComponentHolder.getAppComponent().inject(routesLoader);
-                routesLoader.init();
-            }
-            return routesLoader;
-        } finally {
-            lock.unlock();
-        }
+        // TODO: туповато
+        return getOrCreateInstance(routesLoaders, null, () -> {
+            RoutesLoader instance = new RoutesLoader();
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
     }
 
     public PathLoader getPathLoader(Id routeId) {
-        lock.lock();
-        try {
-            PathLoader loader = pathLoaders.get(routeId);
-            if (loader == null) {
-                loader = new PathLoader(routeId);
-                ComponentHolder.getAppComponent().inject(loader);
-                loader.init();
-                pathLoaders.put(routeId, loader);
-            }
-            return loader;
-        } finally {
-            lock.unlock();
-        }
+        return getOrCreateInstance(pathLoaders, routeId, () -> {
+            PathLoader instance = new PathLoader(routeId);
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
     }
 
     public VehiclesLoader getVehiclesLoader(Id routeId) {
-        lock.lock();
-        try {
-            VehiclesLoader loader = vehiclesLoaders.get(routeId);
-            if (loader == null) {
-                loader = new VehiclesLoader(routeId);
-                ComponentHolder.getAppComponent().inject(loader);
-                loader.init();
-                vehiclesLoaders.put(routeId, loader);
-            }
-            return loader;
-        } finally {
-            lock.unlock();
-        }
+        return getOrCreateInstance(vehiclesLoaders, routeId, () -> {
+            VehiclesLoader instance = new VehiclesLoader(routeId);
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
+    }
+
+    public ForecastLoader getForecastLoader(Id stationId) {
+        return getOrCreateInstance(forecastLoaders, stationId, () -> {
+            ForecastLoader instance = new ForecastLoader(stationId);
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
+    }
+
+    @Override
+    protected void onNewInstance(BaseLoader instance) {
+        instance.init();
     }
 }

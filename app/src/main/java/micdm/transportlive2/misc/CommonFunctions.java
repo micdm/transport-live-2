@@ -22,9 +22,7 @@ public class CommonFunctions {
     @Named("mainThread")
     Scheduler mainThreadScheduler;
 
-    CommonFunctions() {
-
-    }
+    CommonFunctions() {}
 
     public <T1, T2> Pair<T1, T2> wrap(T1 first, T2 second) {
         return Pair.with(first, second);

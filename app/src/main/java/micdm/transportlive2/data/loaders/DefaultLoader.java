@@ -21,9 +21,7 @@ abstract class DefaultLoader<Client, Data> extends BaseLoader<Client, Data> {
     @Inject
     ObservableCache observableCache;
 
-    DefaultLoader() {
-
-    }
+    DefaultLoader() {}
 
     @Override
     public Observable<Result<Data>> getData() {

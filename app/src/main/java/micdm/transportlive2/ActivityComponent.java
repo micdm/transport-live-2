@@ -7,6 +7,7 @@ import micdm.transportlive2.ui.views.AboutView;
 import micdm.transportlive2.ui.views.CannotLoadView;
 import micdm.transportlive2.ui.views.ClearableEditText;
 import micdm.transportlive2.ui.views.CustomMapView;
+import micdm.transportlive2.ui.views.ForecastView;
 import micdm.transportlive2.ui.views.LoadingView;
 import micdm.transportlive2.ui.views.SearchRouteView;
 import micdm.transportlive2.ui.views.SelectedRoutesView;
@@ -15,6 +16,12 @@ import micdm.transportlive2.ui.views.VehiclesView;
 @ActivityScope
 @Subcomponent(modules = {ActivityModule.class, AnimationModule.class, MiscModule2.class})
 public interface ActivityComponent {
+
+    @Subcomponent.Builder
+    interface Builder {
+        Builder activityModule(ActivityModule module);
+        ActivityComponent build();
+    }
 
     void inject(MainActivity target);
     void inject(CannotLoadView target);
@@ -26,10 +33,5 @@ public interface ActivityComponent {
     void inject(ClearableEditText target);
     void inject(AboutView target);
     void inject(PermissionChecker target);
-
-    @Subcomponent.Builder
-    interface Builder {
-        Builder activityModule(ActivityModule module);
-        ActivityComponent build();
-    }
+    void inject(ForecastView target);
 }

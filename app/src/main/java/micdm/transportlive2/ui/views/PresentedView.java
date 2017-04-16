@@ -5,6 +5,10 @@ import android.util.AttributeSet;
 
 public abstract class PresentedView extends BaseView {
 
+    public PresentedView(Context context) {
+        super(context);
+    }
+
     public PresentedView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }

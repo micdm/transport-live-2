@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.Collection;
 
@@ -29,6 +30,10 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     @Inject
     CommonFunctions commonFunctions;
     @Inject
+    Context context;
+    @Inject
+    LayoutInflater layoutInflater;
+    @Inject
     PathsPresenter pathsPresenter;
     @Inject
     RoutesPresenter routesPresenter;
@@ -38,7 +43,9 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     @BindView(R.id.v__vehicles__loading)
     LoadingView loadingView;
     @BindView(R.id.v__vehicles__loaded)
-    View loadedView;
+    ViewGroup loadedView;
+    @BindView(R.id.v__vehicles__map)
+    CustomMapView mapView;
     @BindView(R.id.v__vehicles__search_route)
     SearchRouteView searchRouteView;
     @BindView(R.id.v__vehicles__cannot_load)
@@ -81,8 +88,30 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     @Override
     protected Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForForecast(),
             subscribeForAbout(),
             subscribeForRequiredData()
+        );
+    }
+
+    private Disposable subscribeForForecast() {
+        Observable<ForecastView> common = mapView.getSelectStationRequests()
+            .map(stationId -> {
+                ForecastView view = (ForecastView) layoutInflater.inflate(R.layout.v__vehicles__forecast, loadedView, false);
+                view.setStationId(stationId);
+                return view;
+            })
+            .share();
+        return new CompositeDisposable(
+            common.subscribe(loadedView::addView),
+            Observable
+                .merge(
+                    common.compose(commonFunctions.getPrevious()),
+                    common.switchMap(view ->
+                        view.getCloseRequests().compose(commonFunctions.toConst(view))
+                    )
+                )
+                .subscribe(loadedView::removeView)
         );
     }
 

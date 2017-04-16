@@ -2,6 +2,7 @@ package micdm.transportlive2;
 
 import dagger.Component;
 import micdm.transportlive2.data.DataModule;
+import micdm.transportlive2.data.loaders.ForecastLoader;
 import micdm.transportlive2.data.loaders.PathLoader;
 import micdm.transportlive2.data.loaders.RoutesLoader;
 import micdm.transportlive2.data.loaders.VehiclesLoader;
@@ -12,6 +13,7 @@ import micdm.transportlive2.data.stores.SelectedRoutesStore;
 import micdm.transportlive2.misc.Cache;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.MiscModule;
+import micdm.transportlive2.ui.ForecastPresenter;
 import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.SelectedRoutesPresenter;
@@ -46,4 +48,6 @@ public interface AppComponent {
     void inject(CommonFunctions target);
     void inject(MiscFunctions target);
     void inject(VehicleMarkerIconBuilder target);
+    void inject(ForecastLoader target);
+    void inject(ForecastPresenter target);
 }

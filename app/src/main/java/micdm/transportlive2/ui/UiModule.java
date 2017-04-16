@@ -60,6 +60,12 @@ public class UiModule {
 
     @Provides
     @AppScope
+    Presenters providePresenters() {
+        return new Presenters();
+    }
+
+    @Provides
+    @AppScope
     @Named("vehicleIcon")
     Bitmap provideVehicleIcon(App app) {
         Drawable drawable = ContextCompat.getDrawable(app, R.drawable.ic_vehicle);
@@ -75,11 +81,11 @@ public class UiModule {
     @Named("stationIcon")
     Bitmap provideStationIcon(App app, Resources resources) {
         Drawable drawable = ContextCompat.getDrawable(app, R.drawable.ic_station);
-        Bitmap bitmap = Bitmap.createBitmap(resources.getDimensionPixelSize(R.dimen.station_marker_size),
-                                            resources.getDimensionPixelSize(R.dimen.station_marker_size),
-                                            Bitmap.Config.ARGB_8888);
+        int iconSize = resources.getDimensionPixelSize(R.dimen.station_marker_size);
+        Bitmap bitmap = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        int iconPadding = resources.getDimensionPixelSize(R.dimen.station_marker_padding);
+        drawable.setBounds(iconPadding, iconPadding, canvas.getWidth() - iconPadding, canvas.getHeight() - iconPadding);
         drawable.setColorFilter(resources.getColor(R.color.station_icon), PorterDuff.Mode.SRC_ATOP);
         drawable.draw(canvas);
         return bitmap;

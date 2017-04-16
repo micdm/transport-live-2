@@ -166,6 +166,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
         }
     }
 
+    // TODO: не показывать маркеры на мелком масштабе
     private static class StationHandler {
 
         private final Bitmap icon;
@@ -182,7 +183,9 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             for (Path path: paths) {
                 for (Station station: path.stations()) {
                     if (!markers.containsKey(station.id())) {
-                        markers.put(station.id(), newMarker(station));
+                        Marker marker = newMarker(station);
+                        marker.setTag(station.id());
+                        markers.put(station.id(), marker);
                     } else {
                         outdated.remove(station.id());
                     }
@@ -302,6 +305,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 map.moveCamera(
                     CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(CAMERA_LATITUDE, CAMERA_LONGITUDE), CAMERA_ZOOM))
                 );
+//                map.setInfoWindowAdapter();
             }),
             Observable
                 .combineLatest(
@@ -433,5 +437,21 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     .compose(commonFunctions.toConst(routeIds))
                     .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
             });
+    }
+
+    public Observable<Id> getSelectStationRequests() {
+        return getMap().switchMap(map ->
+            Observable.create(source -> {
+                map.setOnMarkerClickListener(marker -> {
+                    Object tag = marker.getTag();
+                    if (tag != null && tag instanceof Id) {
+                        source.onNext((Id) tag);
+                        return true;
+                    }
+                    return false;
+                });
+                source.setCancellable(() -> map.setOnMarkerClickListener(null));
+            })
+        );
     }
 }

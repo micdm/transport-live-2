@@ -22,9 +22,7 @@ abstract class BasePresenter<T> {
         initMore();
     }
 
-    void initMore() {
-
-    }
+    void initMore() {}
 
     Disposable subscribeForEvents() {
         return null;

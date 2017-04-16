@@ -19,7 +19,6 @@ public abstract class BaseView extends FrameLayout {
 
     public BaseView(Context context) {
         super(context);
-        createViewHierarchy();
     }
 
     public BaseView(Context context, AttributeSet attrs) {
@@ -32,7 +31,7 @@ public abstract class BaseView extends FrameLayout {
         createViewHierarchy();
     }
 
-    private void createViewHierarchy() {
+    protected void createViewHierarchy() {
         if (!isInEditMode()) {
             inflateContent(layoutInflater);
             ButterKnife.bind(this);

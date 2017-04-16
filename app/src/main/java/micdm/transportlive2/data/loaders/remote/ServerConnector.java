@@ -23,4 +23,8 @@ public class ServerConnector {
     public Single<GetPathResponse> getPath(Id routeId) {
         return apiService.getPath(routeId.getOriginal());
     }
+
+    public Single<GetForecastResponse> getForecast(Id stationId) {
+        return apiService.getForecast(stationId.getOriginal());
+    }
 }

@@ -11,6 +11,8 @@
     <string name="v__search_route__input">Номер, конечная остановка…</string>
     <string name="v__search_route__route">%1$s №%2$s (%3$s → %4$s)</string>
     <string name="v__custom_map__no_vehicles">Кажется, весь транспорт в парке</string>
+    <string name="v__forecast__item__route">%1$s №%2$s</string>
+    <string name="v__forecast__item__time">%d мин.</string>
     <string name="v__about__title">%1$s v%2$s</string>
     <string name="v__about__source">Работает с gpt.incom.tomsk.ru</string>
     <string name="v__about__author">По всем вопросам пишите на demerzov@gmail.com</string>

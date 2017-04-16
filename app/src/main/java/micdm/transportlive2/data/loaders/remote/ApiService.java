@@ -16,4 +16,7 @@ interface ApiService {
 
     @GET("PathwayGeoJson")
     Single<GetPathResponse> getPath(@Query("pathwayId") String routeId);
+
+    @GET("Forecast/GetForecast")
+    Single<GetForecastResponse> getForecast(@Query("pathwayMilestoneId") String stationId);
 }
