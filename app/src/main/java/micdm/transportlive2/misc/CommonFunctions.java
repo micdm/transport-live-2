@@ -4,6 +4,7 @@ import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -17,6 +18,8 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 
 public class CommonFunctions {
+
+    private static final int DEFAULT_MIN_DELAY = 200;
 
     @Inject
     @Named("mainThread")
@@ -90,5 +93,19 @@ public class CommonFunctions {
                 .subscribe(source::onNext, source::onError, source::onComplete);
             source.setDisposable(subscription);
         });
+    }
+
+    public <T> ObservableTransformer<T, T> minDelay() {
+        return minDelay(DEFAULT_MIN_DELAY);
+    }
+
+    public <T> ObservableTransformer<T, T> minDelay(int delay) {
+        return observable -> observable
+            .timeInterval()
+            .concatMap(timed ->
+                timed.time() > delay ?
+                    Observable.just(timed.value()) :
+                    Observable.just(timed.value()).delay(delay - timed.time(), TimeUnit.MILLISECONDS)
+            );
     }
 }

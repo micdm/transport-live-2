@@ -1,42 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<micdm.transportlive2.ui.views.SelectedRouteView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingLeft="8dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
-    <ImageView
-        android:id="@+id/v__selected_routes__item__icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:tint="#fff"/>
-    <TextView
-        android:id="@+id/v__selected_routes__item__number"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="8dp"
-        android:textAppearance="@style/TextAppearance.AppCompat.Title"
-        android:textColor="#fff"/>
-    <LinearLayout
-        android:id="@+id/v__selected_routes__item__extra"
-        android:layout_width="@dimen/selected_routes_offset"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginLeft="8dp"
-        android:gravity="right">
-        <ImageView
-            android:id="@+id/v__selected_routes__item__remove"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:scaleType="center"
-            android:src="@drawable/ic_cancel"
-            android:tint="#fff"
-            android:background="@null"/>
-    </LinearLayout>
-</LinearLayout>
+    android:layout_height="wrap_content"/>

@@ -2,27 +2,21 @@ package micdm.transportlive2.ui.views;
 
 import android.animation.Animator;
 import android.content.Context;
-import android.content.res.Resources;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -32,69 +26,35 @@ import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
-import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.SelectedRoutesPresenter;
-import micdm.transportlive2.ui.misc.ColorConstructor;
 
-public class SelectedRoutesView extends PresentedView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
-
-    private static class RouteInfo {
-
-        final RouteGroup group;
-        final Route route;
-
-        private RouteInfo(RouteGroup group, Route route) {
-            this.group = group;
-            this.route = route;
-        }
-    }
+public class SelectedRoutesView extends PresentedView implements RoutesPresenter.View {
 
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
         static class ViewHolder extends RecyclerView.ViewHolder {
 
-            @BindView(R.id.v__selected_routes__item__icon)
-            ImageView iconView;
-            @BindView(R.id.v__selected_routes__item__number)
-            TextView numberView;
-//            @BindView(R.id.v__selected_routes__item__stations)
-//            TextView stationsView;
-            @BindView(R.id.v__selected_routes__item__extra)
-            View extraView;
-            @BindView(R.id.v__selected_routes__item__remove)
-            View removeView;
-
             ViewHolder(View itemView) {
                 super(itemView);
-                ButterKnife.bind(this, itemView);
             }
         }
 
-        private final ColorConstructor colorConstructor;
         private final LayoutInflater layoutInflater;
-        private final Resources resources;
 
         private final Subject<Object> toggleRequests = PublishSubject.create();
-        private final Subject<Id> selectRouteRequests = PublishSubject.create();
         private List<RouteInfo> routes = Collections.emptyList();
 
-        Adapter(ColorConstructor colorConstructor, LayoutInflater layoutInflater, Resources resources) {
-            this.colorConstructor = colorConstructor;
+        Adapter(LayoutInflater layoutInflater) {
             this.layoutInflater = layoutInflater;
-            this.resources = resources;
             setHasStableIds(true);
         }
 
         Observable<Object> getToggleRequests() {
             return toggleRequests;
-        }
-
-        Observable<Id> getSelectRouteRequests() {
-            return selectRouteRequests;
         }
 
         @Override
@@ -105,20 +65,8 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
             RouteInfo info = routes.get(position);
-            holder.itemView.setBackgroundColor(colorConstructor.getByString(info.route.id().getOriginal()));
             holder.itemView.setOnClickListener(o -> toggleRequests.onNext(Irrelevant.INSTANCE));
-            if (info.group.type() == RouteGroup.Type.TROLLEYBUS) {
-                holder.iconView.setImageDrawable(resources.getDrawable(R.drawable.ic_trolleybus));
-            }
-            if (info.group.type() == RouteGroup.Type.TRAM) {
-                holder.iconView.setImageDrawable(resources.getDrawable(R.drawable.ic_tram));
-            }
-            if (info.group.type() == RouteGroup.Type.BUS) {
-                holder.iconView.setImageDrawable(resources.getDrawable(R.drawable.ic_bus));
-            }
-            holder.numberView.setText(info.route.number());
-//            holder.stationsView.setText(String.format("%s\n%s", info.routeId.source(), info.routeId.destination()));
-            holder.removeView.setOnClickListener(o -> selectRouteRequests.onNext(info.route.id()));
+            ((SelectedRouteView) holder.itemView).setRouteId(info.route.id());
         }
 
         @Override
@@ -143,8 +91,6 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     @Inject
     @Named("hideRoutes")
     Animator hideRoutesAnimator;
-    @Inject
-    ColorConstructor colorConstructor;
     @Inject
     CommonFunctions commonFunctions;
     @Inject
@@ -173,7 +119,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     void setupViews() {
         // TODO: анимация? чтоб размер изменялся после удаления элементов
         itemsView.setLayoutManager(new LinearLayoutManager(getContext()));
-        itemsView.setAdapter(new Adapter(colorConstructor, layoutInflater, getResources()));
+        itemsView.setAdapter(new Adapter(layoutInflater));
     }
 
     @Override
@@ -231,24 +177,11 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     @Override
     void attachToPresenters() {
         routesPresenter.attach(this);
-        selectedRoutesPresenter.attach(this);
     }
 
     @Override
     void detachFromPresenters() {
         routesPresenter.detach(this);
-        selectedRoutesPresenter.detach(this);
-    }
-
-    @Override
-    public Observable<Collection<Id>> getSelectRoutesRequests() {
-        return selectedRoutesPresenter.getSelectedRoutes().switchMap(routeIds ->
-            ((Adapter) itemsView.getAdapter()).getSelectRouteRequests().map(routeId -> {
-                Collection<Id> result = new HashSet<>(routeIds);
-                result.remove(routeId);
-                return result;
-            })
-        );
     }
 
     @Override

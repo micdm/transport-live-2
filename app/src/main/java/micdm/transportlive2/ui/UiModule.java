@@ -42,8 +42,8 @@ public class UiModule {
 
     @Provides
     @AppScope
-    VehiclesPresenter provideVehiclesPresenter() {
-        VehiclesPresenter instance = new VehiclesPresenter();
+    AllVehiclesPresenter provideAllVehiclesPresenter() {
+        AllVehiclesPresenter instance = new AllVehiclesPresenter();
         ComponentHolder.getAppComponent().inject(instance);
         instance.init();
         return instance;

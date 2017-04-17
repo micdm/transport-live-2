@@ -13,6 +13,7 @@ import micdm.transportlive2.data.stores.SelectedRoutesStore;
 import micdm.transportlive2.misc.Cache;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.MiscModule;
+import micdm.transportlive2.ui.AllVehiclesPresenter;
 import micdm.transportlive2.ui.ForecastPresenter;
 import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
@@ -43,11 +44,12 @@ public interface AppComponent {
     void inject(SelectedRoutesStore target);
     void inject(ServerConnector target);
     void inject(VehiclesLoader target);
-    void inject(VehiclesPresenter target);
+    void inject(AllVehiclesPresenter target);
     void inject(RoutesStore target);
     void inject(CommonFunctions target);
     void inject(MiscFunctions target);
     void inject(VehicleMarkerIconBuilder target);
     void inject(ForecastLoader target);
     void inject(ForecastPresenter target);
+    void inject(VehiclesPresenter target);
 }

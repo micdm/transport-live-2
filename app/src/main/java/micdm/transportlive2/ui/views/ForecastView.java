@@ -43,19 +43,6 @@ import micdm.transportlive2.ui.misc.ResultWatcher2;
 
 public class ForecastView extends PresentedView implements RoutesPresenter.View, ForecastPresenter.View {
 
-    private static class VehicleInfo {
-
-        final RouteGroup group;
-        final Route route;
-        final Forecast.Vehicle vehicle;
-
-        VehicleInfo(RouteGroup group, Route route, Forecast.Vehicle vehicle) {
-            this.group = group;
-            this.route = route;
-            this.vehicle = vehicle;
-        }
-    }
-
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
         // TODO: нужен один общий класс

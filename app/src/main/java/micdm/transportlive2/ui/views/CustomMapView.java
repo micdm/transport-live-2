@@ -50,17 +50,17 @@ import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
+import micdm.transportlive2.ui.AllVehiclesPresenter;
 import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.SelectedRoutesPresenter;
-import micdm.transportlive2.ui.VehiclesPresenter;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.PermissionChecker;
 import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 
-public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, VehiclesPresenter.View {
+public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, AllVehiclesPresenter.View {
 
     private static class VehicleHandler {
 
@@ -219,6 +219,8 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
+    AllVehiclesPresenter allVehiclesPresenter;
+    @Inject
     @Named("stationIcon")
     Bitmap stationIcon;
     @Inject
@@ -239,8 +241,6 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     SelectedRoutesPresenter selectedRoutesPresenter;
     @Inject
     VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
-    @Inject
-    VehiclesPresenter vehiclesPresenter;
 
     @BindView(R.id.v__custom_map__no_vehicles)
     View noVehiclesView;
@@ -327,7 +327,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                             .map(Result::getData)
                             .distinctUntilChanged(),
                         Observable.merge(
-                            vehiclesPresenter.getResults()
+                            allVehiclesPresenter.getResults()
                                 .filter(Result::isSuccess)
                                 .map(Result::getData),
                             selectedRoutesPresenter.getSelectedRoutes()
@@ -345,7 +345,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 .subscribe(),
             Observable
                 .combineLatest(
-                    vehiclesPresenter.getResults()
+                    allVehiclesPresenter.getResults()
                         .filter(Result::isSuccess)
                         .map(Result::getData),
                     selectedRoutesPresenter.getSelectedRoutes(),
@@ -399,14 +399,14 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     void attachToPresenters() {
         routesPresenter.attach(this);
         pathsPresenter.attach(this);
-        vehiclesPresenter.attach(this);
+        allVehiclesPresenter.attach(this);
     }
 
     @Override
     void detachFromPresenters() {
         routesPresenter.detach(this);
         pathsPresenter.detach(this);
-        vehiclesPresenter.detach(this);
+        allVehiclesPresenter.detach(this);
     }
 
     @Override
