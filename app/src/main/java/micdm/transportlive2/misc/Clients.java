@@ -25,7 +25,7 @@ public class Clients<Client> {
         if (!clients.contains(client)) {
             clients = new HashSet<>(clients);
             clients.add(client);
-            Timber.d("Client %s attached to %s", client, this);
+            Timber.v("Client %s attached to %s", client, this);
             this.clients.onNext(clients);
         }
     }
@@ -35,7 +35,7 @@ public class Clients<Client> {
         if (clients.contains(client)) {
             clients = new HashSet<>(clients);
             clients.remove(client);
-            Timber.d("Client %s detached from %s", client, this);
+            Timber.v("Client %s detached from %s", client, this);
             this.clients.onNext(clients);
         }
     }

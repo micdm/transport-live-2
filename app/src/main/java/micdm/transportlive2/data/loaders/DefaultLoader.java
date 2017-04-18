@@ -1,6 +1,5 @@
 package micdm.transportlive2.data.loaders;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
@@ -30,7 +29,6 @@ abstract class DefaultLoader<Client, Data> extends BaseLoader<Client, Data> {
             AtomicBoolean isLocked = new AtomicBoolean(false);
             return getLoadRequests()
                 .filter(o -> !isLocked.get())
-                .throttleFirst(3, TimeUnit.SECONDS)
                 .doOnNext(o -> isLocked.set(true))
                 .switchMap(o ->
                     loadFromCache()
@@ -47,7 +45,7 @@ abstract class DefaultLoader<Client, Data> extends BaseLoader<Client, Data> {
                         .startWith(Result.newLoading())
                 )
                 .doOnNext(result ->
-                    Timber.d("Loader %s produced result %s", this, result)
+                    Timber.v("Loader %s produced result %s", this, result)
                 )
                 .replay(1)
                 .refCount();
