@@ -50,7 +50,7 @@ public class RoutesLoader extends DefaultLoader<RoutesLoader.Client, Collection<
 
     @Override
     Observable<Collection<RouteGroup>> loadFromCache() {
-        return routesStore.getData(null); //TODO: туповато
+        return routesStore.getStored();
     }
 
     @Override

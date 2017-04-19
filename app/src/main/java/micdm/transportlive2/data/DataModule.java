@@ -13,14 +13,17 @@ import dagger.Provides;
 import micdm.transportlive2.AppScope;
 import micdm.transportlive2.data.loaders.LoaderModule;
 import micdm.transportlive2.data.stores.StoreModule;
+import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.IdFactory;
 import micdm.transportlive2.models.ImmutablePath;
 import micdm.transportlive2.models.ImmutablePoint;
+import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.ImmutableRoute;
 import micdm.transportlive2.models.ImmutableRouteGroup;
 import micdm.transportlive2.models.ImmutableStation;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
+import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
@@ -28,18 +31,66 @@ import micdm.transportlive2.models.Station;
 @Module(includes = {LoaderModule.class, StoreModule.class})
 public class DataModule {
 
-    private static class RouteGroupTypeAdapter extends TypeAdapter<RouteGroup> {
+    static class IdTypeAdapter extends TypeAdapter<Id> {
 
         private final IdFactory idFactory;
 
-        private RouteGroupTypeAdapter(IdFactory idFactory) {
+        private IdTypeAdapter(IdFactory idFactory) {
             this.idFactory = idFactory;
+        }
+
+        @Override
+        public void write(JsonWriter out, Id id) throws IOException {
+            out.value(id.getOriginal());
+        }
+
+        @Override
+        public Id read(JsonReader in) throws IOException {
+            return idFactory.newInstance(in.nextString());
+        }
+    }
+
+    static class PointTypeAdapter extends TypeAdapter<Point> {
+
+        @Override
+        public void write(JsonWriter out, Point point) throws IOException {
+            out.beginObject();
+            out.name("lat").value(point.latitude());
+            out.name("lon").value(point.longitude());
+            out.endObject();
+        }
+
+        @Override
+        public Point read(JsonReader in) throws IOException {
+            ImmutablePoint.Builder builder = ImmutablePoint.builder();
+            in.beginObject();
+            while (in.hasNext()) {
+                String name = in.nextName();
+                if (name.equals("lat")) {
+                    builder.latitude(in.nextDouble());
+                }
+                if (name.equals("lon")) {
+                    builder.longitude(in.nextDouble());
+                }
+            }
+            in.endObject();
+            return builder.build();
+        }
+    }
+
+    static class RouteGroupTypeAdapter extends TypeAdapter<RouteGroup> {
+
+        private final IdTypeAdapter idTypeAdapter;
+
+        private RouteGroupTypeAdapter(IdTypeAdapter idTypeAdapter) {
+            this.idTypeAdapter = idTypeAdapter;
         }
 
         @Override
         public void write(JsonWriter out, RouteGroup group) throws IOException {
             out.beginObject();
-            out.name("id").value(group.id().getOriginal());
+            out.name("id");
+            idTypeAdapter.write(out, group.id());
             out.name("type").value(group.type().toString());
             out.name("routes");
             out.beginArray();
@@ -52,7 +103,8 @@ public class DataModule {
 
         private void writeRoute(JsonWriter out, Route route) throws IOException {
             out.beginObject();
-            out.name("id").value(route.id().getOriginal());
+            out.name("id");
+            idTypeAdapter.write(out, route.id());
             out.name("number").value(route.number());
             out.name("source").value(route.source());
             out.name("destination").value(route.destination());
@@ -66,7 +118,7 @@ public class DataModule {
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("id")) {
-                    builder.id(idFactory.newInstance(in.nextString()));
+                    builder.id(idTypeAdapter.read(in));
                 }
                 if (name.equals("type")) {
                     String type = in.nextString();
@@ -98,7 +150,7 @@ public class DataModule {
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("id")) {
-                    builder.id(idFactory.newInstance(in.nextString()));
+                    builder.id(idTypeAdapter.read(in));
                 }
                 if (name.equals("number")) {
                     builder.number(in.nextString());
@@ -115,21 +167,24 @@ public class DataModule {
         }
     }
 
-    private static class PathTypeAdapter extends TypeAdapter<Path> {
+    static class PathTypeAdapter extends TypeAdapter<Path> {
 
-        private final IdFactory idFactory;
+        private final IdTypeAdapter idTypeAdapter;
+        private final PointTypeAdapter pointTypeAdapter;
 
-        private PathTypeAdapter(IdFactory idFactory) {
-            this.idFactory = idFactory;
+        private PathTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter) {
+            this.idTypeAdapter = idTypeAdapter;
+            this.pointTypeAdapter = pointTypeAdapter;
         }
 
         @Override
         public void write(JsonWriter out, Path path) throws IOException {
             out.beginObject();
-            out.name("routeId").value(path.routeId().getOriginal());
+            out.name("routeId");
+            idTypeAdapter.write(out, path.routeId());
             out.name("points").beginArray();
             for (Point point: path.points()) {
-                writePoint(out, point);
+                pointTypeAdapter.write(out, point);
             }
             out.endArray();
             out.name("stations").beginArray();
@@ -140,19 +195,12 @@ public class DataModule {
             out.endObject();
         }
 
-        private void writePoint(JsonWriter out, Point point) throws IOException {
-            out.beginArray()
-                .value(point.latitude())
-                .value(point.longitude())
-            .endArray();
-        }
-
         private void writeStation(JsonWriter out, Station station) throws IOException {
-            out.beginObject()
-                .name("id").value(station.id().getOriginal())
-                .name("name").value(station.name())
-                .name("location");
-            writePoint(out, station.location());
+            out.beginObject().name("id");
+            idTypeAdapter.write(out, station.id());
+            out.name("name").value(station.name());
+            out.name("location");
+            pointTypeAdapter.write(out, station.location());
             out.endObject();
         }
 
@@ -163,12 +211,12 @@ public class DataModule {
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("routeId")) {
-                    builder.routeId(idFactory.newInstance(in.nextString()));
+                    builder.routeId(idTypeAdapter.read(in));
                 }
                 if (name.equals("points")) {
                     in.beginArray();
                     while (in.hasNext()) {
-                        builder.addPoints(readPoint(in));
+                        builder.addPoints(pointTypeAdapter.read(in));
                     }
                     in.endArray();
                 }
@@ -184,29 +232,103 @@ public class DataModule {
             return builder.build();
         }
 
-        private Point readPoint(JsonReader in) throws IOException {
-            in.beginArray();
-            ImmutablePoint.Builder builder =
-                ImmutablePoint.builder()
-                    .latitude((float) in.nextDouble())
-                    .longitude((float) in.nextDouble());
-            in.endArray();
-            return builder.build();
-        }
-
         private Station readStation(JsonReader in) throws IOException {
             in.beginObject();
             ImmutableStation.Builder builder = ImmutableStation.builder();
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("id")) {
-                    builder.id(idFactory.newInstance(in.nextString()));
+                    builder.id(idTypeAdapter.read(in));
                 }
                 if (name.equals("name")) {
                     builder.name(in.nextString());
                 }
                 if (name.equals("location")) {
-                    builder.location(readPoint(in));
+                    builder.location(pointTypeAdapter.read(in));
+                }
+            }
+            in.endObject();
+            return builder.build();
+        }
+    }
+
+    static class PreferencesTypeAdapter extends TypeAdapter<Preferences> {
+
+        private final IdTypeAdapter idTypeAdapter;
+        private final PreferencesCameraPositionTypeAdapter preferencesCameraPositionTypeAdapter;
+
+        private PreferencesTypeAdapter(IdTypeAdapter idTypeAdapter, PreferencesCameraPositionTypeAdapter preferencesCameraPositionTypeAdapter) {
+            this.idTypeAdapter = idTypeAdapter;
+            this.preferencesCameraPositionTypeAdapter = preferencesCameraPositionTypeAdapter;
+        }
+
+        @Override
+        public void write(JsonWriter out, Preferences preferences) throws IOException {
+            out.beginObject();
+            out.name("selectedRoutes").beginArray();
+            for (Id id: preferences.selectedRoutes()) {
+                idTypeAdapter.write(out, id);
+            }
+            out.endArray();
+            out.name("needShowStations").value(preferences.needShowStations());
+            out.name("cameraPosition");
+            preferencesCameraPositionTypeAdapter.write(out, preferences.cameraPosition());
+            out.endObject();
+        }
+
+        @Override
+        public Preferences read(JsonReader in) throws IOException {
+            ImmutablePreferences.Builder builder = ImmutablePreferences.builder();
+            in.beginObject();
+            while (in.hasNext()) {
+                String name = in.nextName();
+                if (name.equals("selectedRoutes")) {
+                    in.beginArray();
+                    while (in.hasNext()) {
+                        builder.addSelectedRoutes(idTypeAdapter.read(in));
+                    }
+                    in.endArray();
+                }
+                if (name.equals("needShowStations")) {
+                    builder.needShowStations(in.nextBoolean());
+                }
+                if (name.equals("cameraPosition")) {
+                    builder.cameraPosition(preferencesCameraPositionTypeAdapter.read(in));
+                }
+            }
+            in.endObject();
+            return builder.build();
+        }
+    }
+
+    static class PreferencesCameraPositionTypeAdapter extends TypeAdapter<Preferences.CameraPosition> {
+
+        private final PointTypeAdapter pointTypeAdapter;
+
+        private PreferencesCameraPositionTypeAdapter(PointTypeAdapter pointTypeAdapter) {
+            this.pointTypeAdapter = pointTypeAdapter;
+        }
+
+        @Override
+        public void write(JsonWriter out, Preferences.CameraPosition cameraPosition) throws IOException {
+            out.beginObject();
+            out.name("position");
+            pointTypeAdapter.write(out, cameraPosition.position());
+            out.name("zoom").value(cameraPosition.zoom());
+            out.endObject();
+        }
+
+        @Override
+        public Preferences.CameraPosition read(JsonReader in) throws IOException {
+            ImmutablePreferences.CameraPosition.Builder builder = ImmutablePreferences.CameraPosition.builder();
+            in.beginObject();
+            while (in.hasNext()) {
+                String name = in.nextName();
+                if (name.equals("position")) {
+                    builder.position(pointTypeAdapter.read(in));
+                }
+                if (name.equals("zoom")) {
+                    builder.zoom(in.nextDouble());
                 }
             }
             in.endObject();
@@ -216,11 +338,47 @@ public class DataModule {
 
     @Provides
     @AppScope
-    Gson provideGson(IdFactory idFactory) {
+    Gson provideGson(RouteGroupTypeAdapter routeGroupTypeAdapter, PathTypeAdapter pathTypeAdapter, PreferencesTypeAdapter preferencesTypeAdapter) {
         return new GsonBuilder()
-            .registerTypeAdapter(RouteGroup.class, new RouteGroupTypeAdapter(idFactory))
-            .registerTypeAdapter(Path.class, new PathTypeAdapter(idFactory))
+            .registerTypeAdapter(RouteGroup.class, routeGroupTypeAdapter)
+            .registerTypeAdapter(Path.class, pathTypeAdapter)
+            .registerTypeAdapter(Preferences.class, preferencesTypeAdapter)
             .create();
     }
-}
 
+    @Provides
+    @AppScope
+    IdTypeAdapter provideIdTypeAdapter(IdFactory idFactory) {
+        return new IdTypeAdapter(idFactory);
+    }
+
+    @Provides
+    @AppScope
+    PointTypeAdapter providePointTypeAdapter() {
+        return new PointTypeAdapter();
+    }
+
+    @Provides
+    @AppScope
+    RouteGroupTypeAdapter provideRouteGroupTypeAdapter(IdTypeAdapter idTypeAdapter) {
+        return new RouteGroupTypeAdapter(idTypeAdapter);
+    }
+
+    @Provides
+    @AppScope
+    PathTypeAdapter providePathTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter) {
+        return new PathTypeAdapter(idTypeAdapter, pointTypeAdapter);
+    }
+
+    @Provides
+    @AppScope
+    PreferencesTypeAdapter providePreferencesTypeAdapter(IdTypeAdapter idTypeAdapter, PreferencesCameraPositionTypeAdapter preferencesCameraPositionTypeAdapter) {
+        return new PreferencesTypeAdapter(idTypeAdapter, preferencesCameraPositionTypeAdapter);
+    }
+
+    @Provides
+    @AppScope
+    PreferencesCameraPositionTypeAdapter providePreferencesCameraPositionTypeAdapter(PointTypeAdapter pointTypeAdapter) {
+        return new PreferencesCameraPositionTypeAdapter(pointTypeAdapter);
+    }
+}

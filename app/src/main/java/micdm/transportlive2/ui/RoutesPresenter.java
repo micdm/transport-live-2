@@ -42,7 +42,7 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View, RoutesP
     }
 
     @Override
-    void attachToLoaders() {
+    void attachToServices() {
         loaders.getRoutesLoader().attach(this);
     }
 

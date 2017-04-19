@@ -11,9 +11,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -32,24 +30,15 @@ import micdm.transportlive2.misc.AnalyticsTracker;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
+import micdm.transportlive2.models.ImmutablePreferences;
+import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
+import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
-import micdm.transportlive2.ui.SelectedRoutesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 
-public class SearchRouteView extends PresentedView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
-
-    private static class RouteInfo {
-
-        final RouteGroup group;
-        final Route route;
-
-        RouteInfo(RouteGroup group, Route route) {
-            this.group = group;
-            this.route = route;
-        }
-    }
+public class SearchRouteView extends PresentedView implements RoutesPresenter.View, PreferencesPresenter.View {
 
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
@@ -120,11 +109,11 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     @Inject
     MiscFunctions miscFunctions;
     @Inject
+    PreferencesPresenter preferencesPresenter;
+    @Inject
     Resources resources;
     @Inject
     RoutesPresenter routesPresenter;
-    @Inject
-    SelectedRoutesPresenter selectedRoutesPresenter;
 
     @BindView(R.id.v__search_route__input)
     ClearableEditText inputView;
@@ -163,7 +152,7 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
                 routesPresenter.getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                selectedRoutesPresenter.getSelectedRoutes(),
+                preferencesPresenter.getSelectedRoutes(),
                 inputView.getText()
                     .map(text -> text.toString().toLowerCase()),
                 (groups, routeIds, search) -> {
@@ -206,13 +195,13 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     @Override
     void attachToPresenters() {
         routesPresenter.attach(this);
-        selectedRoutesPresenter.attach(this);
+        preferencesPresenter.attach(this);
     }
 
     @Override
     void detachFromPresenters() {
         routesPresenter.detach(this);
-        selectedRoutesPresenter.detach(this);
+        preferencesPresenter.detach(this);
     }
 
     @Override
@@ -221,13 +210,13 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     }
 
     @Override
-    public Observable<Collection<Id>> getSelectRoutesRequests() {
-        return selectedRoutesPresenter.getSelectedRoutes().switchMap(routeIds ->
-            ((Adapter) itemsView.getAdapter()).getSelectRouteRequests().map(routeId -> {
-                Collection<Id> result = new HashSet<>(routeIds);
-                result.add(routeId);
-                return result;
-            })
-        );
+    public Observable<Preferences> getChangePreferencesRequests() {
+        return ((Adapter) itemsView.getAdapter()).getSelectRouteRequests()
+            .withLatestFrom(preferencesPresenter.getPreferences(), (routeIds, preferences) ->
+                ImmutablePreferences.builder()
+                    .from(preferences)
+                    .addSelectedRoutes(routeIds)
+                    .build()
+            );
     }
 }

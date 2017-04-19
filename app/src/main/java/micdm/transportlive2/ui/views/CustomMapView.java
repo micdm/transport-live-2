@@ -39,8 +39,6 @@ import butterknife.BindView;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.BehaviorSubject;
-import io.reactivex.subjects.Subject;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.data.loaders.Result;
@@ -48,23 +46,26 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.misc.ObservableCache;
+import micdm.transportlive2.models.ImmutablePoint;
+import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
+import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.AllVehiclesPresenter;
 import micdm.transportlive2.ui.PathsPresenter;
+import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
-import micdm.transportlive2.ui.SelectedRoutesPresenter;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.PermissionChecker;
 import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 
-public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, AllVehiclesPresenter.View {
+public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, AllVehiclesPresenter.View, PreferencesPresenter.View {
 
     private static class VehicleHandler {
 
@@ -209,18 +210,18 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             this.map = map;
         }
 
-        void handle(Collection<Path> paths, boolean areStationsVisible) {
+        void handle(Collection<Path> paths, boolean needShowStations) {
             Collection<Id> outdated = new HashSet<>(markers.keySet());
             for (Path path: paths) {
                 for (Station station: path.stations()) {
                     Marker marker = markers.get(station.id());
                     if (marker == null) {
-                        marker = newMarker(station, areStationsVisible);
+                        marker = newMarker(station, needShowStations);
                         marker.setTag(station.id());
                         markers.put(station.id(), marker);
                     } else {
                         outdated.remove(station.id());
-                        marker.setVisible(areStationsVisible);
+                        marker.setVisible(needShowStations);
                     }
                 }
             }
@@ -229,7 +230,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             }
         }
 
-        private Marker newMarker(Station station, boolean isVisible) {
+        private Marker newMarker(Station station, boolean needShow) {
             return map.addMarker(
                 new MarkerOptions()
                     .anchor(0.5f, 0.5f)
@@ -237,7 +238,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     .icon(BitmapDescriptorFactory.fromBitmap(icon))
                     .position(new LatLng(station.location().latitude(), station.location().longitude()))
                     .title(station.name())
-                    .visible(isVisible)
+                    .visible(needShow)
             );
         }
     }
@@ -246,9 +247,6 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     private static final int MAX_ROUTE_COUNT_WITH_NO_PENALTY = 3;
     private static final Duration LOAD_VEHICLES_PENALTY_INTERVAL = Duration.standardSeconds(5);
 
-    private static final double CAMERA_LATITUDE = 56.488881;
-    private static final double CAMERA_LONGITUDE = 84.987703;
-    private static final int CAMERA_ZOOM = 12;
     private static final int CAMERA_ZOOM_TO_SHOW_STATIONS = 12;
 
     @Inject
@@ -269,11 +267,11 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     PermissionChecker permissionChecker;
     @Inject
+    PreferencesPresenter preferencesPresenter;
+    @Inject
     Resources resources;
     @Inject
     RoutesPresenter routesPresenter;
-    @Inject
-    SelectedRoutesPresenter selectedRoutesPresenter;
     @Inject
     Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
     @Inject
@@ -283,8 +281,6 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     View noVehiclesView;
     @BindView(R.id.v__custom_map__map)
     MapView mapView;
-
-    private final Subject<Boolean> areStationsVisible = BehaviorSubject.createDefault(false);
 
     public CustomMapView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -341,11 +337,15 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 uiSettings.setMapToolbarEnabled(false);
                 uiSettings.setZoomControlsEnabled(true);
                 map.setPadding(0, resources.getDimensionPixelSize(R.dimen.map_top_padding), 0, 0);
-                map.moveCamera(
-                    CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(new LatLng(CAMERA_LATITUDE, CAMERA_LONGITUDE), CAMERA_ZOOM))
-                );
-//                map.setInfoWindowAdapter();
             }),
+            getMap()
+                .withLatestFrom(preferencesPresenter.getCameraPosition(), commonFunctions::wrap)
+                .subscribe(commonFunctions.unwrap((map, camera) -> {
+                    CameraPosition position = CameraPosition.fromLatLngZoom(new LatLng(camera.position().latitude(),
+                                                                                       camera.position().longitude()),
+                                                                                       (float) camera.zoom());
+                    map.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+                })),
             Observable
                 .combineLatest(
                     getMap(),
@@ -369,7 +369,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                             allVehiclesPresenter.getResults()
                                 .filter(Result::isSuccess)
                                 .map(Result::getData),
-                            selectedRoutesPresenter.getSelectedRoutes()
+                            preferencesPresenter.getSelectedRoutes()
                                 .filter(Collection::isEmpty)
                                 .map(o -> Collections.<Vehicle>emptyList())
                         ).distinctUntilChanged(),
@@ -387,7 +387,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     allVehiclesPresenter.getResults()
                         .filter(Result::isSuccess)
                         .map(Result::getData),
-                    selectedRoutesPresenter.getSelectedRoutes(),
+                    preferencesPresenter.getSelectedRoutes(),
                     (vehicles, routeIds) -> vehicles.isEmpty() && !routeIds.isEmpty()
                 )
                 .compose(commonFunctions.toMainThread())
@@ -402,7 +402,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     pathsPresenter.getResults()
                         .filter(Result::isSuccess)
                         .map(Result::getData),
-                    selectedRoutesPresenter.getSelectedRoutes()
+                    preferencesPresenter.getSelectedRoutes()
                         .filter(Collection::isEmpty)
                         .map(o -> Collections.<Path>emptyList())
                 );
@@ -419,11 +419,8 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                         .combineLatest(
                             common,
                             Observable.combineLatest(
-                                areStationsVisible,
-                                Observable.<Boolean>create(source -> {
-                                    map.setOnCameraIdleListener(() -> source.onNext(map.getCameraPosition().zoom >= CAMERA_ZOOM_TO_SHOW_STATIONS));
-                                    source.setCancellable(() -> map.setOnCameraIdleListener(null));
-                                }),
+                                preferencesPresenter.getNeedShowStations(),
+                                getCameraPosition().map(cameraPosition -> cameraPosition.zoom >= CAMERA_ZOOM_TO_SHOW_STATIONS),
                                 (a, b) -> a && b
                             ),
                             Pair::with
@@ -440,8 +437,21 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     private Observable<GoogleMap> getMap() {
         return observableCache.get("getMap", () ->
-            Observable
-                .<GoogleMap>create(source -> mapView.getMapAsync(source::onNext))
+            Observable.<GoogleMap>create(source -> mapView.getMapAsync(source::onNext))
+                .replay()
+                .refCount()
+        );
+    }
+
+    private Observable<CameraPosition> getCameraPosition() {
+        return observableCache.get("getCameraPosition", () ->
+            getMap()
+                .switchMap(map ->
+                    Observable.<CameraPosition>create(source -> {
+                        map.setOnCameraIdleListener(() -> source.onNext(map.getCameraPosition()));
+                        source.setCancellable(() -> map.setOnCameraIdleListener(null));
+                    })
+                )
                 .replay()
                 .refCount()
         );
@@ -449,6 +459,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     @Override
     void attachToPresenters() {
+        preferencesPresenter.attach(this);
         routesPresenter.attach(this);
         pathsPresenter.attach(this);
         allVehiclesPresenter.attach(this);
@@ -456,6 +467,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     @Override
     void detachFromPresenters() {
+        preferencesPresenter.detach(this);
         routesPresenter.detach(this);
         pathsPresenter.detach(this);
         allVehiclesPresenter.detach(this);
@@ -468,15 +480,13 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     @Override
     public Observable<Collection<Id>> getLoadPathsRequests() {
-        return selectedRoutesPresenter.getSelectedRoutes();
+        return preferencesPresenter.getSelectedRoutes();
     }
 
     @Override
     public Observable<Collection<Id>> getLoadVehiclesRequests() {
         return activityLifecycleWatcher.getState(Stage.RESUME, true)
-            .switchMap(o ->
-                selectedRoutesPresenter.getSelectedRoutes()
-            )
+            .switchMap(o -> preferencesPresenter.getSelectedRoutes())
             .switchMap(routeIds -> {
                 Duration interval;
                 if (routeIds.size() > MAX_ROUTE_COUNT_WITH_NO_PENALTY) {
@@ -489,6 +499,27 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     .compose(commonFunctions.toConst(routeIds))
                     .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
             });
+    }
+
+    @Override
+    public Observable<Preferences> getChangePreferencesRequests() {
+        return getCameraPosition()
+            .withLatestFrom(preferencesPresenter.getPreferences(), (cameraPosition, preferences) ->
+                ImmutablePreferences.builder()
+                    .from(preferences)
+                    .cameraPosition(
+                        ImmutablePreferences.CameraPosition.builder()
+                            .position(
+                                ImmutablePoint.builder()
+                                    .latitude(cameraPosition.target.latitude)
+                                    .longitude(cameraPosition.target.longitude)
+                                    .build()
+                            )
+                            .zoom(cameraPosition.zoom)
+                            .build()
+                    )
+                    .build()
+            );
     }
 
     public Observable<Id> getSelectStationRequests() {
@@ -505,9 +536,5 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 source.setCancellable(() -> map.setOnMarkerClickListener(null));
             })
         );
-    }
-
-    public void setStationsVisible(boolean isVisible) {
-        areStationsVisible.onNext(isVisible);
     }
 }

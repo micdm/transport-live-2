@@ -47,7 +47,7 @@ public class ForecastPresenter extends BasePresenter<ForecastPresenter.View, For
     }
 
     @Override
-    void attachToLoaders() {
+    void attachToServices() {
         loaders.getForecastLoader(stationId).attach(this);
     }
 

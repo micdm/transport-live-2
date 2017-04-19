@@ -17,13 +17,18 @@ import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.ObservableCache;
+import micdm.transportlive2.models.ImmutablePreferences;
+import micdm.transportlive2.models.Preferences;
+import micdm.transportlive2.ui.PreferencesPresenter;
 
-public class MainToolbarView extends BaseView {
+public class MainToolbarView extends PresentedView implements PreferencesPresenter.View {
 
     @Inject
     CommonFunctions commonFunctions;
     @Inject
     ObservableCache observableCache;
+    @Inject
+    PreferencesPresenter preferencesPresenter;
 
     @BindView(R.id.v__main_toolbar__toolbar)
     Toolbar toolbarView;
@@ -51,15 +56,18 @@ public class MainToolbarView extends BaseView {
     }
 
     private Disposable subscribeForShowStations() {
-        return getShowStationsRequests().subscribe(needShow ->
-            toolbarView.getMenu().findItem(R.id.m__main__show_stations).setChecked(needShow)
-        );
+        return preferencesPresenter.getNeedShowStations()
+            .subscribe(toolbarView.getMenu().findItem(R.id.m__main__show_stations)::setChecked);
     }
 
-    Observable<Boolean> getShowStationsRequests() {
-        return getMenuClicks()
-            .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
-            .map(item -> !item.isChecked());
+    @Override
+    void attachToPresenters() {
+        preferencesPresenter.attach(this);
+    }
+
+    @Override
+    void detachFromPresenters() {
+        preferencesPresenter.detach(this);
     }
 
     Observable<Object> getGoToAboutRequests() {
@@ -70,5 +78,18 @@ public class MainToolbarView extends BaseView {
 
     private Observable<MenuItem> getMenuClicks() {
         return observableCache.get("getMenuClicks", () -> RxToolbar.itemClicks(toolbarView).share());
+    }
+
+    @Override
+    public Observable<Preferences> getChangePreferencesRequests() {
+        return getMenuClicks()
+            .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
+            .map(item -> !item.isChecked())
+            .withLatestFrom(preferencesPresenter.getPreferences(), (needShowStations, preferences) ->
+                ImmutablePreferences.builder()
+                    .from(preferences)
+                    .needShowStations(needShowStations)
+                    .build()
+            );
     }
 }

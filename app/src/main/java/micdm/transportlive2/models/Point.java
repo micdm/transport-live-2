@@ -5,6 +5,6 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface Point {
 
-    float latitude();
-    float longitude();
+    double latitude();
+    double longitude();
 }

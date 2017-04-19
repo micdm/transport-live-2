@@ -29,8 +29,8 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
+import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
-import micdm.transportlive2.ui.SelectedRoutesPresenter;
 
 public class SelectedRoutesView extends PresentedView implements RoutesPresenter.View {
 
@@ -96,9 +96,9 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     @Inject
     LayoutInflater layoutInflater;
     @Inject
-    RoutesPresenter routesPresenter;
+    PreferencesPresenter preferencesPresenter;
     @Inject
-    SelectedRoutesPresenter selectedRoutesPresenter;
+    RoutesPresenter routesPresenter;
 
     @BindView(R.id.v__selected_routes__items)
     RecyclerView itemsView;
@@ -136,7 +136,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
                 routesPresenter.getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                selectedRoutesPresenter.getSelectedRoutes(),
+                preferencesPresenter.getSelectedRoutes(),
                 (groups, routeIds) -> {
                     List<RouteInfo> routes = new ArrayList<>();
                     for (RouteGroup group: groups) {

@@ -10,5 +10,5 @@ public interface Vehicle {
     Id id();
     Id routeId();
     Point position();
-    float direction();
+    double direction();
 }

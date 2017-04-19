@@ -8,7 +8,6 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import micdm.transportlive2.data.loaders.remote.GetVehiclesResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.PathsStore;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.IdFactory;
@@ -28,8 +27,6 @@ public class VehiclesLoader extends DefaultLoader<VehiclesLoader.Client, Collect
     CommonFunctions commonFunctions;
     @Inject
     IdFactory idFactory;
-    @Inject
-    PathsStore pathsStore;
     @Inject
     ServerConnector serverConnector;
 

@@ -48,12 +48,12 @@ public class VehicleMarkerIconBuilder {
     @Named("vehicleIconText")
     Paint textPaint;
 
-    public BitmapWrapper build(String routeId, String routeNumber, float direction) {
+    public BitmapWrapper build(String routeId, String routeNumber, double direction) {
         BitmapWrapper bitmapWrapper = bitmaps.acquire();
         if (bitmapWrapper == null) {
             bitmapWrapper = newBitmapWrapper();
         }
-        matrix.setRotate(direction, original.getWidth() / 2, original.getHeight() / 2);
+        matrix.setRotate((float) direction, original.getWidth() / 2, original.getHeight() / 2);
         bitmapWrapper.canvas.drawBitmap(original, matrix, paintConstructor.getByString(routeId));
         textPaint.getTextBounds(routeNumber, 0, routeNumber.length(), bounds);
         bitmapWrapper.canvas.drawText(routeNumber, bitmapWrapper.canvas.getWidth() / 2 - bounds.width() / 2,

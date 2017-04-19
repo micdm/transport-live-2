@@ -1,0 +1,47 @@
+package micdm.transportlive2.data.stores;
+
+import com.google.gson.Gson;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import micdm.transportlive2.misc.Cache;
+import micdm.transportlive2.misc.Container;
+import micdm.transportlive2.misc.Id;
+import micdm.transportlive2.models.Path;
+
+public class Stores extends Container<BaseStore> {
+
+    @Inject
+    Cache cache;
+    @Inject
+    Gson gson;
+
+    private final Map<Id, PathStore> pathStores = new HashMap<>();
+
+    public PathStore getPathStore(Id routeId) {
+        return getOrCreateInstance(pathStores, routeId, () ->
+            new PathStore(
+                clients -> clients.get().flatMap(PathStore.Client::getStorePathRequests),
+                new BaseStore.Adapter<Path>() {
+                    @Override
+                    public String serialize(Path path) {
+                        return gson.toJson(path, Path.class);
+                    }
+                    @Override
+                    public Path deserialize(String serialized) {
+                        return gson.fromJson(serialized, Path.class);
+                    }
+                },
+                new CacheStorage(cache, String.format("path_%s", routeId.getOriginal()))
+            )
+        );
+    }
+
+    @Override
+    protected void onNewInstance(BaseStore instance) {
+        instance.init();
+    }
+}

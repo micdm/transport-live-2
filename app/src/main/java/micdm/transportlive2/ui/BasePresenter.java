@@ -30,10 +30,10 @@ abstract class BasePresenter<V, VI extends BasePresenter.ViewInput<V>> {
 
     void init() {
         subscribeForEvents();
-        attachToLoaders();
+        attachToServices();
     }
 
-    void attachToLoaders() {}
+    void attachToServices() {}
 
     Disposable subscribeForEvents() {
         return null;

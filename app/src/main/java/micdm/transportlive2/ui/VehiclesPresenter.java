@@ -52,7 +52,7 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View, Veh
     }
 
     @Override
-    void attachToLoaders() {
+    void attachToServices() {
         loaders.getVehiclesLoader(routeId).attach(this);
     }
 

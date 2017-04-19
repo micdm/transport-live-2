@@ -4,17 +4,11 @@ import android.app.Application;
 
 import javax.inject.Inject;
 
-import micdm.transportlive2.data.stores.PathsStore;
-import micdm.transportlive2.data.stores.SelectedRoutesStore;
 import micdm.transportlive2.misc.TimberTree;
 import timber.log.Timber;
 
 public class App extends Application {
 
-    @Inject
-    PathsStore pathsStore;
-    @Inject
-    SelectedRoutesStore selectedRoutesStore;
     @Inject
     TimberTree timberTree;
 

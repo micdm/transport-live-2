@@ -26,15 +26,17 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.misc.ObservableCache;
+import micdm.transportlive2.models.ImmutablePreferences;
+import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Vehicle;
+import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
-import micdm.transportlive2.ui.SelectedRoutesPresenter;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 
-public class SelectedRouteView extends PresentedView implements RoutesPresenter.View, SelectedRoutesPresenter.View {
+public class SelectedRouteView extends PresentedView implements RoutesPresenter.View, PreferencesPresenter.View {
 
     @Inject
     ColorConstructor colorConstructor;
@@ -43,13 +45,13 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     @Inject
     ObservableCache observableCache;
     @Inject
+    PreferencesPresenter preferencesPresenter;
+    @Inject
     Presenters presenters;
     @Inject
     Resources resources;
     @Inject
     RoutesPresenter routesPresenter;
-    @Inject
-    SelectedRoutesPresenter selectedRoutesPresenter;
 
     @BindView(R.id.v__selected_route__icon)
     ImageView iconView;
@@ -85,13 +87,13 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     @Override
     void attachToPresenters() {
         routesPresenter.attach(this);
-        selectedRoutesPresenter.attach(this);
+        preferencesPresenter.attach(this);
     }
 
     @Override
     void detachFromPresenters() {
         routesPresenter.detach(this);
-        selectedRoutesPresenter.detach(this);
+        preferencesPresenter.detach(this);
     }
 
     @Override
@@ -171,13 +173,17 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     }
 
     @Override
-    public Observable<Collection<Id>> getSelectRoutesRequests() {
-        return observableCache.get("getSelectRoutesRequests", () ->
+    public Observable<Preferences> getChangePreferencesRequests() {
+        return observableCache.get("getChangePreferencesRequests", () ->
             RxView.clicks(removeView)
-                .withLatestFrom(selectedRoutesPresenter.getSelectedRoutes(), (o, routeIds) -> {
-                    Collection<Id> result = new HashSet<>(routeIds);
-                    result.remove(routeId);
-                    return result;
+                .map(o -> routeId)
+                .withLatestFrom(preferencesPresenter.getPreferences(), (routeId, preferences) -> {
+                    Collection<Id> selectedRoutes = new HashSet<>(preferences.selectedRoutes());
+                    selectedRoutes.remove(routeId);
+                    return (Preferences) ImmutablePreferences.builder()
+                        .from(preferences)
+                        .selectedRoutes(selectedRoutes)
+                        .build();
                 })
                 .share()
         );

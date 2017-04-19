@@ -7,7 +7,8 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import micdm.transportlive2.data.loaders.remote.GetPathResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.PathsStore;
+import micdm.transportlive2.data.stores.PathStore;
+import micdm.transportlive2.data.stores.Stores;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.IdFactory;
@@ -17,7 +18,7 @@ import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutableStation;
 import micdm.transportlive2.models.Path;
 
-public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implements PathsStore.Client {
+public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implements PathStore.Client {
 
     public interface Client {
 
@@ -29,9 +30,9 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
     @Inject
     IdFactory idFactory;
     @Inject
-    PathsStore pathsStore;
-    @Inject
     ServerConnector serverConnector;
+    @Inject
+    Stores stores;
 
     private final Id routeId;
 
@@ -46,7 +47,7 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
 
     @Override
     void init() {
-        pathsStore.attach(this);
+        stores.getPathStore(routeId).attach(this);
     }
 
     @Override
@@ -59,7 +60,7 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
 
     @Override
     Observable<Path> loadFromCache() {
-        return pathsStore.getData(routeId);
+        return stores.getPathStore(routeId).getStored();
     }
 
     @Override
@@ -69,7 +70,7 @@ public class PathLoader extends DefaultLoader<PathLoader.Client, Path> implement
             .map(response -> {
                 ImmutablePath.Builder builder = ImmutablePath.builder().routeId(routeId);
                 for (GetPathResponse.SegmentsGeoJson.Feature feature: response.SegmentsGeoJson.features) {
-                    for (List<Float> values: feature.geometry.coordinates){
+                    for (List<Double> values: feature.geometry.coordinates){
                         builder.addPoints(
                             ImmutablePoint.builder()
                                 .latitude(values.get(1))

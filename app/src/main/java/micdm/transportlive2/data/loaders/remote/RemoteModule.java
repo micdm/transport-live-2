@@ -80,5 +80,4 @@ public class RemoteModule {
     CallAdapter.Factory provideCallAdapterFactory() {
         return RxJava2CallAdapterFactory.create();
     }
-
 }

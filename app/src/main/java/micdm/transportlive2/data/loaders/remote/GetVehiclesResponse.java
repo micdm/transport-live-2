@@ -15,11 +15,11 @@ public class GetVehiclesResponse {
 
     public static class Point {
 
-        public final float Lat;
-        public final float Lon;
-        public final float Dir;
+        public final double Lat;
+        public final double Lon;
+        public final double Dir;
 
-        Point(float lat, float lon, float dir) {
+        Point(double lat, double lon, double dir) {
             Lat = lat;
             Lon = lon;
             Dir = dir;

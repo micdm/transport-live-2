@@ -10,9 +10,9 @@ public class GetPathResponse {
 
             public static class Geometry {
 
-                public final List<List<Float>> coordinates;
+                public final List<List<Double>> coordinates;
 
-                Geometry(List<List<Float>> coordinates) {
+                Geometry(List<List<Double>> coordinates) {
                     this.coordinates = coordinates;
                 }
             }
@@ -37,9 +37,9 @@ public class GetPathResponse {
 
             public static class Geometry {
 
-                public final List<Float> coordinates;
+                public final List<Double> coordinates;
 
-                public Geometry(List<Float> coordinates) {
+                public Geometry(List<Double> coordinates) {
                     this.coordinates = coordinates;
                 }
             }

@@ -22,8 +22,8 @@ import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.ui.PathsPresenter;
+import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.RoutesPresenter;
-import micdm.transportlive2.ui.SelectedRoutesPresenter;
 
 public class VehiclesView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View {
 
@@ -36,9 +36,9 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     @Inject
     PathsPresenter pathsPresenter;
     @Inject
-    RoutesPresenter routesPresenter;
+    PreferencesPresenter preferencesPresenter;
     @Inject
-    SelectedRoutesPresenter selectedRoutesPresenter;
+    RoutesPresenter routesPresenter;
 
     @BindView(R.id.v__vehicles__loading)
     LoadingView loadingView;
@@ -90,8 +90,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
         return new CompositeDisposable(
             subscribeForForecast(),
             subscribeForAbout(),
-            subscribeForRequiredData(),
-            subscribeForShowStations()
+            subscribeForRequiredData()
         );
     }
 
@@ -146,10 +145,6 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
         );
     }
 
-    private Disposable subscribeForShowStations() {
-        return mainToolbarView.getShowStationsRequests().subscribe(mapView::setStationsVisible);
-    }
-
     @Override
     public Observable<Object> getLoadRoutesRequests() {
         return cannotLoadView.getRetryRequest().startWith(Irrelevant.INSTANCE);
@@ -157,6 +152,6 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
 
     @Override
     public Observable<Collection<Id>> getLoadPathsRequests() {
-        return cannotLoadView.getRetryRequest().switchMap(o -> selectedRoutesPresenter.getSelectedRoutes());
+        return cannotLoadView.getRetryRequest().switchMap(o -> preferencesPresenter.getSelectedRoutes());
     }
 }

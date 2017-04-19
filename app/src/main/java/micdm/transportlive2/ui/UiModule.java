@@ -37,15 +37,6 @@ public class UiModule {
 
     @Provides
     @AppScope
-    SelectedRoutesPresenter provideSelectedRoutesPresenter() {
-        SelectedRoutesPresenter instance = new SelectedRoutesPresenter();
-        ComponentHolder.getAppComponent().inject(instance);
-        instance.init();
-        return instance;
-    }
-
-    @Provides
-    @AppScope
     AllVehiclesPresenter provideAllVehiclesPresenter() {
         AllVehiclesPresenter instance = new AllVehiclesPresenter();
         ComponentHolder.getAppComponent().inject(instance);
@@ -57,6 +48,15 @@ public class UiModule {
     @AppScope
     PathsPresenter providePathsPresenter() {
         PathsPresenter instance = new PathsPresenter();
+        ComponentHolder.getAppComponent().inject(instance);
+        instance.init();
+        return instance;
+    }
+
+    @Provides
+    @AppScope
+    PreferencesPresenter providePreferencesPresenter() {
+        PreferencesPresenter instance = new PreferencesPresenter();
         ComponentHolder.getAppComponent().inject(instance);
         instance.init();
         return instance;
