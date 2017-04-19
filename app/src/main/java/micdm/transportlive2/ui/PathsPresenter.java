@@ -46,9 +46,8 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
     @Inject
     Loaders loaders;
 
-    @Override
-    ViewInput newViewInput() {
-        return new ViewInput();
+    PathsPresenter() {
+        super(new ViewInput());
     }
 
     @Override

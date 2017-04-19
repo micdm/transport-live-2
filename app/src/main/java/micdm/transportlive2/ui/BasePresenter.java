@@ -22,9 +22,11 @@ abstract class BasePresenter<V, VI extends BasePresenter.ViewInput<V>> {
         }
     }
 
-    final VI viewInput = newViewInput();
+    final VI viewInput;
 
-    abstract VI newViewInput();
+    BasePresenter(VI viewInput) {
+        this.viewInput = viewInput;
+    }
 
     void init() {
         subscribeForEvents();

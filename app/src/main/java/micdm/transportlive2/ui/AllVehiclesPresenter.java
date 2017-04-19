@@ -47,9 +47,8 @@ public class AllVehiclesPresenter extends BasePresenter<AllVehiclesPresenter.Vie
 
     private final Subject<Result<Collection<Vehicle>>> results = BehaviorSubject.create();
 
-    @Override
-    ViewInput newViewInput() {
-        return new ViewInput();
+    AllVehiclesPresenter() {
+        super(new ViewInput());
     }
 
     @Override

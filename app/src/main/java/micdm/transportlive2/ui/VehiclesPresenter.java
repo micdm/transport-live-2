@@ -47,12 +47,8 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View, Veh
     private final Subject<Result<Collection<Vehicle>>> results = BehaviorSubject.create();
 
     VehiclesPresenter(Id routeId) {
+        super(new ViewInput());
         this.routeId = routeId;
-    }
-
-    @Override
-    ViewInput newViewInput() {
-        return new ViewInput();
     }
 
     @Override

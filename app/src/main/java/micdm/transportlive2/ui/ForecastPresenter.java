@@ -42,12 +42,8 @@ public class ForecastPresenter extends BasePresenter<ForecastPresenter.View, For
     private final Id stationId;
 
     ForecastPresenter(Id stationId) {
+        super(new ViewInput());
         this.stationId = stationId;
-    }
-
-    @Override
-    ViewInput newViewInput() {
-        return new ViewInput();
     }
 
     @Override

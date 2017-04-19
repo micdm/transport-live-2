@@ -37,9 +37,8 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View, RoutesP
     @Inject
     Loaders loaders;
 
-    @Override
-    ViewInput newViewInput() {
-        return new ViewInput();
+    public RoutesPresenter() {
+        super(new ViewInput());
     }
 
     @Override

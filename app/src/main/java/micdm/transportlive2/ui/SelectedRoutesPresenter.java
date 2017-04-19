@@ -35,9 +35,8 @@ public class SelectedRoutesPresenter extends BasePresenter<SelectedRoutesPresent
     @Inject
     SelectedRoutesStore selectedRoutesStore;
 
-    @Override
-    ViewInput newViewInput() {
-        return new ViewInput();
+    SelectedRoutesPresenter() {
+        super(new ViewInput());
     }
 
     @Override
