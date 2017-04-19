@@ -31,7 +31,7 @@ public abstract class BaseView extends FrameLayout {
         createViewHierarchy();
     }
 
-    protected void createViewHierarchy() {
+    void createViewHierarchy() {
         if (!isInEditMode()) {
             inflateContent(layoutInflater);
             ButterKnife.bind(this);

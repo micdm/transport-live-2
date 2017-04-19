@@ -20,8 +20,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"/>
-        <micdm.transportlive2.ui.views.SearchRouteView
-            android:id="@+id/v__vehicles__search_route"
+        <micdm.transportlive2.ui.views.MainToolbarView
+            android:id="@+id/v__vehicles__main_toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"/>

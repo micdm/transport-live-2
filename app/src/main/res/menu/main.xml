@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/m__main__show_stations"
+        android:title="@string/m__main__show_stations"
+        android:icon="@drawable/ic_station"
+        android:checkable="true"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/m__main__about"
+        android:title="@string/m__main__about"
+        android:icon="@drawable/ic_info"
+        app:showAsAction="never"/>
+</menu>

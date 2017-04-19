@@ -46,8 +46,8 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     ViewGroup loadedView;
     @BindView(R.id.v__vehicles__map)
     CustomMapView mapView;
-    @BindView(R.id.v__vehicles__search_route)
-    SearchRouteView searchRouteView;
+    @BindView(R.id.v__vehicles__main_toolbar)
+    MainToolbarView mainToolbarView;
     @BindView(R.id.v__vehicles__cannot_load)
     CannotLoadView cannotLoadView;
     @BindView(R.id.v__vehicles__about)
@@ -66,7 +66,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     }
 
     @Override
-    protected void setupViews() {
+    void setupViews() {
         loadingView.setVisibility(View.GONE);
         loadedView.setVisibility(View.GONE);
         cannotLoadView.setVisibility(View.GONE);
@@ -86,11 +86,12 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     }
 
     @Override
-    protected Disposable subscribeForEvents() {
+    Disposable subscribeForEvents() {
         return new CompositeDisposable(
             subscribeForForecast(),
             subscribeForAbout(),
-            subscribeForRequiredData()
+            subscribeForRequiredData(),
+            subscribeForShowStations()
         );
     }
 
@@ -118,7 +119,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     private Disposable subscribeForAbout() {
         return Observable
             .merge(
-                searchRouteView.getGoToAboutRequests().map(o -> View.VISIBLE),
+                mainToolbarView.getGoToAboutRequests().map(o -> View.VISIBLE),
                 aboutView.getCloseRequests().map(o -> View.GONE)
             )
             .subscribe(aboutView::setVisibility);
@@ -143,6 +144,10 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
                 cannotLoadView.setVisibility(View.VISIBLE);
             })
         );
+    }
+
+    private Disposable subscribeForShowStations() {
+        return mainToolbarView.getShowStationsRequests().subscribe(mapView::setStationsVisible);
     }
 
     @Override

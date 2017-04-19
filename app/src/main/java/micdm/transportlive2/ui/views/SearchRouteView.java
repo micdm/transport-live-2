@@ -10,8 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.jakewharton.rxbinding2.view.RxView;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -130,8 +128,6 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
 
     @BindView(R.id.v__search_route__input)
     ClearableEditText inputView;
-    @BindView(R.id.v__search_route__about)
-    View aboutView;
     @BindView(R.id.v__search_route__items)
     RecyclerView itemsView;
 
@@ -233,9 +229,5 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
                 return result;
             })
         );
-    }
-
-    public Observable<Object> getGoToAboutRequests() {
-        return RxView.clicks(aboutView);
     }
 }

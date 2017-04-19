@@ -17,7 +17,7 @@ public class LoadingView extends BaseView {
     }
 
     @Override
-    protected void inflateContent(LayoutInflater layoutInflater) {
+    void inflateContent(LayoutInflater layoutInflater) {
         layoutInflater.inflate(R.layout.v__loading, this);
     }
 }

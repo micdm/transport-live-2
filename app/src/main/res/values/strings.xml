@@ -5,6 +5,8 @@
         <item>Трамвай</item>
         <item>Автобус</item>
     </string-array>
+    <string name="m__main__show_stations">Остановки</string>
+    <string name="m__main__about">О программе…</string>
     <string name="v__cannot_load__message">Не получилось загрузить данные</string>
     <string name="v__cannot_load__retry">Ещё раз</string>
     <string name="v__loading__message">Загрузка…</string>

@@ -25,7 +25,7 @@ public class CannotLoadView extends BaseView {
     }
 
     @Override
-    protected void inflateContent(LayoutInflater layoutInflater) {
+    void inflateContent(LayoutInflater layoutInflater) {
         layoutInflater.inflate(R.layout.v__cannot_load, this);
     }
 

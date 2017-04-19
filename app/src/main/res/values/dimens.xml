@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="selected_routes_offset">52dp</dimen>
-    <dimen name="map_top_padding">52dp</dimen>
+    <dimen name="map_top_padding">60dp</dimen>
     <dimen name="station_marker_size">24dp</dimen>
     <dimen name="station_marker_padding">6dp</dimen>
 </resources>

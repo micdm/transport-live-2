@@ -9,8 +9,7 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.PathLoader;
@@ -29,7 +28,7 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
 
     static class ViewInput extends BasePresenter.ViewInput<View> {
 
-        private final Subject<Collection<Id>> loadPathsRequests = PublishSubject.create();
+        private final Subject<Collection<Id>> loadPathsRequests = BehaviorSubject.create();
 
         Observable<Collection<Id>> getLoadPathsRequests() {
             return loadPathsRequests;
@@ -46,6 +45,8 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
     @Inject
     Loaders loaders;
 
+    private final Subject<Result<Collection<Path>>> results = BehaviorSubject.create();
+
     PathsPresenter() {
         super(new ViewInput());
     }
@@ -54,7 +55,8 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
             getPathLoadersToAttach().subscribe(loader -> loader.attach(this)),
-            getPathLoadersToDetach().subscribe(loader -> loader.detach(this))
+            getPathLoadersToDetach().subscribe(loader -> loader.detach(this)),
+            subscribeForResults()
         );
     }
 
@@ -80,32 +82,31 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
             .map(loaders::getPathLoader);
     }
 
+    private Disposable subscribeForResults() {
+        return viewInput.getLoadPathsRequests()
+            .map(routeIds -> {
+                Collection<Observable<Result<Path>>> observables = new ArrayList<>();
+                for (Id routeId: routeIds) {
+                    observables.add(loaders.getPathLoader(routeId).getData());
+                }
+                return new ResultWatcherN<>(commonFunctions, observables);
+            })
+            .switchMap(watcher ->
+                Observable.<Result<Collection<Path>>>merge(
+                    watcher.getLoading().map(o -> Result.newLoading()),
+                    watcher.getSuccess().map(Result::newSuccess),
+                    watcher.getFail().map(o -> Result.newFail())
+                )
+            )
+            .subscribe(results::onNext);
+    }
+
     @Override
     public Observable<Id> getLoadPathRequests() {
         return viewInput.getLoadPathsRequests().switchMap(Observable::fromIterable);
     }
 
     public Observable<Result<Collection<Path>>> getResults() {
-        return Observable
-            .<Consumer<Collection<PathLoader>>>merge(
-                getPathLoadersToAttach().map(loader -> accumulated -> accumulated.add(loader)),
-                getPathLoadersToDetach().map(loader -> accumulated -> accumulated.remove(loader))
-            )
-            .scan(new ArrayList<PathLoader>(), (accumulated, handler) -> {
-                handler.accept(accumulated);
-                return accumulated;
-            })
-            .switchMap(loaders -> {
-                Collection<Observable<Result<Path>>> observables = new ArrayList<>(loaders.size());
-                for (PathLoader loader: loaders) {
-                    observables.add(loader.getData());
-                }
-                ResultWatcherN<Path> watcher = new ResultWatcherN<>(commonFunctions, observables);
-                return Observable.merge(
-                    watcher.getLoading().map(o -> Result.newLoading()),
-                    watcher.getSuccess().map(Result::newSuccess),
-                    watcher.getFail().map(o -> Result.newFail())
-                );
-            });
+        return results;
     }
 }

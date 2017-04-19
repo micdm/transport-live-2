@@ -9,6 +9,7 @@ import micdm.transportlive2.ui.views.ClearableEditText;
 import micdm.transportlive2.ui.views.CustomMapView;
 import micdm.transportlive2.ui.views.ForecastView;
 import micdm.transportlive2.ui.views.LoadingView;
+import micdm.transportlive2.ui.views.MainToolbarView;
 import micdm.transportlive2.ui.views.SearchRouteView;
 import micdm.transportlive2.ui.views.SelectedRouteView;
 import micdm.transportlive2.ui.views.SelectedRoutesView;
@@ -36,4 +37,5 @@ public interface ActivityComponent {
     void inject(PermissionChecker target);
     void inject(ForecastView target);
     void inject(SelectedRouteView target);
+    void inject(MainToolbarView target);
 }

@@ -39,6 +39,8 @@ import butterknife.BindView;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.data.loaders.Result;
@@ -196,7 +198,6 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
         }
     }
 
-    // TODO: не показывать маркеры на мелком масштабе
     private static class StationHandler {
 
         private final Bitmap icon;
@@ -208,16 +209,18 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             this.map = map;
         }
 
-        void handle(Collection<Path> paths) {
+        void handle(Collection<Path> paths, boolean areStationsVisible) {
             Collection<Id> outdated = new HashSet<>(markers.keySet());
             for (Path path: paths) {
                 for (Station station: path.stations()) {
-                    if (!markers.containsKey(station.id())) {
-                        Marker marker = newMarker(station);
+                    Marker marker = markers.get(station.id());
+                    if (marker == null) {
+                        marker = newMarker(station, areStationsVisible);
                         marker.setTag(station.id());
                         markers.put(station.id(), marker);
                     } else {
                         outdated.remove(station.id());
+                        marker.setVisible(areStationsVisible);
                     }
                 }
             }
@@ -226,7 +229,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             }
         }
 
-        private Marker newMarker(Station station) {
+        private Marker newMarker(Station station, boolean isVisible) {
             return map.addMarker(
                 new MarkerOptions()
                     .anchor(0.5f, 0.5f)
@@ -234,6 +237,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                     .icon(BitmapDescriptorFactory.fromBitmap(icon))
                     .position(new LatLng(station.location().latitude(), station.location().longitude()))
                     .title(station.name())
+                    .visible(isVisible)
             );
         }
     }
@@ -245,6 +249,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     private static final double CAMERA_LATITUDE = 56.488881;
     private static final double CAMERA_LONGITUDE = 84.987703;
     private static final int CAMERA_ZOOM = 12;
+    private static final int CAMERA_ZOOM_TO_SHOW_STATIONS = 12;
 
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
@@ -279,6 +284,8 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @BindView(R.id.v__custom_map__map)
     MapView mapView;
 
+    private final Subject<Boolean> areStationsVisible = BehaviorSubject.createDefault(false);
+
     public CustomMapView(Context context, AttributeSet attrs) {
         super(context, attrs);
         if (!isInEditMode()) {
@@ -287,7 +294,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     }
 
     @Override
-    protected void inflateContent(LayoutInflater layoutInflater) {
+    void inflateContent(LayoutInflater layoutInflater) {
         layoutInflater.inflate(R.layout.v__custom_map, this);
     }
 
@@ -297,7 +304,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     }
 
     @Override
-    protected Disposable subscribeForEvents() {
+    Disposable subscribeForEvents() {
         return new CompositeDisposable(
             subscribeForActivityEvents(),
             subscribeForMap(),
@@ -389,32 +396,45 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     }
 
     private Disposable subscribeForPaths() {
-        return getMap()
-            .switchMap(map -> {
-                Observable<Collection<Path>> common =
-                    Observable
-                        .merge(
-                            pathsPresenter.getResults()
-                                .filter(Result::isSuccess)
-                                .map(Result::getData),
-                            selectedRoutesPresenter.getSelectedRoutes()
-                                .filter(Collection::isEmpty)
-                                .map(o -> Collections.<Path>emptyList())
-                        )
-                        .distinctUntilChanged()
-                        .compose(commonFunctions.toMainThread())
-                        .share();
-                return Observable.merge(
-                    common.scan(new PathHandler(colorConstructor, map), (accumulated, paths) -> {
-                        accumulated.handle(paths);
-                        return accumulated;
-                    }),
-                    common.scan(new StationHandler(stationIcon, map), (accumulated, paths) -> {
-                        accumulated.handle(paths);
-                        return accumulated;
-                    })
+        Observable<Collection<Path>> common =
+            Observable
+                .merge(
+                    pathsPresenter.getResults()
+                        .filter(Result::isSuccess)
+                        .map(Result::getData),
+                    selectedRoutesPresenter.getSelectedRoutes()
+                        .filter(Collection::isEmpty)
+                        .map(o -> Collections.<Path>emptyList())
                 );
-            })
+        return getMap()
+            .switchMap(map ->
+                Observable.merge(
+                    common
+                        .compose(commonFunctions.toMainThread())
+                        .scan(new PathHandler(colorConstructor, map), (accumulated, paths) -> {
+                            accumulated.handle(paths);
+                            return accumulated;
+                        }),
+                    Observable
+                        .combineLatest(
+                            common,
+                            Observable.combineLatest(
+                                areStationsVisible,
+                                Observable.<Boolean>create(source -> {
+                                    map.setOnCameraIdleListener(() -> source.onNext(map.getCameraPosition().zoom >= CAMERA_ZOOM_TO_SHOW_STATIONS));
+                                    source.setCancellable(() -> map.setOnCameraIdleListener(null));
+                                }),
+                                (a, b) -> a && b
+                            ),
+                            Pair::with
+                        )
+                        .compose(commonFunctions.toMainThread())
+                        .scan(new StationHandler(stationIcon, map), (accumulated, pair) -> {
+                            accumulated.handle(pair.getValue0(), pair.getValue1());
+                            return accumulated;
+                        })
+                )
+            )
             .subscribe();
     }
 
@@ -485,5 +505,9 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 source.setCancellable(() -> map.setOnMarkerClickListener(null));
             })
         );
+    }
+
+    public void setStationsVisible(boolean isVisible) {
+        areStationsVisible.onNext(isVisible);
     }
 }
