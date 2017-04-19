@@ -1,6 +1,7 @@
 package micdm.transportlive2.ui.views;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
@@ -69,18 +71,32 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             Vehicle vehicle;
             Marker marker;
             VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
+            final ValueAnimator animator;
 
-            private VehicleMarker(Vehicle vehicle, Marker marker) {
+            private VehicleMarker(Vehicle vehicle, Marker marker, ValueAnimator animator) {
                 this.vehicle = vehicle;
                 this.marker = marker;
+                this.animator = animator;
+                animator.addUpdateListener(animation -> marker.setPosition((LatLng) animation.getAnimatedValue()));
+            }
+
+            void cleanup() {
+                marker.remove();
+                if (bitmapWrapper != null) {
+                    bitmapWrapper.recycle();
+                }
+                animator.removeAllUpdateListeners();
+                animator.cancel();
             }
         }
 
+        private final Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
         private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
         private final GoogleMap map;
         private Map<Id, VehicleMarker> markers = new HashMap<>();
 
-        VehicleHandler(VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
+        VehicleHandler(Provider<ValueAnimator> vehicleMarkerAnimatorProvider, VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
+            this.vehicleMarkerAnimatorProvider = vehicleMarkerAnimatorProvider;
             this.vehicleMarkerIconBuilder = vehicleMarkerIconBuilder;
             this.map = map;
         }
@@ -90,12 +106,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             for (Vehicle vehicle: vehicles) {
                 VehicleMarker vehicleMarker = markers.get(vehicle.id());
                 if (vehicleMarker == null) {
-                    MarkerOptions options = new MarkerOptions()
-                        .anchor(0.5f, 0.5f)
-                        .flat(true)
-                        .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()))
-                        .zIndex(1);
-                    vehicleMarker = new VehicleMarker(vehicle, map.addMarker(options));
+                    vehicleMarker = newMarker(vehicle);
                     markers.put(vehicle.id(), vehicleMarker);
                 } else {
                     outdated.remove(vehicle.id());
@@ -103,19 +114,38 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                         continue;
                     }
                     vehicleMarker.vehicle = vehicle;
-                    vehicleMarker.marker.setPosition(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()));
+                    updatePosition(vehicleMarker.marker, vehicle.position(), vehicleMarker.animator);
                 }
-                if (vehicleMarker.bitmapWrapper != null) {
-                    vehicleMarker.bitmapWrapper.recycle();
-                    vehicleMarker.bitmapWrapper = null;
-                }
-                Route route = getRouteById(groups, vehicle.routeId());
-                vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
-                vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
+                updateIcon(vehicleMarker, groups, vehicle);
             }
             for (Id id: outdated) {
-                markers.remove(id).marker.remove();
+                markers.remove(id).cleanup();
             }
+        }
+
+        private VehicleMarker newMarker(Vehicle vehicle) {
+            MarkerOptions options = new MarkerOptions()
+                .anchor(0.5f, 0.5f)
+                .flat(true)
+                .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()))
+                .zIndex(1);
+            return new VehicleMarker(vehicle, map.addMarker(options), vehicleMarkerAnimatorProvider.get());
+        }
+
+        private void updatePosition(Marker marker, Point position, ValueAnimator animator) {
+            animator.cancel();
+            animator.setObjectValues(marker.getPosition(), new LatLng(position.latitude(), position.longitude()));
+            animator.start();
+        }
+
+        private void updateIcon(VehicleMarker vehicleMarker, Collection<RouteGroup> groups, Vehicle vehicle) {
+            if (vehicleMarker.bitmapWrapper != null) {
+                vehicleMarker.bitmapWrapper.recycle();
+                vehicleMarker.bitmapWrapper = null;
+            }
+            Route route = getRouteById(groups, vehicle.routeId());
+            vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
+            vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
         }
 
         private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
@@ -240,6 +270,8 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     SelectedRoutesPresenter selectedRoutesPresenter;
     @Inject
+    Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
+    @Inject
     VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
 
     @BindView(R.id.v__custom_map__no_vehicles)
@@ -337,7 +369,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                         Pair::with
                     )
                     .compose(commonFunctions.toMainThread())
-                    .scan(new VehicleHandler(vehicleMarkerIconBuilder, map), (accumulated, pair) -> {
+                    .scan(new VehicleHandler(vehicleMarkerAnimatorProvider, vehicleMarkerIconBuilder, map), (accumulated, pair) -> {
                         accumulated.handle(pair.getValue0(), pair.getValue1());
                         return accumulated;
                     })

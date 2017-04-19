@@ -1,5 +1,7 @@
 package micdm.transportlive2.ui;
 
+import android.animation.TypeEvaluator;
+import android.animation.ValueAnimator;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -8,6 +10,8 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
+
+import com.google.android.gms.maps.model.LatLng;
 
 import javax.inject.Named;
 
@@ -91,7 +95,6 @@ public class UiModule {
         return bitmap;
     }
 
-
     @Provides
     @Named("vehicleIconText")
     @AppScope
@@ -101,5 +104,19 @@ public class UiModule {
         paint.setStyle(Paint.Style.FILL);
         paint.setTextSize(vehicleIcon.getWidth() * 0.25f);
         return paint;
+    }
+
+    @Provides
+    ValueAnimator provideMarkerAnimator(TypeEvaluator<LatLng> typeEvaluator) {
+        return ValueAnimator.ofObject(typeEvaluator, new LatLng(0, 0));
+    }
+
+    @Provides
+    @AppScope
+    TypeEvaluator<LatLng> provideLatLngTypeEvaluator() {
+        return (fraction, startValue, endValue) -> new LatLng(
+            startValue.latitude + (endValue.latitude - startValue.latitude) * fraction,
+            startValue.longitude + (endValue.longitude - startValue.longitude) * fraction
+        );
     }
 }
