@@ -20,6 +20,7 @@ import micdm.transportlive2.misc.ObservableCache;
 import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.ui.PreferencesPresenter;
+import micdm.transportlive2.ui.Presenters;
 
 public class MainToolbarView extends PresentedView implements PreferencesPresenter.View {
 
@@ -28,7 +29,7 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
     @Inject
     ObservableCache observableCache;
     @Inject
-    PreferencesPresenter preferencesPresenter;
+    Presenters presenters;
 
     @BindView(R.id.v__main_toolbar__toolbar)
     Toolbar toolbarView;
@@ -56,18 +57,18 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
     }
 
     private Disposable subscribeForShowStations() {
-        return preferencesPresenter.getNeedShowStations()
+        return presenters.getPreferencesPresenter().getNeedShowStations()
             .subscribe(toolbarView.getMenu().findItem(R.id.m__main__show_stations)::setChecked);
     }
 
     @Override
     void attachToPresenters() {
-        preferencesPresenter.attach(this);
+        presenters.getPreferencesPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
-        preferencesPresenter.detach(this);
+        presenters.getPreferencesPresenter().detach(this);
     }
 
     Observable<Object> getGoToAboutRequests() {
@@ -85,7 +86,7 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
         return getMenuClicks()
             .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
             .map(item -> !item.isChecked())
-            .withLatestFrom(preferencesPresenter.getPreferences(), (needShowStations, preferences) ->
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (needShowStations, preferences) ->
                 ImmutablePreferences.builder()
                     .from(preferences)
                     .needShowStations(needShowStations)

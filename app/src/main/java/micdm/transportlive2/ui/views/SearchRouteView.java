@@ -35,6 +35,7 @@ import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.ui.PreferencesPresenter;
+import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 
@@ -109,11 +110,9 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     @Inject
     MiscFunctions miscFunctions;
     @Inject
-    PreferencesPresenter preferencesPresenter;
+    Presenters presenters;
     @Inject
     Resources resources;
-    @Inject
-    RoutesPresenter routesPresenter;
 
     @BindView(R.id.v__search_route__input)
     ClearableEditText inputView;
@@ -149,10 +148,10 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     private Disposable subscribeForRoutes() {
         return Observable
             .combineLatest(
-                routesPresenter.getResults()
+                presenters.getRoutesPresenter().getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                preferencesPresenter.getSelectedRoutes(),
+                presenters.getPreferencesPresenter().getSelectedRoutes(),
                 inputView.getText()
                     .map(text -> text.toString().toLowerCase()),
                 (groups, routeIds, search) -> {
@@ -194,14 +193,14 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
 
     @Override
     void attachToPresenters() {
-        routesPresenter.attach(this);
-        preferencesPresenter.attach(this);
+        presenters.getRoutesPresenter().attach(this);
+        presenters.getPreferencesPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
-        routesPresenter.detach(this);
-        preferencesPresenter.detach(this);
+        presenters.getRoutesPresenter().detach(this);
+        presenters.getPreferencesPresenter().detach(this);
     }
 
     @Override
@@ -212,7 +211,7 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     @Override
     public Observable<Preferences> getChangePreferencesRequests() {
         return ((Adapter) itemsView.getAdapter()).getSelectRouteRequests()
-            .withLatestFrom(preferencesPresenter.getPreferences(), (routeIds, preferences) ->
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (routeIds, preferences) ->
                 ImmutablePreferences.builder()
                     .from(preferences)
                     .addSelectedRoutes(routeIds)

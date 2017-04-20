@@ -45,13 +45,9 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     @Inject
     ObservableCache observableCache;
     @Inject
-    PreferencesPresenter preferencesPresenter;
-    @Inject
     Presenters presenters;
     @Inject
     Resources resources;
-    @Inject
-    RoutesPresenter routesPresenter;
 
     @BindView(R.id.v__selected_route__icon)
     ImageView iconView;
@@ -86,14 +82,14 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
 
     @Override
     void attachToPresenters() {
-        routesPresenter.attach(this);
-        preferencesPresenter.attach(this);
+        presenters.getRoutesPresenter().attach(this);
+        presenters.getPreferencesPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
-        routesPresenter.detach(this);
-        preferencesPresenter.detach(this);
+        presenters.getRoutesPresenter().detach(this);
+        presenters.getPreferencesPresenter().detach(this);
     }
 
     @Override
@@ -111,7 +107,7 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     }
 
     private Disposable subscribeForRoute() {
-        return routesPresenter.getResults()
+        return presenters.getRoutesPresenter().getResults()
             .filter(Result::isSuccess)
             .map(Result::getData)
             .map(groups -> {
@@ -177,7 +173,7 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
         return observableCache.get("getChangePreferencesRequests", () ->
             RxView.clicks(removeView)
                 .map(o -> routeId)
-                .withLatestFrom(preferencesPresenter.getPreferences(), (routeId, preferences) -> {
+                .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (routeId, preferences) -> {
                     Collection<Id> selectedRoutes = new HashSet<>(preferences.selectedRoutes());
                     selectedRoutes.remove(routeId);
                     return (Preferences) ImmutablePreferences.builder()

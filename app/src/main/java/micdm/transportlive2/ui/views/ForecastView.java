@@ -121,8 +121,6 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
     Presenters presenters;
     @Inject
     Resources resources;
-    @Inject
-    RoutesPresenter routesPresenter;
 
     @BindView(R.id.v__forecast__name)
     TextView nameView;
@@ -183,7 +181,7 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
     private Disposable subscribeForForecast() {
         ResultWatcher2<Collection<RouteGroup>, Forecast> watcher = new ResultWatcher2<>(
             commonFunctions,
-            routesPresenter.getResults(),
+            presenters.getRoutesPresenter().getResults(),
             presenters.getForecastPresenter(stationId).getResults()
         );
         return new CompositeDisposable(

@@ -65,7 +65,9 @@ public class UiModule {
     @Provides
     @AppScope
     Presenters providePresenters() {
-        return new Presenters();
+        Presenters instance = new Presenters();
+        ComponentHolder.getAppComponent().inject(instance);
+        return instance;
     }
 
     @Provides

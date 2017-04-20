@@ -10,6 +10,7 @@ import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.stores.PreferencesStore;
+import micdm.transportlive2.data.stores.Stores;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Preferences;
 
@@ -35,7 +36,7 @@ public class PreferencesPresenter extends BasePresenter<PreferencesPresenter.Vie
     }
 
     @Inject
-    PreferencesStore preferencesStore;
+    Stores stores;
 
     private final Subject<Preferences> preferences = BehaviorSubject.create();
 
@@ -49,12 +50,12 @@ public class PreferencesPresenter extends BasePresenter<PreferencesPresenter.Vie
     }
 
     private Disposable subscribeForPreferences() {
-        return preferencesStore.getData().subscribe(preferences::onNext);
+        return stores.getPreferencesStore().getData().subscribe(preferences::onNext);
     }
 
     @Override
     void attachToServices() {
-        preferencesStore.attach(this);
+        stores.getPreferencesStore().attach(this);
     }
 
     @Override

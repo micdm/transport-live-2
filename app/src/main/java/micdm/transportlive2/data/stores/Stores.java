@@ -18,6 +18,10 @@ public class Stores extends Container<BaseStore> {
     Cache cache;
     @Inject
     Gson gson;
+    @Inject
+    PreferencesStore preferencesStore;
+    @Inject
+    RoutesStore routesStore;
 
     private final Map<Id, PathStore> pathStores = new HashMap<>();
 
@@ -38,6 +42,14 @@ public class Stores extends Container<BaseStore> {
                 new CacheStorage(cache, String.format("path_%s", routeId.getOriginal()))
             )
         );
+    }
+
+    public PreferencesStore getPreferencesStore() {
+        return preferencesStore;
+    }
+
+    public RoutesStore getRoutesStore() {
+        return routesStore;
     }
 
     @Override

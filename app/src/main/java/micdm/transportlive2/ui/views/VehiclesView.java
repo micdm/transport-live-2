@@ -22,7 +22,7 @@ import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.ui.PathsPresenter;
-import micdm.transportlive2.ui.PreferencesPresenter;
+import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
 
 public class VehiclesView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View {
@@ -34,11 +34,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     @Inject
     LayoutInflater layoutInflater;
     @Inject
-    PathsPresenter pathsPresenter;
-    @Inject
-    PreferencesPresenter preferencesPresenter;
-    @Inject
-    RoutesPresenter routesPresenter;
+    Presenters presenters;
 
     @BindView(R.id.v__vehicles__loading)
     LoadingView loadingView;
@@ -75,14 +71,14 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
 
     @Override
     void attachToPresenters() {
-        routesPresenter.attach(this);
-        pathsPresenter.attach(this);
+        presenters.getRoutesPresenter().attach(this);
+        presenters.getPathsPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
-        routesPresenter.detach(this);
-        pathsPresenter.detach(this);
+        presenters.getRoutesPresenter().detach(this);
+        presenters.getPathsPresenter().detach(this);
     }
 
     @Override
@@ -125,7 +121,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     }
 
     private Disposable subscribeForRequiredData() {
-        Observable<Result<Collection<RouteGroup>>> common = routesPresenter.getResults().compose(commonFunctions.toMainThread());
+        Observable<Result<Collection<RouteGroup>>> common = presenters.getRoutesPresenter().getResults().compose(commonFunctions.toMainThread());
         return new CompositeDisposable(
             common.filter(Result::isLoading).subscribe(o -> {
                 loadingView.setVisibility(View.VISIBLE);
@@ -152,6 +148,6 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
 
     @Override
     public Observable<Collection<Id>> getLoadPathsRequests() {
-        return cannotLoadView.getRetryRequest().switchMap(o -> preferencesPresenter.getSelectedRoutes());
+        return cannotLoadView.getRetryRequest().switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes());
     }
 }

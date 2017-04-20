@@ -29,7 +29,7 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
-import micdm.transportlive2.ui.PreferencesPresenter;
+import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
 
 public class SelectedRoutesView extends PresentedView implements RoutesPresenter.View {
@@ -96,9 +96,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     @Inject
     LayoutInflater layoutInflater;
     @Inject
-    PreferencesPresenter preferencesPresenter;
-    @Inject
-    RoutesPresenter routesPresenter;
+    Presenters presenters;
 
     @BindView(R.id.v__selected_routes__items)
     RecyclerView itemsView;
@@ -133,10 +131,10 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     private Disposable subscribeForSelectedRoutes() {
         return Observable
             .combineLatest(
-                routesPresenter.getResults()
+                presenters.getRoutesPresenter().getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                preferencesPresenter.getSelectedRoutes(),
+                presenters.getPreferencesPresenter().getSelectedRoutes(),
                 (groups, routeIds) -> {
                     List<RouteInfo> routes = new ArrayList<>();
                     for (RouteGroup group: groups) {
@@ -176,12 +174,12 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
 
     @Override
     void attachToPresenters() {
-        routesPresenter.attach(this);
+        presenters.getRoutesPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
-        routesPresenter.detach(this);
+        presenters.getRoutesPresenter().detach(this);
     }
 
     @Override

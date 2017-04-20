@@ -58,6 +58,7 @@ import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.AllVehiclesPresenter;
 import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.PreferencesPresenter;
+import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
@@ -252,8 +253,6 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
     @Inject
-    AllVehiclesPresenter allVehiclesPresenter;
-    @Inject
     @Named("stationIcon")
     Bitmap stationIcon;
     @Inject
@@ -263,15 +262,11 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Inject
     ObservableCache observableCache;
     @Inject
-    PathsPresenter pathsPresenter;
-    @Inject
     PermissionChecker permissionChecker;
     @Inject
-    PreferencesPresenter preferencesPresenter;
+    Presenters presenters;
     @Inject
     Resources resources;
-    @Inject
-    RoutesPresenter routesPresenter;
     @Inject
     Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
     @Inject
@@ -339,7 +334,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 map.setPadding(0, resources.getDimensionPixelSize(R.dimen.map_top_padding), 0, 0);
             }),
             getMap()
-                .withLatestFrom(preferencesPresenter.getCameraPosition(), commonFunctions::wrap)
+                .withLatestFrom(presenters.getPreferencesPresenter().getCameraPosition(), commonFunctions::wrap)
                 .subscribe(commonFunctions.unwrap((map, camera) -> {
                     CameraPosition position = CameraPosition.fromLatLngZoom(new LatLng(camera.position().latitude(),
                                                                                        camera.position().longitude()),
@@ -361,15 +356,15 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
             getMap()
                 .switchMap(map ->
                     Observable.combineLatest(
-                        routesPresenter.getResults()
+                        presenters.getRoutesPresenter().getResults()
                             .filter(Result::isSuccess)
                             .map(Result::getData)
                             .distinctUntilChanged(),
                         Observable.merge(
-                            allVehiclesPresenter.getResults()
+                            presenters.getAllVehiclesPresenter().getResults()
                                 .filter(Result::isSuccess)
                                 .map(Result::getData),
-                            preferencesPresenter.getSelectedRoutes()
+                            presenters.getPreferencesPresenter().getSelectedRoutes()
                                 .filter(Collection::isEmpty)
                                 .map(o -> Collections.<Vehicle>emptyList())
                         ).distinctUntilChanged(),
@@ -384,10 +379,10 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 .subscribe(),
             Observable
                 .combineLatest(
-                    allVehiclesPresenter.getResults()
+                    presenters.getAllVehiclesPresenter().getResults()
                         .filter(Result::isSuccess)
                         .map(Result::getData),
-                    preferencesPresenter.getSelectedRoutes(),
+                    presenters.getPreferencesPresenter().getSelectedRoutes(),
                     (vehicles, routeIds) -> vehicles.isEmpty() && !routeIds.isEmpty()
                 )
                 .compose(commonFunctions.toMainThread())
@@ -399,10 +394,10 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
         Observable<Collection<Path>> common =
             Observable
                 .merge(
-                    pathsPresenter.getResults()
+                    presenters.getPathsPresenter().getResults()
                         .filter(Result::isSuccess)
                         .map(Result::getData),
-                    preferencesPresenter.getSelectedRoutes()
+                    presenters.getPreferencesPresenter().getSelectedRoutes()
                         .filter(Collection::isEmpty)
                         .map(o -> Collections.<Path>emptyList())
                 );
@@ -419,7 +414,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                         .combineLatest(
                             common,
                             Observable.combineLatest(
-                                preferencesPresenter.getNeedShowStations(),
+                                presenters.getPreferencesPresenter().getNeedShowStations(),
                                 getCameraPosition().map(cameraPosition -> cameraPosition.zoom >= CAMERA_ZOOM_TO_SHOW_STATIONS),
                                 (a, b) -> a && b
                             ),
@@ -459,18 +454,18 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     @Override
     void attachToPresenters() {
-        preferencesPresenter.attach(this);
-        routesPresenter.attach(this);
-        pathsPresenter.attach(this);
-        allVehiclesPresenter.attach(this);
+        presenters.getPreferencesPresenter().attach(this);
+        presenters.getRoutesPresenter().attach(this);
+        presenters.getPathsPresenter().attach(this);
+        presenters.getAllVehiclesPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
-        preferencesPresenter.detach(this);
-        routesPresenter.detach(this);
-        pathsPresenter.detach(this);
-        allVehiclesPresenter.detach(this);
+        presenters.getPreferencesPresenter().detach(this);
+        presenters.getRoutesPresenter().detach(this);
+        presenters.getPathsPresenter().detach(this);
+        presenters.getAllVehiclesPresenter().detach(this);
     }
 
     @Override
@@ -480,13 +475,13 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
     @Override
     public Observable<Collection<Id>> getLoadPathsRequests() {
-        return preferencesPresenter.getSelectedRoutes();
+        return presenters.getPreferencesPresenter().getSelectedRoutes();
     }
 
     @Override
     public Observable<Collection<Id>> getLoadVehiclesRequests() {
         return activityLifecycleWatcher.getState(Stage.RESUME, true)
-            .switchMap(o -> preferencesPresenter.getSelectedRoutes())
+            .switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes())
             .switchMap(routeIds -> {
                 Duration interval;
                 if (routeIds.size() > MAX_ROUTE_COUNT_WITH_NO_PENALTY) {
@@ -504,7 +499,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Override
     public Observable<Preferences> getChangePreferencesRequests() {
         return getCameraPosition()
-            .withLatestFrom(preferencesPresenter.getPreferences(), (cameraPosition, preferences) ->
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (cameraPosition, preferences) ->
                 ImmutablePreferences.builder()
                     .from(preferences)
                     .cameraPosition(
