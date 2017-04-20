@@ -19,4 +19,7 @@ interface ApiService {
 
     @GET("Forecast/GetForecast")
     Single<GetForecastResponse> getForecast(@Query("pathwayMilestoneId") String stationId);
+
+    @GET("PathwayMilestone")
+    Single<GetStationResponse> getStation(@Query("pathwayMilestoneId") String stationId);
 }

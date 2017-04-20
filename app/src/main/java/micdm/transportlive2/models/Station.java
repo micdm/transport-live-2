@@ -9,5 +9,6 @@ public interface Station {
 
     Id id();
     String name();
+    String description();
     Point location();
 }

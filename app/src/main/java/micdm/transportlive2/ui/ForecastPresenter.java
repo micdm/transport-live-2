@@ -9,7 +9,6 @@ import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.ForecastLoader;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
-import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Forecast;
 
@@ -34,8 +33,6 @@ public class ForecastPresenter extends BasePresenter<ForecastPresenter.View, For
         }
     }
 
-    @Inject
-    CommonFunctions commonFunctions;
     @Inject
     Loaders loaders;
 

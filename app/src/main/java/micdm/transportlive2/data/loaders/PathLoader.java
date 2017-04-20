@@ -56,6 +56,7 @@ public class PathLoader extends BaseLoader<PathLoader.Client, Path> {
                     ImmutableStation.builder()
                         .id(idFactory.newInstance(feature.properties.mid))
                         .name(feature.properties.name)
+                        .description("")
                         .location(
                             ImmutablePoint.builder()
                                 .latitude(feature.geometry.coordinates.get(1))

@@ -18,7 +18,7 @@ public interface Preferences {
     }
 
     List<Id> selectedRoutes();
-    List<Station> selectedStations();
+    List<Id> selectedStations();
     boolean needShowStations();
     CameraPosition cameraPosition();
 }

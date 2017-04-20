@@ -13,6 +13,8 @@ import micdm.transportlive2.ui.views.MainToolbarView;
 import micdm.transportlive2.ui.views.SearchRouteView;
 import micdm.transportlive2.ui.views.SelectedRouteView;
 import micdm.transportlive2.ui.views.SelectedRoutesView;
+import micdm.transportlive2.ui.views.SelectedStationView;
+import micdm.transportlive2.ui.views.SelectedStationsView;
 import micdm.transportlive2.ui.views.VehiclesView;
 
 @ActivityScope
@@ -38,4 +40,6 @@ public interface ActivityComponent {
     void inject(ForecastView target);
     void inject(SelectedRouteView target);
     void inject(MainToolbarView target);
+    void inject(SelectedStationsView target);
+    void inject(SelectedStationView target);
 }

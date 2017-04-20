@@ -27,4 +27,8 @@ public class ServerConnector {
     public Single<GetForecastResponse> getForecast(Id stationId) {
         return apiService.getForecast(stationId.getOriginal());
     }
+
+    public Single<GetStationResponse> getStation(Id stationId) {
+        return apiService.getStation(stationId.getOriginal());
+    }
 }

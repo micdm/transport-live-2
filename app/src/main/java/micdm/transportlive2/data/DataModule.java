@@ -171,10 +171,12 @@ public class DataModule {
 
         private final IdTypeAdapter idTypeAdapter;
         private final PointTypeAdapter pointTypeAdapter;
+        private final StationTypeAdapter stationTypeAdapter;
 
-        private PathTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter) {
+        private PathTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter, StationTypeAdapter stationTypeAdapter) {
             this.idTypeAdapter = idTypeAdapter;
             this.pointTypeAdapter = pointTypeAdapter;
+            this.stationTypeAdapter = stationTypeAdapter;
         }
 
         @Override
@@ -189,18 +191,9 @@ public class DataModule {
             out.endArray();
             out.name("stations").beginArray();
             for (Station station: path.stations()) {
-                writeStation(out, station);
+                stationTypeAdapter.write(out, station);
             }
             out.endArray();
-            out.endObject();
-        }
-
-        private void writeStation(JsonWriter out, Station station) throws IOException {
-            out.beginObject().name("id");
-            idTypeAdapter.write(out, station.id());
-            out.name("name").value(station.name());
-            out.name("location");
-            pointTypeAdapter.write(out, station.location());
             out.endObject();
         }
 
@@ -223,28 +216,9 @@ public class DataModule {
                 if (name.equals("stations")) {
                     in.beginArray();
                     while (in.hasNext()) {
-                        builder.addStations(readStation(in));
+                        builder.addStations(stationTypeAdapter.read(in));
                     }
                     in.endArray();
-                }
-            }
-            in.endObject();
-            return builder.build();
-        }
-
-        private Station readStation(JsonReader in) throws IOException {
-            in.beginObject();
-            ImmutableStation.Builder builder = ImmutableStation.builder();
-            while (in.hasNext()) {
-                String name = in.nextName();
-                if (name.equals("id")) {
-                    builder.id(idTypeAdapter.read(in));
-                }
-                if (name.equals("name")) {
-                    builder.name(in.nextString());
-                }
-                if (name.equals("location")) {
-                    builder.location(pointTypeAdapter.read(in));
                 }
             }
             in.endObject();
@@ -270,6 +244,11 @@ public class DataModule {
                 idTypeAdapter.write(out, id);
             }
             out.endArray();
+            out.name("selectedStations").beginArray();
+            for (Id id: preferences.selectedStations()) {
+                idTypeAdapter.write(out, id);
+            }
+            out.endArray();
             out.name("needShowStations").value(preferences.needShowStations());
             out.name("cameraPosition");
             preferencesCameraPositionTypeAdapter.write(out, preferences.cameraPosition());
@@ -286,6 +265,13 @@ public class DataModule {
                     in.beginArray();
                     while (in.hasNext()) {
                         builder.addSelectedRoutes(idTypeAdapter.read(in));
+                    }
+                    in.endArray();
+                }
+                if (name.equals("selectedStations")) {
+                    in.beginArray();
+                    while (in.hasNext()) {
+                        builder.addSelectedStations(idTypeAdapter.read(in));
                     }
                     in.endArray();
                 }
@@ -336,13 +322,61 @@ public class DataModule {
         }
     }
 
+    static class StationTypeAdapter extends TypeAdapter<Station> {
+
+        private final IdTypeAdapter idTypeAdapter;
+        private final PointTypeAdapter pointTypeAdapter;
+
+        StationTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter) {
+            this.idTypeAdapter = idTypeAdapter;
+            this.pointTypeAdapter = pointTypeAdapter;
+        }
+
+        @Override
+        public void write(JsonWriter out, Station station) throws IOException {
+            out.beginObject();
+            out.name("id");
+            idTypeAdapter.write(out, station.id());
+            out.name("name").value(station.name());
+            out.name("description").value(station.description());
+            out.name("location");
+            pointTypeAdapter.write(out, station.location());
+            out.endObject();
+        }
+
+        @Override
+        public Station read(JsonReader in) throws IOException {
+            ImmutableStation.Builder builder = ImmutableStation.builder();
+            in.beginObject();
+            while (in.hasNext()) {
+                String name = in.nextName();
+                if (name.equals("id")) {
+                    builder.id(idTypeAdapter.read(in));
+                }
+                if (name.equals("name")) {
+                    builder.name(in.nextString());
+                }
+                if (name.equals("description")) {
+                    builder.description(in.nextString());
+                }
+                if (name.equals("location")) {
+                    builder.location(pointTypeAdapter.read(in));
+                }
+            }
+            in.endObject();
+            return builder.build();
+        }
+    }
+
     @Provides
     @AppScope
-    Gson provideGson(RouteGroupTypeAdapter routeGroupTypeAdapter, PathTypeAdapter pathTypeAdapter, PreferencesTypeAdapter preferencesTypeAdapter) {
+    Gson provideGson(RouteGroupTypeAdapter routeGroupTypeAdapter, PathTypeAdapter pathTypeAdapter,
+                     PreferencesTypeAdapter preferencesTypeAdapter, StationTypeAdapter stationTypeAdapter) {
         return new GsonBuilder()
             .registerTypeAdapter(RouteGroup.class, routeGroupTypeAdapter)
             .registerTypeAdapter(Path.class, pathTypeAdapter)
             .registerTypeAdapter(Preferences.class, preferencesTypeAdapter)
+            .registerTypeAdapter(Station.class, stationTypeAdapter)
             .create();
     }
 
@@ -366,13 +400,15 @@ public class DataModule {
 
     @Provides
     @AppScope
-    PathTypeAdapter providePathTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter) {
-        return new PathTypeAdapter(idTypeAdapter, pointTypeAdapter);
+    PathTypeAdapter providePathTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter,
+                                           StationTypeAdapter stationTypeAdapter) {
+        return new PathTypeAdapter(idTypeAdapter, pointTypeAdapter, stationTypeAdapter);
     }
 
     @Provides
     @AppScope
-    PreferencesTypeAdapter providePreferencesTypeAdapter(IdTypeAdapter idTypeAdapter, PreferencesCameraPositionTypeAdapter preferencesCameraPositionTypeAdapter) {
+    PreferencesTypeAdapter providePreferencesTypeAdapter(IdTypeAdapter idTypeAdapter,
+                                                         PreferencesCameraPositionTypeAdapter preferencesCameraPositionTypeAdapter) {
         return new PreferencesTypeAdapter(idTypeAdapter, preferencesCameraPositionTypeAdapter);
     }
 
@@ -380,5 +416,11 @@ public class DataModule {
     @AppScope
     PreferencesCameraPositionTypeAdapter providePreferencesCameraPositionTypeAdapter(PointTypeAdapter pointTypeAdapter) {
         return new PreferencesCameraPositionTypeAdapter(pointTypeAdapter);
+    }
+
+    @Provides
+    @AppScope
+    StationTypeAdapter provideStationTypeAdapter(IdTypeAdapter idTypeAdapter, PointTypeAdapter pointTypeAdapter) {
+        return new StationTypeAdapter(idTypeAdapter, pointTypeAdapter);
     }
 }

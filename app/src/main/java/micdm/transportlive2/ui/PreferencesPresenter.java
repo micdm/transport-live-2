@@ -73,6 +73,12 @@ public class PreferencesPresenter extends BasePresenter<PreferencesPresenter.Vie
             .distinctUntilChanged();
     }
 
+    public Observable<Collection<Id>> getSelectedStations() {
+        return preferences
+            .<Collection<Id>>map(Preferences::selectedStations)
+            .distinctUntilChanged();
+    }
+
     public Observable<Boolean> getNeedShowStations() {
         return preferences
             .map(Preferences::needShowStations)

@@ -6,6 +6,7 @@ import micdm.transportlive2.data.loaders.ForecastLoader;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.PathLoader;
 import micdm.transportlive2.data.loaders.RoutesLoader;
+import micdm.transportlive2.data.loaders.StationLoader;
 import micdm.transportlive2.data.loaders.VehiclesLoader;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
 import micdm.transportlive2.data.stores.PathStore;
@@ -20,6 +21,7 @@ import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
+import micdm.transportlive2.ui.StationPresenter;
 import micdm.transportlive2.ui.UiModule;
 import micdm.transportlive2.ui.VehiclesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
@@ -56,4 +58,6 @@ public interface AppComponent {
     void inject(RoutesLoader target);
     void inject(Loaders target);
     void inject(Presenters target);
+    void inject(StationLoader target);
+    void inject(StationPresenter target);
 }

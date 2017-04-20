@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.jakewharton.rxbinding2.view.RxView;
@@ -17,6 +18,7 @@ import org.joda.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -33,15 +35,18 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Forecast;
+import micdm.transportlive2.models.ImmutablePreferences;
+import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.ui.ForecastPresenter;
+import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 import micdm.transportlive2.ui.misc.ResultWatcher2;
 
-public class ForecastView extends PresentedView implements RoutesPresenter.View, ForecastPresenter.View {
+public class ForecastView extends PresentedView implements RoutesPresenter.View, ForecastPresenter.View, PreferencesPresenter.View {
 
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
@@ -122,8 +127,12 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
     @Inject
     Resources resources;
 
+    @BindView(R.id.v__forecast__title)
+    View titleView;
     @BindView(R.id.v__forecast__name)
     TextView nameView;
+    @BindView(R.id.v__forecast__favorite)
+    ImageView favoriteView;
     @BindView(R.id.v__forecast__description)
     TextView descriptionView;
     @BindView(R.id.v__forecast__close)
@@ -166,16 +175,23 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
     @Override
     void attachToPresenters() {
         presenters.getForecastPresenter(stationId).attach(this);
+        presenters.getPreferencesPresenter().attach(this);
+        presenters.getRoutesPresenter().attach(this);
     }
 
     @Override
     void detachFromPresenters() {
         presenters.getForecastPresenter(stationId).detach(this);
+        presenters.getPreferencesPresenter().detach(this);
+        presenters.getRoutesPresenter().detach(this);
     }
 
     @Override
     Disposable subscribeForEvents() {
-        return subscribeForForecast();
+        return new CompositeDisposable(
+            subscribeForForecast(),
+            subscribeForFavorite()
+        );
     }
 
     private Disposable subscribeForForecast() {
@@ -202,8 +218,13 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
                         descriptionView.setText(product.second.description());
                         descriptionView.setVisibility(VISIBLE);
                     }
-                    ((Adapter) vehiclesView.getAdapter()).setVehicles(getArrivingVehicles(product.first, product.second));
-                    vehiclesView.setVisibility(VISIBLE);
+                    List<VehicleInfo> vehicles = getArrivingVehicles(product.first, product.second);
+                    if (vehicles.isEmpty()) {
+                        vehiclesView.setVisibility(GONE);
+                    } else {
+                        ((Adapter) vehiclesView.getAdapter()).setVehicles(vehicles);
+                        vehiclesView.setVisibility(VISIBLE);
+                    }
                     cannotLoadView.setVisibility(GONE);
                 }),
             watcher.getFail()
@@ -213,6 +234,12 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
                     cannotLoadView.setVisibility(VISIBLE);
                 })
         );
+    }
+
+    private Disposable subscribeForFavorite() {
+        return presenters.getPreferencesPresenter().getSelectedStations()
+            .map(stations -> stations.contains(stationId) ? R.drawable.ic_star : R.drawable.ic_empty_star)
+            .subscribe(favoriteView::setImageResource);
     }
 
     private List<VehicleInfo> getArrivingVehicles(Collection<RouteGroup> groups, Forecast forecast) {
@@ -243,6 +270,24 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
         return cannotLoadView.getRetryRequest()
             .startWith(Irrelevant.INSTANCE)
             .switchMap(o -> Observable.interval(0, LOAD_FORECAST_INTERVAL.getStandardSeconds(), TimeUnit.SECONDS));
+    }
+
+    @Override
+    public Observable<Preferences> getChangePreferencesRequests() {
+        return RxView.clicks(titleView)
+            .map(o -> stationId)
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (stationId, preferences) -> {
+                Collection<Id> selectedStations = new HashSet<>(preferences.selectedStations());
+                if (selectedStations.contains(stationId)) {
+                    selectedStations.remove(stationId);
+                } else {
+                    selectedStations.add(stationId);
+                }
+                return ImmutablePreferences.builder()
+                    .from(preferences)
+                    .selectedStations(selectedStations)
+                    .build();
+            });
     }
 
     public Observable<Object> getCloseRequests() {

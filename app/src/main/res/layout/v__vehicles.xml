@@ -15,11 +15,22 @@
             android:id="@+id/v__vehicles__map"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
-        <micdm.transportlive2.ui.views.SelectedRoutesView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"/>
+            android:layout_centerVertical="true"
+            android:gravity="right">
+            <micdm.transportlive2.ui.views.SelectedRoutesView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <micdm.transportlive2.ui.views.SelectedStationsView
+                android:id="@+id/v__vehicles__selected_stations"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
         <micdm.transportlive2.ui.views.MainToolbarView
             android:id="@+id/v__vehicles__main_toolbar"
             android:layout_width="match_parent"

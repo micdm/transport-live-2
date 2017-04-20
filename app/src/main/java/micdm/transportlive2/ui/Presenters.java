@@ -21,6 +21,7 @@ public class Presenters extends Container<BasePresenter> {
     RoutesPresenter routesPresenter;
 
     private final Map<Id, ForecastPresenter> forecastPresenters = new HashMap<>();
+    private final Map<Id, StationPresenter> stationPresenters = new HashMap<>();
     private final Map<Id, VehiclesPresenter> vehiclesPresenters = new HashMap<>();
 
     public AllVehiclesPresenter getAllVehiclesPresenter() {
@@ -45,6 +46,14 @@ public class Presenters extends Container<BasePresenter> {
 
     public RoutesPresenter getRoutesPresenter() {
         return routesPresenter;
+    }
+
+    public StationPresenter getStationPresenter(Id stationId) {
+        return getOrCreateInstance(stationPresenters, stationId, () -> {
+            StationPresenter instance = new StationPresenter(stationId);
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
     }
 
     public VehiclesPresenter getVehiclesPresenter(Id routeId) {

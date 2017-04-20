@@ -11,6 +11,7 @@ import micdm.transportlive2.misc.Cache;
 import micdm.transportlive2.misc.Container;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Path;
+import micdm.transportlive2.models.Station;
 
 public class Stores extends Container<BaseStore> {
 
@@ -24,6 +25,7 @@ public class Stores extends Container<BaseStore> {
     RoutesStore routesStore;
 
     private final Map<Id, PathStore> pathStores = new HashMap<>();
+    private final Map<Id, StationStore> stationStores = new HashMap<>();
 
     public PathStore getPathStore(Id routeId) {
         return getOrCreateInstance(pathStores, routeId, () ->
@@ -50,6 +52,25 @@ public class Stores extends Container<BaseStore> {
 
     public RoutesStore getRoutesStore() {
         return routesStore;
+    }
+
+    public StationStore getStationStore(Id stationId) {
+        return getOrCreateInstance(stationStores, stationId, () ->
+            new StationStore(
+                clients -> clients.get().flatMap(StationStore.Client::getStoreStationRequests),
+                new BaseStore.Adapter<Station>() {
+                    @Override
+                    public String serialize(Station station) {
+                        return gson.toJson(station, Station.class);
+                    }
+                    @Override
+                    public Station deserialize(String serialized) {
+                        return gson.fromJson(serialized, Station.class);
+                    }
+                },
+                new CacheStorage(cache, String.format("station_%s", stationId.getOriginal()))
+            )
+        );
     }
 
     @Override

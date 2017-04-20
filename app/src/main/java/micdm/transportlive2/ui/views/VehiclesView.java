@@ -44,6 +44,8 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     CustomMapView mapView;
     @BindView(R.id.v__vehicles__main_toolbar)
     MainToolbarView mainToolbarView;
+    @BindView(R.id.v__vehicles__selected_stations)
+    SelectedStationsView selectedStationsView;
     @BindView(R.id.v__vehicles__cannot_load)
     CannotLoadView cannotLoadView;
     @BindView(R.id.v__vehicles__about)
@@ -91,13 +93,18 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     }
 
     private Disposable subscribeForForecast() {
-        Observable<ForecastView> common = mapView.getSelectStationRequests()
-            .map(stationId -> {
-                ForecastView view = (ForecastView) layoutInflater.inflate(R.layout.v__vehicles__forecast, loadedView, false);
-                view.setStationId(stationId);
-                return view;
-            })
-            .share();
+        Observable<ForecastView> common =
+            Observable
+                .merge(
+                    mapView.getSelectStationRequests(),
+                    selectedStationsView.getSelectStationRequests()
+                )
+                .map(stationId -> {
+                    ForecastView view = (ForecastView) layoutInflater.inflate(R.layout.v__vehicles__forecast, loadedView, false);
+                    view.setStationId(stationId);
+                    return view;
+                })
+                .share();
         return new CompositeDisposable(
             common.subscribe(loadedView::addView),
             Observable

@@ -26,9 +26,10 @@ public class Loaders extends Container<BaseLoader> {
     @Inject
     Stores stores;
 
-    private final Map<Id, PathLoader> pathLoaders = new HashMap<>();
-    private final Map<Id, VehiclesLoader> vehiclesLoaders = new HashMap<>();
     private final Map<Id, ForecastLoader> forecastLoaders = new HashMap<>();
+    private final Map<Id, PathLoader> pathLoaders = new HashMap<>();
+    private final Map<Id, StationLoader> stationLoaders = new HashMap<>();
+    private final Map<Id, VehiclesLoader> vehiclesLoaders = new HashMap<>();
 
     public ForecastLoader getForecastLoader(Id stationId) {
         return getOrCreateInstance(forecastLoaders, stationId, () -> {
@@ -57,6 +58,19 @@ public class Loaders extends Container<BaseLoader> {
                 new StoreCacheLoader<>(stores.getPathStore(routeId)),
                 new PathLoader.PathServerLoader(idFactory, serverConnector, routeId),
                 new PathLoader.PathStoreClient(stores.getPathStore(routeId))
+            );
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
+    }
+
+    public StationLoader getStationLoader(Id stationId) {
+        return getOrCreateInstance(stationLoaders, stationId, () -> {
+            StationLoader instance = new StationLoader(
+                clients -> clients.get().flatMap(StationLoader.Client::getLoadStationRequests),
+                new StoreCacheLoader<>(stores.getStationStore(stationId)),
+                new StationLoader.StationServerLoader(idFactory, serverConnector, stationId),
+                new StationLoader.StationStoreClient(stores.getStationStore(stationId))
             );
             ComponentHolder.getAppComponent().inject(instance);
             return instance;
