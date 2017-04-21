@@ -3,7 +3,7 @@ package micdm.transportlive2.ui.views;
 import android.content.Context;
 import android.util.AttributeSet;
 
-public abstract class PresentedView extends BaseView {
+abstract class PresentedView extends BaseView {
 
     public PresentedView(Context context) {
         super(context);

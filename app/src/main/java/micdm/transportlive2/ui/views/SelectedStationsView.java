@@ -85,7 +85,7 @@ public class SelectedStationsView extends BaseView {
     Presenters presenters;
 
     @BindView(R.id.v__selected_stations__items)
-    RecyclerView stationsView;
+    ProbablyEmptyRecyclerView stationsView;
 
     public SelectedStationsView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -112,7 +112,11 @@ public class SelectedStationsView extends BaseView {
 
     private Disposable subscribeForSelectedStations() {
         return presenters.getPreferencesPresenter().getSelectedStations()
-            .map(ArrayList::new)
+            .map(ids -> {
+                List<Id> result = new ArrayList<>(ids);
+                Collections.sort(result, (a, b) -> a.getOriginal().compareTo(b.getOriginal()));
+                return result;
+            })
             .subscribe(((Adapter) stationsView.getAdapter())::setStationIds);
     }
 

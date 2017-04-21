@@ -1,18 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:gravity="center"
+    android:gravity="center_vertical"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
     android:background="@drawable/search_route_item_background">
-    <TextView
-        android:id="@+id/v__selected_station__name"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
-        android:textColor="@color/search_route_item_text"/>
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/v__selected_station__name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+            android:textColor="@color/search_route_item_text"/>
+        <TextView
+            android:id="@+id/v__selected_station__description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@color/search_route_item_text"/>
+    </LinearLayout>
+    <ImageView
+        android:id="@+id/v__selected_station__favorite"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:src="@drawable/ic_star"
+        android:tint="@color/favorite"
+        android:alpha="@dimen/icon_alpha"/>
 </LinearLayout>

@@ -35,6 +35,7 @@ import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.ColorConstructor;
+import micdm.transportlive2.ui.misc.MiscFunctions;
 
 public class SelectedRouteView extends PresentedView implements RoutesPresenter.View, PreferencesPresenter.View {
 
@@ -42,6 +43,8 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     ColorConstructor colorConstructor;
     @Inject
     CommonFunctions commonFunctions;
+    @Inject
+    MiscFunctions miscFunctions;
     @Inject
     ObservableCache observableCache;
     @Inject
@@ -55,10 +58,8 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     View loadingView;
     @BindView(R.id.v__selected_route__cannot_load)
     View cannotLoad;
-    @BindView(R.id.v__selected_route__number)
-    TextView numberView;
-    @BindView(R.id.v__selected_route__extra)
-    View extraView;
+    @BindView(R.id.v__selected_route__name)
+    TextView nameView;
     @BindView(R.id.v__selected_route__remove)
     View removeView;
 
@@ -122,17 +123,8 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
             })
             .compose(commonFunctions.toMainThread())
             .subscribe(info -> {
-                setBackgroundColor(colorConstructor.getByString(info.route.id().getOriginal()));
-                if (info.group.type() == RouteGroup.Type.TROLLEYBUS) {
-                    iconView.setImageDrawable(resources.getDrawable(R.drawable.ic_trolleybus));
-                }
-                if (info.group.type() == RouteGroup.Type.TRAM) {
-                    iconView.setImageDrawable(resources.getDrawable(R.drawable.ic_tram));
-                }
-                if (info.group.type() == RouteGroup.Type.BUS) {
-                    iconView.setImageDrawable(resources.getDrawable(R.drawable.ic_bus));
-                }
-                numberView.setText(info.route.number());
+                iconView.setColorFilter(colorConstructor.getByString(info.route.id().getOriginal()));
+                nameView.setText(resources.getString(R.string.v__selected_route__name, miscFunctions.getRouteGroupName(info.group), info.route.number()));
             });
     }
 
@@ -145,18 +137,21 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
             common
                 .filter(Result::isLoading)
                 .subscribe(o -> {
+                    iconView.setVisibility(GONE);
                     loadingView.setVisibility(VISIBLE);
                     cannotLoad.setVisibility(GONE);
                 }),
             common
                 .filter(Result::isSuccess)
                 .subscribe(o -> {
+                    iconView.setVisibility(VISIBLE);
                     loadingView.setVisibility(GONE);
                     cannotLoad.setVisibility(GONE);
                 }),
             common
                 .filter(Result::isFail)
                 .subscribe(o -> {
+                    iconView.setVisibility(GONE);
                     loadingView.setVisibility(GONE);
                     cannotLoad.setVisibility(VISIBLE);
                 })

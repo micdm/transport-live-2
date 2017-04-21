@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <android.support.v7.widget.RecyclerView
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/drawer_item_height"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:gravity="center_vertical"
+        android:drawableLeft="@drawable/ic_bus"
+        android:drawablePadding="8dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:text="@string/v__selected_routes__title"
+        android:alpha="@dimen/icon_alpha"/>
+    <micdm.transportlive2.ui.views.ProbablyEmptyRecyclerView
         android:id="@+id/v__selected_routes__items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:translationX="@dimen/selected_routes_offset"/>
-</FrameLayout>
+        app:text="@string/v__selected_routes__empty_text"/>
+</LinearLayout>

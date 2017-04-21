@@ -1,6 +1,5 @@
 package micdm.transportlive2.ui.views;
 
-import android.animation.Animator;
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,14 +13,10 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.data.loaders.Result;
@@ -45,16 +40,11 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
 
         private final LayoutInflater layoutInflater;
 
-        private final Subject<Object> toggleRequests = PublishSubject.create();
         private List<RouteInfo> routes = Collections.emptyList();
 
         Adapter(LayoutInflater layoutInflater) {
             this.layoutInflater = layoutInflater;
             setHasStableIds(true);
-        }
-
-        Observable<Object> getToggleRequests() {
-            return toggleRequests;
         }
 
         @Override
@@ -64,9 +54,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            RouteInfo info = routes.get(position);
-            holder.itemView.setOnClickListener(o -> toggleRequests.onNext(Irrelevant.INSTANCE));
-            ((SelectedRouteView) holder.itemView).setRouteId(info.route.id());
+            ((SelectedRouteView) holder.itemView).setRouteId(routes.get(position).route.id());
         }
 
         @Override
@@ -86,12 +74,6 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     }
 
     @Inject
-    @Named("showRoutes")
-    Animator showRoutesAnimator;
-    @Inject
-    @Named("hideRoutes")
-    Animator hideRoutesAnimator;
-    @Inject
     CommonFunctions commonFunctions;
     @Inject
     LayoutInflater layoutInflater;
@@ -99,7 +81,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
     Presenters presenters;
 
     @BindView(R.id.v__selected_routes__items)
-    RecyclerView itemsView;
+    ProbablyEmptyRecyclerView itemsView;
 
     public SelectedRoutesView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -122,10 +104,7 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
 
     @Override
     Disposable subscribeForEvents() {
-        return new CompositeDisposable(
-            subscribeForSelectedRoutes(),
-            subscribeForShowRequests()
-        );
+        return subscribeForSelectedRoutes();
     }
 
     private Disposable subscribeForSelectedRoutes() {
@@ -155,21 +134,6 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
             )
             .compose(commonFunctions.toMainThread())
             .subscribe(((Adapter) itemsView.getAdapter())::setRoutes);
-    }
-
-    private Disposable subscribeForShowRequests() {
-        return ((Adapter) itemsView.getAdapter()).getToggleRequests().subscribe(o -> {
-            if (showRoutesAnimator.isRunning() || hideRoutesAnimator.isRunning()) {
-                return;
-            }
-            if (itemsView.getTranslationX() == 0) {
-                hideRoutesAnimator.setTarget(itemsView);
-                hideRoutesAnimator.start();
-            } else {
-                showRoutesAnimator.setTarget(itemsView);
-                showRoutesAnimator.start();
-            }
-        });
     }
 
     @Override

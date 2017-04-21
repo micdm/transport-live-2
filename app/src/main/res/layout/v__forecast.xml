@@ -37,7 +37,8 @@
                     android:layout_height="match_parent"
                     android:layout_marginLeft="4dp"
                     android:src="@drawable/ic_empty_star"
-                    android:alpha="0.53"/>
+                    android:tint="@color/favorite"
+                    android:alpha="@dimen/icon_alpha"/>
             </LinearLayout>
             <TextView
                 android:id="@+id/v__forecast__description"
@@ -53,7 +54,7 @@
             android:layout_height="match_parent"
             android:layout_marginLeft="8dp"
             android:src="@drawable/ic_cancel"
-            android:alpha="0.53"/>
+            android:alpha="@dimen/icon_alpha"/>
     </LinearLayout>
     <android.support.v7.widget.RecyclerView
         android:id="@+id/v__forecast__vehicles"

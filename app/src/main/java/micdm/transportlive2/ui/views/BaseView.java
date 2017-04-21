@@ -10,7 +10,7 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 
-public abstract class BaseView extends FrameLayout {
+abstract class BaseView extends FrameLayout {
 
     @Inject
     LayoutInflater layoutInflater;

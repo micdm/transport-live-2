@@ -1,6 +1,7 @@
 package micdm.transportlive2.ui.views;
 
 import android.content.Context;
+import android.support.v4.widget.DrawerLayout;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,7 +40,9 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     @BindView(R.id.v__vehicles__loading)
     LoadingView loadingView;
     @BindView(R.id.v__vehicles__loaded)
-    ViewGroup loadedView;
+    DrawerLayout loadedView;
+    @BindView(R.id.v__vehicles__content)
+    ViewGroup contentView;
     @BindView(R.id.v__vehicles__map)
     CustomMapView mapView;
     @BindView(R.id.v__vehicles__main_toolbar)
@@ -67,6 +70,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     void setupViews() {
         loadingView.setVisibility(View.GONE);
         loadedView.setVisibility(View.GONE);
+        mainToolbarView.addToggle(loadedView);
         cannotLoadView.setVisibility(View.GONE);
         aboutView.setVisibility(View.GONE);
     }
@@ -100,13 +104,16 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
                     selectedStationsView.getSelectStationRequests()
                 )
                 .map(stationId -> {
-                    ForecastView view = (ForecastView) layoutInflater.inflate(R.layout.v__vehicles__forecast, loadedView, false);
+                    ForecastView view = (ForecastView) layoutInflater.inflate(R.layout.v__vehicles__forecast, contentView, false);
                     view.setStationId(stationId);
                     return view;
                 })
                 .share();
         return new CompositeDisposable(
-            common.subscribe(loadedView::addView),
+            common.subscribe(view -> {
+                loadedView.closeDrawers();
+                contentView.addView(view);
+            }),
             Observable
                 .merge(
                     common.compose(commonFunctions.getPrevious()),
@@ -114,7 +121,7 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
                         view.getCloseRequests().compose(commonFunctions.toConst(view))
                     )
                 )
-                .subscribe(loadedView::removeView)
+                .subscribe(contentView::removeView)
         );
     }
 

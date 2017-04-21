@@ -10,6 +10,7 @@ import micdm.transportlive2.ui.views.CustomMapView;
 import micdm.transportlive2.ui.views.ForecastView;
 import micdm.transportlive2.ui.views.LoadingView;
 import micdm.transportlive2.ui.views.MainToolbarView;
+import micdm.transportlive2.ui.views.ProbablyEmptyRecyclerView;
 import micdm.transportlive2.ui.views.SearchRouteView;
 import micdm.transportlive2.ui.views.SelectedRouteView;
 import micdm.transportlive2.ui.views.SelectedRoutesView;
@@ -42,4 +43,5 @@ public interface ActivityComponent {
     void inject(MainToolbarView target);
     void inject(SelectedStationsView target);
     void inject(SelectedStationView target);
+    void inject(ProbablyEmptyRecyclerView target);
 }

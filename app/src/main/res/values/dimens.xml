@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="selected_routes_offset">52dp</dimen>
     <dimen name="map_top_padding">60dp</dimen>
     <dimen name="station_marker_size">24dp</dimen>
     <dimen name="station_marker_padding">6dp</dimen>
+    <dimen name="drawer_item_height">48dp</dimen>
+    <item name="icon_alpha" type="dimen" format="float">0.53</item>
 </resources>
