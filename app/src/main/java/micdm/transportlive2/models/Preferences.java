@@ -2,7 +2,7 @@ package micdm.transportlive2.models;
 
 import org.immutables.value.Value;
 
-import java.util.List;
+import java.util.Set;
 
 import micdm.transportlive2.misc.Id;
 
@@ -17,8 +17,8 @@ public interface Preferences {
         double zoom();
     }
 
-    List<Id> selectedRoutes();
-    List<Id> selectedStations();
+    Set<Id> selectedRoutes();
+    Set<Id> selectedStations();
     boolean needShowStations();
     CameraPosition cameraPosition();
 }

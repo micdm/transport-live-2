@@ -8,9 +8,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:hint="@string/v__search_route__input"/>
-    <android.support.v7.widget.RecyclerView
+    <micdm.transportlive2.ui.views.ProbablyEmptyRecyclerView
         android:id="@+id/v__search_route__items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="vertical"/>
+        app:message="@layout/v__search_route__no_routes"/>
 </LinearLayout>

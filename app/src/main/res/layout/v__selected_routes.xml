@@ -18,5 +18,5 @@
         android:id="@+id/v__selected_routes__items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:text="@string/v__selected_routes__empty_text"/>
+        app:message="@layout/v__selected_routes__no_routes"/>
 </LinearLayout>

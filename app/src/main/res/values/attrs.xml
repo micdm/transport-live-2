@@ -4,6 +4,6 @@
         <attr name="hint" format="string"/>
     </declare-styleable>
     <declare-styleable name="ProbablyEmptyRecyclerView">
-        <attr name="text" format="string"/>
+        <attr name="message" format="reference"/>
     </declare-styleable>
 </resources>

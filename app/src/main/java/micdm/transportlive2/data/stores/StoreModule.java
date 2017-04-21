@@ -46,9 +46,9 @@ public class StoreModule {
             },
             new SharedPreferencesStorage(sharedPreferences, "preferences"),
             ImmutablePreferences.builder()
-                .selectedRoutes(Collections.emptyList())
-                .selectedStations(Collections.emptyList())
-                .needShowStations(false)
+                .selectedRoutes(Collections.emptySet())
+                .selectedStations(Collections.emptySet())
+                .needShowStations(true)
                 .cameraPosition(
                     ImmutablePreferences.CameraPosition.builder()
                         .position(

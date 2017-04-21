@@ -12,6 +12,7 @@
     <string name="v__loading__message">Загрузка…</string>
     <string name="v__search_route__input">Номер, конечная остановка…</string>
     <string name="v__search_route__route">%1$s №%2$s (%3$s → %4$s)</string>
+    <string name="v__search_route__no_routes">Ничего подходящего не найдено.</string>
     <string name="v__custom_map__no_vehicles">Кажется, весь транспорт в парке</string>
     <string name="v__forecast__item__route">%1$s №%2$s</string>
     <string name="v__forecast__item__time">%d мин.</string>
@@ -20,10 +21,10 @@
     <string name="v__about__author">По всем вопросам пишите на demerzov@gmail.com</string>
     <string name="v__about__ok">Понятно</string>
     <string name="v__selected_routes__title">Маршруты</string>
-    <string name="v__selected_routes__empty_text">Выберите маршруты через поисковую строку.</string>
+    <string name="v__selected_routes__no_routes">Выберите маршруты через поисковую строку.</string>
     <string name="v__selected_route__name">%1$s №%2$s</string>
     <string name="v__selected_stations__title">Остановки</string>
-    <string name="v__selected_stations__empty_text">Выберите остановки на карте.</string>
+    <string name="v__selected_stations__no_stations">Выберите остановки на карте.</string>
     <string name="v__main_toolbar__open_drawer">Открыть</string>
     <string name="v__main_toolbar__close_drawer">Закрыть</string>
 </resources>

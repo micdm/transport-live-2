@@ -117,7 +117,7 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     @BindView(R.id.v__search_route__input)
     ClearableEditText inputView;
     @BindView(R.id.v__search_route__items)
-    RecyclerView itemsView;
+    ProbablyEmptyRecyclerView itemsView;
 
     public SearchRouteView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -135,12 +135,14 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     void setupViews() {
         itemsView.setLayoutManager(new LinearLayoutManager(getContext()));
         itemsView.setAdapter(new Adapter(layoutInflater, miscFunctions, resources));
+        itemsView.setItemAnimator(null);
     }
 
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
             subscribeForRoutes(),
+            subscribeForSearchString(),
             subscribeForSelection()
         );
     }
@@ -151,17 +153,16 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
                 presenters.getRoutesPresenter().getResults()
                     .filter(Result::isSuccess)
                     .map(Result::getData),
-                presenters.getPreferencesPresenter().getSelectedRoutes(),
                 inputView.getText()
                     .map(text -> text.toString().toLowerCase()),
-                (groups, routeIds, search) -> {
+                (groups, search) -> {
                     if (search.isEmpty()) {
                         return Collections.<RouteInfo>emptyList();
                     }
                     List<RouteInfo> routes = new ArrayList<>();
                     for (RouteGroup group: groups) {
                         for (Route route: group.routes()) {
-                            if ((isRouteGroupMatchesSearch(group, search) || isRouteMatchesSearch(route, search)) && !routeIds.contains(route.id())) {
+                            if ((isRouteGroupMatchesSearch(group, search) || isRouteMatchesSearch(route, search))) {
                                 routes.add(new RouteInfo(group, route));
                             }
                         }
@@ -181,6 +182,12 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
         return route.number().contains(search) ||
             route.source().toLowerCase().contains(search) ||
             route.destination().toLowerCase().contains(search);
+    }
+
+    private Disposable subscribeForSearchString() {
+        return inputView.getText()
+            .map(value -> value.length() != 0)
+            .subscribe(itemsView::setEmptyCheckEnabled);
     }
 
     private Disposable subscribeForSelection() {
