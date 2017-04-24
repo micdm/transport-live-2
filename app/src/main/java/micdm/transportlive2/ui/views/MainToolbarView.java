@@ -11,17 +11,22 @@ import android.view.MenuItem;
 
 import com.jakewharton.rxbinding2.support.v7.widget.RxToolbar;
 
+import java.util.Collection;
+
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
+import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.ObservableCache;
 import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Preferences;
+import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 
@@ -58,7 +63,28 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
 
     @Override
     Disposable subscribeForEvents() {
-        return subscribeForShowStations();
+        return new CompositeDisposable(
+            subscribeForVehicles(),
+            subscribeForShowStations()
+        );
+    }
+
+    private Disposable subscribeForVehicles() {
+        Observable<Result<Collection<Vehicle>>> common = presenters.getAllVehiclesPresenter().getResults()
+            .compose(commonFunctions.minDelay())
+            .compose(commonFunctions.toMainThread())
+            .share();
+        return new CompositeDisposable(
+            common
+                .filter(Result::isLoading)
+                .subscribe(o -> toolbarView.setNavigationIcon(R.drawable.menu_loading)),
+            common
+                .filter(Result::isSuccess)
+                .subscribe(o -> toolbarView.setNavigationIcon(R.drawable.menu_success)),
+            common
+                .filter(Result::isFail)
+                .subscribe(o -> toolbarView.setNavigationIcon(R.drawable.menu_warning))
+        );
     }
 
     private Disposable subscribeForShowStations() {
@@ -79,7 +105,6 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
     public void addToggle(DrawerLayout view) {
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(activity, view, toolbarView, R.string.v__main_toolbar__open_drawer,
                                                                  R.string.v__main_toolbar__close_drawer);
-        toggle.setDrawerIndicatorEnabled(true);
         view.addDrawerListener(toggle);
         toggle.syncState();
     }
