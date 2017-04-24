@@ -17,13 +17,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
-            android:textColor="@color/search_route_item_text"/>
+            android:textColor="@color/search_route_item_text"
+            android:maxLines="1"
+            android:ellipsize="end"/>
         <TextView
             android:id="@+id/v__selected_station__description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-            android:textColor="@color/search_route_item_text"/>
+            android:textColor="@color/search_route_item_text"
+            android:maxLines="1"
+            android:ellipsize="end"/>
     </LinearLayout>
     <ImageView
         android:id="@+id/v__selected_station__favorite"
