@@ -19,14 +19,11 @@ import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
-import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.RouteGroup;
-import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.RoutesPresenter;
 
-public class VehiclesView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View {
+public class VehiclesView extends PresentedView {
 
     @Inject
     CommonFunctions commonFunctions;
@@ -76,24 +73,26 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
     }
 
     @Override
-    void attachToPresenters() {
-        presenters.getRoutesPresenter().attach(this);
-        presenters.getPathsPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getRoutesPresenter().detach(this);
-        presenters.getPathsPresenter().detach(this);
-    }
-
-    @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForLoadRoutesRequests(),
+            subscribeForLoadPathsRequests(),
             subscribeForForecast(),
             subscribeForAbout(),
             subscribeForRequiredData()
         );
+    }
+
+    private Disposable subscribeForLoadRoutesRequests() {
+        return cannotLoadView.getRetryRequest()
+            .startWith(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+    }
+
+    private Disposable subscribeForLoadPathsRequests() {
+        return cannotLoadView.getRetryRequest()
+            .switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes())
+            .subscribe(presenters.getPathsPresenter().viewInput::loadPaths);
     }
 
     private Disposable subscribeForForecast() {
@@ -153,15 +152,5 @@ public class VehiclesView extends PresentedView implements RoutesPresenter.View,
                 cannotLoadView.setVisibility(View.VISIBLE);
             })
         );
-    }
-
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return cannotLoadView.getRetryRequest().startWith(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Collection<Id>> getLoadPathsRequests() {
-        return cannotLoadView.getRetryRequest().switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes());
     }
 }

@@ -5,23 +5,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetRoutesResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.BaseStore;
 import micdm.transportlive2.data.stores.RoutesStore;
 import micdm.transportlive2.misc.IdFactory;
 import micdm.transportlive2.models.ImmutableRoute;
 import micdm.transportlive2.models.ImmutableRouteGroup;
 import micdm.transportlive2.models.RouteGroup;
 
-public class RoutesLoader extends BaseLoader<RoutesLoader.Client, Collection<RouteGroup>> {
-
-    public interface Client {
-
-        Observable<Object> getLoadRoutesRequests();
-    }
+public class RoutesLoader extends BaseLoader<Collection<RouteGroup>> {
 
     static class RoutesServerLoader implements BaseLoader.ServerLoader<Collection<RouteGroup>> {
 
@@ -80,25 +73,15 @@ public class RoutesLoader extends BaseLoader<RoutesLoader.Client, Collection<Rou
         }
     }
 
-    static class RoutesStoreClient extends DefaultStoreClient<RoutesStore.Client, Collection<RouteGroup>> implements RoutesStore.Client {
+    static class RoutesStoreClient extends DefaultStoreClient<Collection<RouteGroup>> {
 
-        RoutesStoreClient(BaseStore<RoutesStore.Client, Collection<RouteGroup>> store) {
+        RoutesStoreClient(RoutesStore store) {
             super(store);
-        }
-
-        @Override
-        public void attach() {
-            store.attach(this);
-        }
-
-        @Override
-        public Observable<Collection<RouteGroup>> getStoreRoutesRequests() {
-            return data;
         }
     }
 
-    RoutesLoader(ClientHandler<Client> clientHandler, CacheLoader<Collection<RouteGroup>> cacheLoader,
-                 ServerLoader<Collection<RouteGroup>> serverLoader, StoreClient<Collection<RouteGroup>> storeClient) {
-        super(clientHandler, cacheLoader, serverLoader, storeClient);
+    RoutesLoader(CacheLoader<Collection<RouteGroup>> cacheLoader, ServerLoader<Collection<RouteGroup>> serverLoader,
+                 StoreClient<Collection<RouteGroup>> storeClient) {
+        super(cacheLoader, serverLoader, storeClient);
     }
 }

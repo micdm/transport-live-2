@@ -50,30 +50,25 @@ import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
-import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
-import micdm.transportlive2.ui.AllVehiclesPresenter;
-import micdm.transportlive2.ui.PathsPresenter;
-import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.PermissionChecker;
 import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 
-public class CustomMapView extends PresentedView implements RoutesPresenter.View, PathsPresenter.View, AllVehiclesPresenter.View, PreferencesPresenter.View {
+public class CustomMapView extends PresentedView {
 
     private static class VehicleHandler {
 
         private static class VehicleMarker {
 
             Vehicle vehicle;
-            Marker marker;
+            final Marker marker;
             VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
             final ValueAnimator animator;
 
@@ -97,7 +92,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
         private final Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
         private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
         private final GoogleMap map;
-        private Map<Id, VehicleMarker> markers = new HashMap<>();
+        private final Map<Id, VehicleMarker> markers = new HashMap<>();
 
         VehicleHandler(Provider<ValueAnimator> vehicleMarkerAnimatorProvider, VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
             this.vehicleMarkerAnimatorProvider = vehicleMarkerAnimatorProvider;
@@ -168,7 +163,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
         private final ColorConstructor colorConstructor;
         private final GoogleMap map;
-        private Map<Id, Polyline> polylines = new HashMap<>();
+        private final Map<Id, Polyline> polylines = new HashMap<>();
 
         PathHandler(ColorConstructor colorConstructor, GoogleMap map) {
             this.colorConstructor = colorConstructor;
@@ -204,7 +199,7 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
 
         private final Bitmap icon;
         private final GoogleMap map;
-        private Map<Id, Marker> markers = new HashMap<>();
+        private final Map<Id, Marker> markers = new HashMap<>();
 
         StationHandler(Bitmap icon, GoogleMap map) {
             this.icon = icon;
@@ -297,11 +292,64 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForLoadRoutesRequests(),
+            subscribeForLoadPathsRequests(),
+            subscribeForLoadVehiclesRequests(),
+            subscribeForChangePreferencesRequests(),
             subscribeForActivityEvents(),
             subscribeForMap(),
             subscribeForVehicles(),
             subscribeForPaths()
         );
+    }
+
+    private Disposable subscribeForLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+    }
+
+    private Disposable subscribeForLoadPathsRequests() {
+        return presenters.getPreferencesPresenter().getSelectedRoutes()
+            .subscribe(presenters.getPathsPresenter().viewInput::loadPaths);
+    }
+
+    private Disposable subscribeForLoadVehiclesRequests() {
+        return activityLifecycleWatcher.getState(Stage.RESUME, true)
+            .switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes())
+            .switchMap(routeIds -> {
+                Duration interval;
+                if (routeIds.size() > MAX_ROUTE_COUNT_WITH_NO_PENALTY) {
+                    interval = LOAD_VEHICLES_PENALTY_INTERVAL.multipliedBy(routeIds.size());
+                } else {
+                    interval = LOAD_VEHICLES_INTERVAL;
+                }
+                return Observable
+                    .interval(0, interval.getStandardSeconds(), TimeUnit.SECONDS)
+                    .compose(commonFunctions.toConst(routeIds))
+                    .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
+            })
+            .subscribe(presenters.getAllVehiclesPresenter().viewInput::loadVehicles);
+    }
+
+    private Disposable subscribeForChangePreferencesRequests() {
+        return getCameraPosition()
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (cameraPosition, preferences) ->
+                ImmutablePreferences.builder()
+                    .from(preferences)
+                    .cameraPosition(
+                        ImmutablePreferences.CameraPosition.builder()
+                            .position(
+                                ImmutablePoint.builder()
+                                    .latitude(cameraPosition.target.latitude)
+                                    .longitude(cameraPosition.target.longitude)
+                                    .build()
+                            )
+                            .zoom(cameraPosition.zoom)
+                            .build()
+                    )
+                    .build()
+            )
+            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
     private Disposable subscribeForActivityEvents() {
@@ -450,71 +498,6 @@ public class CustomMapView extends PresentedView implements RoutesPresenter.View
                 .replay()
                 .refCount()
         );
-    }
-
-    @Override
-    void attachToPresenters() {
-        presenters.getPreferencesPresenter().attach(this);
-        presenters.getRoutesPresenter().attach(this);
-        presenters.getPathsPresenter().attach(this);
-        presenters.getAllVehiclesPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getPreferencesPresenter().detach(this);
-        presenters.getRoutesPresenter().detach(this);
-        presenters.getPathsPresenter().detach(this);
-        presenters.getAllVehiclesPresenter().detach(this);
-    }
-
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Collection<Id>> getLoadPathsRequests() {
-        return presenters.getPreferencesPresenter().getSelectedRoutes();
-    }
-
-    @Override
-    public Observable<Collection<Id>> getLoadVehiclesRequests() {
-        return activityLifecycleWatcher.getState(Stage.RESUME, true)
-            .switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes())
-            .switchMap(routeIds -> {
-                Duration interval;
-                if (routeIds.size() > MAX_ROUTE_COUNT_WITH_NO_PENALTY) {
-                    interval = LOAD_VEHICLES_PENALTY_INTERVAL.multipliedBy(routeIds.size());
-                } else {
-                    interval = LOAD_VEHICLES_INTERVAL;
-                }
-                return Observable
-                    .interval(0, interval.getStandardSeconds(), TimeUnit.SECONDS)
-                    .compose(commonFunctions.toConst(routeIds))
-                    .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
-            });
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return getCameraPosition()
-            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (cameraPosition, preferences) ->
-                ImmutablePreferences.builder()
-                    .from(preferences)
-                    .cameraPosition(
-                        ImmutablePreferences.CameraPosition.builder()
-                            .position(
-                                ImmutablePoint.builder()
-                                    .latitude(cameraPosition.target.latitude)
-                                    .longitude(cameraPosition.target.longitude)
-                                    .build()
-                            )
-                            .zoom(cameraPosition.zoom)
-                            .build()
-                    )
-                    .build()
-            );
     }
 
     public Observable<Id> getSelectStationRequests() {

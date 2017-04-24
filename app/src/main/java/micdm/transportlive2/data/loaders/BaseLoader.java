@@ -11,16 +11,12 @@ import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
-import micdm.transportlive2.misc.Clients;
+import micdm.transportlive2.misc.Irrelevant;
 import timber.log.Timber;
 
-abstract class BaseLoader<Client, Data> {
-
-    interface ClientHandler<Client> {
-
-        Observable<Object> getLoadRequests(Clients<Client> clients);
-    }
+abstract class BaseLoader<Data> {
 
     interface CacheLoader<Data> {
 
@@ -34,7 +30,6 @@ abstract class BaseLoader<Client, Data> {
 
     interface StoreClient<Data> {
 
-        void attach();
         void setData(Data data);
     }
 
@@ -42,17 +37,14 @@ abstract class BaseLoader<Client, Data> {
     @Named("io")
     Scheduler ioScheduler;
 
-    private final Clients<Client> clients = new Clients<>();
-
-    private final ClientHandler<Client> clientHandler;
+    private final Subject<Object> loadRequests = PublishSubject.create();
     private final CacheLoader<Data> cacheLoader;
     private final ServerLoader<Data> serverLoader;
     private final StoreClient<Data> storeClient;
 
     private final Subject<Result<Data>> results = BehaviorSubject.create();
 
-    BaseLoader(ClientHandler<Client> clientHandler, CacheLoader<Data> cacheLoader, ServerLoader<Data> serverLoader, StoreClient<Data> storeClient) {
-        this.clientHandler = clientHandler;
+    BaseLoader(CacheLoader<Data> cacheLoader, ServerLoader<Data> serverLoader, StoreClient<Data> storeClient) {
         this.cacheLoader = cacheLoader;
         this.serverLoader = serverLoader;
         this.storeClient = storeClient;
@@ -61,12 +53,11 @@ abstract class BaseLoader<Client, Data> {
     void init() {
         subscribeForLoadRequests();
         subscribeForData();
-        storeClient.attach();
     }
 
     private Disposable subscribeForLoadRequests() {
         AtomicBoolean isLocked = new AtomicBoolean(false);
-        return clientHandler.getLoadRequests(clients)
+        return loadRequests
             .filter(o -> !isLocked.get())
             .doOnNext(o -> isLocked.set(true))
             .switchMap(o ->
@@ -97,15 +88,11 @@ abstract class BaseLoader<Client, Data> {
             .subscribe(storeClient::setData);
     }
 
-    public void attach(Client client) {
-        clients.attach(client);
-    }
-
-    public void detach(Client client) {
-        clients.detach(client);
-    }
-
     public Observable<Result<Data>> getData() {
         return results;
+    }
+
+    public void load() {
+        loadRequests.onNext(Irrelevant.INSTANCE);
     }
 }

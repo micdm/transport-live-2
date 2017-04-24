@@ -5,22 +5,19 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
-import micdm.transportlive2.data.loaders.RoutesLoader;
+import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.RouteGroup;
 
-public class RoutesPresenter extends BasePresenter<RoutesPresenter.View, RoutesPresenter.ViewInput> implements RoutesLoader.Client {
+public class RoutesPresenter extends BasePresenter {
 
-    public interface View {
-
-        Observable<Object> getLoadRoutesRequests();
-    }
-
-    static class ViewInput extends BasePresenter.ViewInput<View> {
+    public static class ViewInput {
 
         private final Subject<Object> loadRoutesRequests = PublishSubject.create();
 
@@ -28,30 +25,34 @@ public class RoutesPresenter extends BasePresenter<RoutesPresenter.View, RoutesP
             return loadRoutesRequests;
         }
 
-        @Override
-        Disposable subscribeForInput(View view) {
-            return view.getLoadRoutesRequests().subscribe(loadRoutesRequests::onNext);
+        public void loadRoutes() {
+            loadRoutesRequests.onNext(Irrelevant.INSTANCE);
         }
     }
 
     @Inject
     Loaders loaders;
 
-    public RoutesPresenter() {
-        super(new ViewInput());
-    }
+    public final ViewInput viewInput = new ViewInput();
+    private final Subject<Result<Collection<RouteGroup>>> results = BehaviorSubject.create();
 
     @Override
-    void attachToServices() {
-        loaders.getRoutesLoader().attach(this);
+    Disposable subscribeForEvents() {
+        return new CompositeDisposable(
+            subscribeForInput(),
+            subscribeForResults()
+        );
     }
 
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return viewInput.getLoadRoutesRequests();
+    private Disposable subscribeForInput() {
+        return viewInput.getLoadRoutesRequests().subscribe(o -> loaders.getRoutesLoader().load());
+    }
+
+    private Disposable subscribeForResults() {
+        return loaders.getRoutesLoader().getData().subscribe(results::onNext);
     }
 
     public Observable<Result<Collection<RouteGroup>>> getResults() {
-        return loaders.getRoutesLoader().getData();
+        return results;
     }
 }

@@ -5,9 +5,9 @@ import micdm.transportlive2.data.stores.BaseStore;
 
 class StoreCacheLoader<Data> implements BaseLoader.CacheLoader<Data> {
 
-    private final BaseStore<?, Data> store;
+    private final BaseStore<Data> store;
 
-    StoreCacheLoader(BaseStore<?, Data> store) {
+    StoreCacheLoader(BaseStore<Data> store) {
         this.store = store;
     }
 

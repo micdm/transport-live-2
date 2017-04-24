@@ -5,23 +5,18 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
-import micdm.transportlive2.data.stores.PreferencesStore;
 import micdm.transportlive2.data.stores.Stores;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Preferences;
 
-public class PreferencesPresenter extends BasePresenter<PreferencesPresenter.View, PreferencesPresenter.ViewInput> implements PreferencesStore.Client {
+public class PreferencesPresenter extends BasePresenter {
 
-    public interface View {
-
-        Observable<Preferences> getChangePreferencesRequests();
-    }
-
-    static class ViewInput extends BasePresenter.ViewInput<View> {
+    public static class ViewInput {
 
         private final Subject<Preferences> changePreferencesRequests = PublishSubject.create();
 
@@ -29,38 +24,31 @@ public class PreferencesPresenter extends BasePresenter<PreferencesPresenter.Vie
             return changePreferencesRequests;
         }
 
-        @Override
-        Disposable subscribeForInput(View view) {
-            return view.getChangePreferencesRequests().subscribe(changePreferencesRequests::onNext);
+        public void changePreferences(Preferences preferences) {
+            changePreferencesRequests.onNext(preferences);
         }
     }
 
     @Inject
     Stores stores;
 
+    public final ViewInput viewInput = new ViewInput();
     private final Subject<Preferences> preferences = BehaviorSubject.create();
-
-    PreferencesPresenter() {
-        super(new ViewInput());
-    }
 
     @Override
     Disposable subscribeForEvents() {
-        return subscribeForPreferences();
+        return new CompositeDisposable(
+            subscribeForInput(),
+            subscribeForPreferences()
+        );
+    }
+
+    private Disposable subscribeForInput() {
+        return viewInput.getChangePreferencesRequests().subscribe(stores.getPreferencesStore()::store);
     }
 
     private Disposable subscribeForPreferences() {
         return stores.getPreferencesStore().getData().subscribe(preferences::onNext);
-    }
-
-    @Override
-    void attachToServices() {
-        stores.getPreferencesStore().attach(this);
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return viewInput.getChangePreferencesRequests();
     }
 
     public Observable<Preferences> getPreferences() {

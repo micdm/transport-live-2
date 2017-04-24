@@ -34,7 +34,6 @@ public class Loaders extends Container<BaseLoader> {
     public ForecastLoader getForecastLoader(Id stationId) {
         return getOrCreateInstance(forecastLoaders, stationId, () -> {
             ForecastLoader instance = new ForecastLoader(
-                clients -> clients.get().flatMap(ForecastLoader.Client::getLoadForecastRequests),
                 new DummyCacheLoader<>(),
                 new ForecastLoader.ForecastServerLoader(idFactory, serverConnector, stationId),
                 new DummyStoreClient<>()
@@ -51,10 +50,6 @@ public class Loaders extends Container<BaseLoader> {
     public PathLoader getPathLoader(Id routeId) {
         return getOrCreateInstance(pathLoaders, routeId, () -> {
             PathLoader instance = new PathLoader(
-                clients -> clients.get()
-                    .flatMap(PathLoader.Client::getLoadPathRequests)
-                    .filter(routeId::equals)
-                    .compose(commonFunctions.toNothing()),
                 new StoreCacheLoader<>(stores.getPathStore(routeId)),
                 new PathLoader.PathServerLoader(idFactory, serverConnector, routeId),
                 new PathLoader.PathStoreClient(stores.getPathStore(routeId))
@@ -67,7 +62,6 @@ public class Loaders extends Container<BaseLoader> {
     public StationLoader getStationLoader(Id stationId) {
         return getOrCreateInstance(stationLoaders, stationId, () -> {
             StationLoader instance = new StationLoader(
-                clients -> clients.get().flatMap(StationLoader.Client::getLoadStationRequests),
                 new StoreCacheLoader<>(stores.getStationStore(stationId)),
                 new StationLoader.StationServerLoader(idFactory, serverConnector, stationId),
                 new StationLoader.StationStoreClient(stores.getStationStore(stationId))
@@ -80,10 +74,6 @@ public class Loaders extends Container<BaseLoader> {
     public VehiclesLoader getVehiclesLoader(Id routeId) {
         return getOrCreateInstance(vehiclesLoaders, routeId, () -> {
             VehiclesLoader instance = new VehiclesLoader(
-                clients -> clients.get()
-                    .flatMap(VehiclesLoader.Client::getLoadVehiclesRequests)
-                    .filter(routeId::equals)
-                    .compose(commonFunctions.toNothing()),
                 new DummyCacheLoader<>(),
                 new VehiclesLoader.VehiclesServerLoader(idFactory, serverConnector, routeId),
                 new DummyStoreClient<>()

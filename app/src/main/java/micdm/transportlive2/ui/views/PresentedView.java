@@ -12,18 +12,4 @@ abstract class PresentedView extends BaseView {
     public PresentedView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
-
-    @Override
-    void onAttach() {
-        attachToPresenters();
-    }
-
-    abstract void attachToPresenters();
-
-    @Override
-    void onDetach() {
-        detachFromPresenters();
-    }
-
-    abstract void detachFromPresenters();
 }

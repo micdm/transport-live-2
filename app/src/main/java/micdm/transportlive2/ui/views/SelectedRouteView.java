@@ -31,13 +31,11 @@ import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Vehicle;
-import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 
-public class SelectedRouteView extends PresentedView implements RoutesPresenter.View, PreferencesPresenter.View {
+public class SelectedRouteView extends PresentedView {
 
     @Inject
     ColorConstructor colorConstructor;
@@ -82,18 +80,6 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     }
 
     @Override
-    void attachToPresenters() {
-        presenters.getRoutesPresenter().attach(this);
-        presenters.getPreferencesPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getRoutesPresenter().detach(this);
-        presenters.getPreferencesPresenter().detach(this);
-    }
-
-    @Override
     void setupViews() {
         loadingView.setVisibility(GONE);
         cannotLoad.setVisibility(GONE);
@@ -102,9 +88,30 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForLoadRoutesRequests(),
+            subscribeForChangePreferencesRequests(),
             subscribeForRoute(),
             subscribeForVehicles()
         );
+    }
+
+    private Disposable subscribeForLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+    }
+
+    private Disposable subscribeForChangePreferencesRequests() {
+        return RxView.clicks(removeView)
+            .map(o -> routeId)
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (routeId, preferences) -> {
+                Collection<Id> selectedRoutes = new HashSet<>(preferences.selectedRoutes());
+                selectedRoutes.remove(routeId);
+                return (Preferences) ImmutablePreferences.builder()
+                    .from(preferences)
+                    .selectedRoutes(selectedRoutes)
+                    .build();
+            })
+            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
     private Disposable subscribeForRoute() {
@@ -155,28 +162,6 @@ public class SelectedRouteView extends PresentedView implements RoutesPresenter.
                     loadingView.setVisibility(GONE);
                     cannotLoad.setVisibility(VISIBLE);
                 })
-        );
-    }
-
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return observableCache.get("getChangePreferencesRequests", () ->
-            RxView.clicks(removeView)
-                .map(o -> routeId)
-                .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (routeId, preferences) -> {
-                    Collection<Id> selectedRoutes = new HashSet<>(preferences.selectedRoutes());
-                    selectedRoutes.remove(routeId);
-                    return (Preferences) ImmutablePreferences.builder()
-                        .from(preferences)
-                        .selectedRoutes(selectedRoutes)
-                        .build();
-                })
-                .share()
         );
     }
 }

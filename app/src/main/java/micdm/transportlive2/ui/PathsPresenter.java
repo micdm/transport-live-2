@@ -2,7 +2,6 @@ package micdm.transportlive2.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import javax.inject.Inject;
 
@@ -10,33 +9,27 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
-import micdm.transportlive2.data.loaders.PathLoader;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.ui.misc.ResultWatcherN;
 
-public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPresenter.ViewInput> implements PathLoader.Client {
+public class PathsPresenter extends BasePresenter {
 
-    public interface View {
+    public static class ViewInput {
 
-        Observable<Collection<Id>> getLoadPathsRequests();
-    }
-
-    static class ViewInput extends BasePresenter.ViewInput<View> {
-
-        private final Subject<Collection<Id>> loadPathsRequests = BehaviorSubject.create();
+        private final Subject<Collection<Id>> loadPathsRequests = PublishSubject.create();
 
         Observable<Collection<Id>> getLoadPathsRequests() {
             return loadPathsRequests;
         }
 
-        @Override
-        Disposable subscribeForInput(View view) {
-            return view.getLoadPathsRequests().subscribe(loadPathsRequests::onNext);
+        public void loadPaths(Collection<Id> ids) {
+            loadPathsRequests.onNext(ids);
         }
     }
 
@@ -45,41 +38,23 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
     @Inject
     Loaders loaders;
 
+    public final ViewInput viewInput = new ViewInput();
     private final Subject<Result<Collection<Path>>> results = BehaviorSubject.create();
-
-    PathsPresenter() {
-        super(new ViewInput());
-    }
 
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            getPathLoadersToAttach().subscribe(loader -> loader.attach(this)),
-            getPathLoadersToDetach().subscribe(loader -> loader.detach(this)),
+            subscribeForInput(),
             subscribeForResults()
         );
     }
 
-    private Observable<PathLoader> getPathLoadersToAttach() {
-        return commonFunctions
-            .getDelta(
-                viewInput.getLoadPathsRequests()
-                    .compose(commonFunctions.getPrevious())
-                    .startWith(Collections.<Id>emptyList()),
-                viewInput.getLoadPathsRequests()
-            )
-            .switchMap(Observable::fromIterable)
-            .map(loaders::getPathLoader);
-    }
-
-    private Observable<PathLoader> getPathLoadersToDetach() {
-        return commonFunctions
-            .getDelta(
-                viewInput.getLoadPathsRequests().skip(1),
-                viewInput.getLoadPathsRequests().compose(commonFunctions.getPrevious())
-            )
-            .switchMap(Observable::fromIterable)
-            .map(loaders::getPathLoader);
+    private Disposable subscribeForInput() {
+        return viewInput.getLoadPathsRequests().subscribe(ids -> {
+            for (Id id: ids) {
+                loaders.getPathLoader(id).load();
+            }
+        });
     }
 
     private Disposable subscribeForResults() {
@@ -99,11 +74,6 @@ public class PathsPresenter extends BasePresenter<PathsPresenter.View, PathsPres
                 )
             )
             .subscribe(results::onNext);
-    }
-
-    @Override
-    public Observable<Id> getLoadPathRequests() {
-        return viewInput.getLoadPathsRequests().switchMap(Observable::fromIterable);
     }
 
     public Observable<Result<Collection<Path>>> getResults() {

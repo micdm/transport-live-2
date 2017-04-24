@@ -2,15 +2,11 @@ package micdm.transportlive2.data.stores;
 
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import micdm.transportlive2.misc.Clients;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 import timber.log.Timber;
 
-public abstract class BaseStore<Client, Data> {
-
-    interface ClientHandler<Client, Data> {
-
-        Observable<Data> getWriteRequests(Clients<Client> clients);
-    }
+public abstract class BaseStore<Data> {
 
     interface Adapter<Data> {
 
@@ -24,19 +20,16 @@ public abstract class BaseStore<Client, Data> {
         void write(String value);
     }
 
-    private final Clients<Client> clients = new Clients<>();
-
-    private final ClientHandler<Client, Data> clientHandler;
+    private final Subject<Data> storeRequests = PublishSubject.create();
     private final Adapter<Data> adapter;
     private final Storage storage;
     private final Data initial;
 
-    BaseStore(ClientHandler<Client, Data> clientHandler, Adapter<Data> adapter, Storage storage) {
-        this(clientHandler, adapter, storage, null);
+    BaseStore(Adapter<Data> adapter, Storage storage) {
+        this(adapter, storage, null);
     }
 
-    BaseStore(ClientHandler<Client, Data> clientHandler, Adapter<Data> adapter, Storage storage, Data initial) {
-        this.clientHandler = clientHandler;
+    BaseStore(Adapter<Data> adapter, Storage storage, Data initial) {
         this.adapter = adapter;
         this.storage = storage;
         this.initial = initial;
@@ -47,7 +40,7 @@ public abstract class BaseStore<Client, Data> {
     }
 
     private void subscribeForWriteRequests() {
-        clientHandler.getWriteRequests(clients)
+        storeRequests
             .distinctUntilChanged()
             .subscribe(data -> {
                 Timber.d("Writing data on %s", this);
@@ -56,7 +49,7 @@ public abstract class BaseStore<Client, Data> {
     }
 
     public Observable<Data> getData() {
-        return clientHandler.getWriteRequests(clients)
+        return storeRequests
             .startWith(getStored().toObservable())
             .distinctUntilChanged();
     }
@@ -73,11 +66,7 @@ public abstract class BaseStore<Client, Data> {
         return initial == null ? Maybe.empty() : Maybe.just(initial);
     }
 
-    public void attach(Client client) {
-        clients.attach(client);
-    }
-
-    public void detach(Client client) {
-        clients.detach(client);
+    public void store(Data data) {
+        storeRequests.onNext(data);
     }
 }

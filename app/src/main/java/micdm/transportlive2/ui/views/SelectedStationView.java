@@ -24,13 +24,10 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.ImmutablePreferences;
-import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Station;
-import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.StationPresenter;
 
-public class SelectedStationView extends PresentedView implements StationPresenter.View, PreferencesPresenter.View {
+public class SelectedStationView extends PresentedView {
 
     @Inject
     CommonFunctions commonFunctions;
@@ -63,20 +60,31 @@ public class SelectedStationView extends PresentedView implements StationPresent
     }
 
     @Override
-    void attachToPresenters() {
-        presenters.getPreferencesPresenter().attach(this);
-        presenters.getStationPresenter(stationId).attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getPreferencesPresenter().detach(this);
-        presenters.getStationPresenter(stationId).detach(this);
-    }
-
-    @Override
     Disposable subscribeForEvents() {
-        return subscribeForData();
+        return new CompositeDisposable(
+            subscribeForLoadStationRequests(),
+            subscribeForChangePreferencesRequests(),
+            subscribeForData()
+        );
+    }
+
+    private Disposable subscribeForLoadStationRequests() {
+        return Observable.just(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getStationPresenter(stationId).viewInput.loadStation());
+    }
+
+    private Disposable subscribeForChangePreferencesRequests() {
+        return RxView.clicks(favoriteView)
+            .map(o -> stationId)
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (stationId, preferences) -> {
+                Collection<Id> selectedStations = new HashSet<>(preferences.selectedStations());
+                selectedStations.remove(stationId);
+                return ImmutablePreferences.builder()
+                    .from(preferences)
+                    .selectedStations(selectedStations)
+                    .build();
+            })
+            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
     private Disposable subscribeForData() {
@@ -101,24 +109,5 @@ public class SelectedStationView extends PresentedView implements StationPresent
                 .filter(Result::isFail)
                 .subscribe()
         );
-    }
-
-    @Override
-    public Observable<Object> getLoadStationRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return RxView.clicks(favoriteView)
-            .map(o -> stationId)
-            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (stationId, preferences) -> {
-                Collection<Id> selectedStations = new HashSet<>(preferences.selectedStations());
-                selectedStations.remove(stationId);
-                return ImmutablePreferences.builder()
-                    .from(preferences)
-                    .selectedStations(selectedStations)
-                    .build();
-            });
     }
 }

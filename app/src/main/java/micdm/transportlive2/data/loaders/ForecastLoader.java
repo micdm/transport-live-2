@@ -2,7 +2,6 @@ package micdm.transportlive2.data.loaders;
 
 import org.joda.time.Duration;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetForecastResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
@@ -11,12 +10,7 @@ import micdm.transportlive2.misc.IdFactory;
 import micdm.transportlive2.models.Forecast;
 import micdm.transportlive2.models.ImmutableForecast;
 
-public class ForecastLoader extends BaseLoader<ForecastLoader.Client, Forecast> {
-
-    public interface Client {
-
-        Observable<Object> getLoadForecastRequests();
-    }
+public class ForecastLoader extends BaseLoader<Forecast> {
 
     static class ForecastServerLoader implements ServerLoader<Forecast> {
 
@@ -52,8 +46,7 @@ public class ForecastLoader extends BaseLoader<ForecastLoader.Client, Forecast> 
         }
     }
 
-    ForecastLoader(ClientHandler<Client> clientHandler, CacheLoader<Forecast> cacheLoader,
-                   ServerLoader<Forecast> serverLoader, StoreClient<Forecast> storeClient) {
-        super(clientHandler, cacheLoader, serverLoader, storeClient);
+    ForecastLoader(CacheLoader<Forecast> cacheLoader, ServerLoader<Forecast> serverLoader, StoreClient<Forecast> storeClient) {
+        super(cacheLoader, serverLoader, storeClient);
     }
 }

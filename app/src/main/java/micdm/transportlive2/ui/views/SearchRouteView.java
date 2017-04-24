@@ -31,15 +31,12 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.ImmutablePreferences;
-import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
-import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 
-public class SearchRouteView extends PresentedView implements RoutesPresenter.View, PreferencesPresenter.View {
+public class SearchRouteView extends PresentedView {
 
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
@@ -141,10 +138,28 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForLoadRoutesRequests(),
+            subscribeForChangePreferencesRequests(),
             subscribeForRoutes(),
             subscribeForSearchString(),
             subscribeForSelection()
         );
+    }
+
+    private Disposable subscribeForLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+    }
+
+    private Disposable subscribeForChangePreferencesRequests() {
+        return ((Adapter) itemsView.getAdapter()).getSelectRouteRequests()
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (routeIds, preferences) ->
+                ImmutablePreferences.builder()
+                    .from(preferences)
+                    .addSelectedRoutes(routeIds)
+                    .build()
+            )
+            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
     private Disposable subscribeForRoutes() {
@@ -196,33 +211,5 @@ public class SearchRouteView extends PresentedView implements RoutesPresenter.Vi
                 analyticsTracker.trackRouteSelection(routeId.getOriginal());
                 inputView.clear();
             });
-    }
-
-    @Override
-    void attachToPresenters() {
-        presenters.getRoutesPresenter().attach(this);
-        presenters.getPreferencesPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getRoutesPresenter().detach(this);
-        presenters.getPreferencesPresenter().detach(this);
-    }
-
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return ((Adapter) itemsView.getAdapter()).getSelectRouteRequests()
-            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (routeIds, preferences) ->
-                ImmutablePreferences.builder()
-                    .from(preferences)
-                    .addSelectedRoutes(routeIds)
-                    .build()
-            );
     }
 }

@@ -48,7 +48,6 @@ abstract class BaseView extends FrameLayout {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
             subscription = subscribeForEvents();
-            onAttach();
         }
     }
 
@@ -56,20 +55,11 @@ abstract class BaseView extends FrameLayout {
         return null;
     }
 
-    void onAttach() {
-
-    }
-
     @Override
     protected void onDetachedFromWindow() {
-        onDetach();
         if (subscription != null) {
             subscription.dispose();
         }
         super.onDetachedFromWindow();
-    }
-
-    void onDetach() {
-
     }
 }

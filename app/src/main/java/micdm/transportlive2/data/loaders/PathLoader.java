@@ -2,11 +2,9 @@ package micdm.transportlive2.data.loaders;
 
 import java.util.List;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetPathResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.BaseStore;
 import micdm.transportlive2.data.stores.PathStore;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.IdFactory;
@@ -15,12 +13,7 @@ import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutableStation;
 import micdm.transportlive2.models.Path;
 
-public class PathLoader extends BaseLoader<PathLoader.Client, Path> {
-
-    public interface Client {
-
-        Observable<Id> getLoadPathRequests();
-    }
+public class PathLoader extends BaseLoader<Path> {
 
     static class PathServerLoader implements ServerLoader<Path> {
 
@@ -70,25 +63,14 @@ public class PathLoader extends BaseLoader<PathLoader.Client, Path> {
         }
     }
 
-    static class PathStoreClient extends DefaultStoreClient<PathStore.Client, Path> implements PathStore.Client {
+    static class PathStoreClient extends DefaultStoreClient<Path> {
 
-        PathStoreClient(BaseStore<PathStore.Client, Path> store) {
+        PathStoreClient(PathStore store) {
             super(store);
-        }
-
-        @Override
-        public void attach() {
-            store.attach(this);
-        }
-
-        @Override
-        public Observable<Path> getStorePathRequests() {
-            return data;
         }
     }
 
-    PathLoader(ClientHandler<Client> clientHandler, CacheLoader<Path> cacheLoader,
-               ServerLoader<Path> serverLoader, StoreClient<Path> storeClient) {
-        super(clientHandler, cacheLoader, serverLoader, storeClient);
+    PathLoader(CacheLoader<Path> cacheLoader, ServerLoader<Path> serverLoader, StoreClient<Path> storeClient) {
+        super(cacheLoader, serverLoader, storeClient);
     }
 }

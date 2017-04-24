@@ -1,10 +1,8 @@
 package micdm.transportlive2.data.loaders;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetStationResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.BaseStore;
 import micdm.transportlive2.data.stores.StationStore;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.IdFactory;
@@ -12,12 +10,7 @@ import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutableStation;
 import micdm.transportlive2.models.Station;
 
-public class StationLoader extends BaseLoader<StationLoader.Client, Station> {
-
-    public interface Client {
-
-        Observable<Object> getLoadStationRequests();
-    }
+public class StationLoader extends BaseLoader<Station> {
 
     static class StationServerLoader implements ServerLoader<Station> {
 
@@ -51,25 +44,14 @@ public class StationLoader extends BaseLoader<StationLoader.Client, Station> {
         }
     }
 
-    static class StationStoreClient extends DefaultStoreClient<StationStore.Client, Station> implements StationStore.Client {
+    static class StationStoreClient extends DefaultStoreClient<Station> {
 
-        StationStoreClient(BaseStore<StationStore.Client, Station> store) {
+        StationStoreClient(StationStore store) {
             super(store);
-        }
-
-        @Override
-        public void attach() {
-            store.attach(this);
-        }
-
-        @Override
-        public Observable<Station> getStoreStationRequests() {
-            return data;
         }
     }
 
-    StationLoader(ClientHandler<Client> clientHandler, CacheLoader<Station> cacheLoader,
-                  ServerLoader<Station> serverLoader, StoreClient<Station> storeClient) {
-        super(clientHandler, cacheLoader, serverLoader, storeClient);
+    StationLoader(CacheLoader<Station> cacheLoader, ServerLoader<Station> serverLoader, StoreClient<Station> storeClient) {
+        super(cacheLoader, serverLoader, storeClient);
     }
 }

@@ -25,12 +25,10 @@ import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.ObservableCache;
 import micdm.transportlive2.models.ImmutablePreferences;
-import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Vehicle;
-import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 
-public class MainToolbarView extends PresentedView implements PreferencesPresenter.View {
+public class MainToolbarView extends PresentedView {
 
     @Inject
     Activity activity;
@@ -64,9 +62,23 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForChangePreferencesRequests(),
             subscribeForVehicles(),
             subscribeForShowStations()
         );
+    }
+
+    private Disposable subscribeForChangePreferencesRequests() {
+        return getMenuClicks()
+            .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
+            .map(item -> !item.isChecked())
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (needShowStations, preferences) ->
+                ImmutablePreferences.builder()
+                    .from(preferences)
+                    .needShowStations(needShowStations)
+                    .build()
+            )
+            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
     private Disposable subscribeForVehicles() {
@@ -92,16 +104,6 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
             .subscribe(toolbarView.getMenu().findItem(R.id.m__main__show_stations)::setChecked);
     }
 
-    @Override
-    void attachToPresenters() {
-        presenters.getPreferencesPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getPreferencesPresenter().detach(this);
-    }
-
     public void addToggle(DrawerLayout view) {
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(activity, view, toolbarView, R.string.v__main_toolbar__open_drawer,
                                                                  R.string.v__main_toolbar__close_drawer);
@@ -109,7 +111,7 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
         toggle.syncState();
     }
 
-    Observable<Object> getGoToAboutRequests() {
+    public Observable<Object> getGoToAboutRequests() {
         return getMenuClicks()
             .filter(menuItem -> menuItem.getItemId() == R.id.m__main__about)
             .compose(commonFunctions.toNothing());
@@ -117,18 +119,5 @@ public class MainToolbarView extends PresentedView implements PreferencesPresent
 
     private Observable<MenuItem> getMenuClicks() {
         return observableCache.get("getMenuClicks", () -> RxToolbar.itemClicks(toolbarView).share());
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return getMenuClicks()
-            .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
-            .map(item -> !item.isChecked())
-            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (needShowStations, preferences) ->
-                ImmutablePreferences.builder()
-                    .from(preferences)
-                    .needShowStations(needShowStations)
-                    .build()
-            );
     }
 }

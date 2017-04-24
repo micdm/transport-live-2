@@ -5,25 +5,21 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
-import micdm.transportlive2.data.loaders.VehiclesLoader;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
+import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Vehicle;
 
-public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View, VehiclesPresenter.ViewInput> implements VehiclesLoader.Client {
+public class VehiclesPresenter extends BasePresenter {
 
-    public interface View {
-
-        Observable<Object> getLoadVehiclesRequests();
-    }
-
-    static class ViewInput extends BasePresenter.ViewInput<View> {
+    static class ViewInput {
 
         private final Subject<Object> loadVehiclesRequests = PublishSubject.create();
 
@@ -31,9 +27,8 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View, Veh
             return loadVehiclesRequests;
         }
 
-        @Override
-        Disposable subscribeForInput(View view) {
-            return view.getLoadVehiclesRequests().subscribe(loadVehiclesRequests::onNext);
+        public void loadVehicles() {
+            loadVehiclesRequests.onNext(Irrelevant.INSTANCE);
         }
     }
 
@@ -42,32 +37,29 @@ public class VehiclesPresenter extends BasePresenter<VehiclesPresenter.View, Veh
     @Inject
     Loaders loaders;
 
-    private final Id routeId;
-
+    public final ViewInput viewInput = new ViewInput();
     private final Subject<Result<Collection<Vehicle>>> results = BehaviorSubject.create();
 
+    private final Id routeId;
+
     VehiclesPresenter(Id routeId) {
-        super(new ViewInput());
         this.routeId = routeId;
     }
 
     @Override
-    void attachToServices() {
-        loaders.getVehiclesLoader(routeId).attach(this);
+    Disposable subscribeForEvents() {
+        return new CompositeDisposable(
+            subscribeForInput(),
+            subscribeForResults()
+        );
     }
 
-    @Override
-    Disposable subscribeForEvents() {
-        return subscribeForResults();
+    private Disposable subscribeForInput() {
+        return viewInput.getLoadVehiclesRequests().subscribe(o -> loaders.getVehiclesLoader(routeId).load());
     }
 
     private Disposable subscribeForResults() {
         return loaders.getVehiclesLoader(routeId).getData().subscribe(results::onNext);
-    }
-
-    @Override
-    public Observable<Id> getLoadVehiclesRequests() {
-        return viewInput.getLoadVehiclesRequests().compose(commonFunctions.toConst(routeId));
     }
 
     public Observable<Result<Collection<Vehicle>>> getResults() {

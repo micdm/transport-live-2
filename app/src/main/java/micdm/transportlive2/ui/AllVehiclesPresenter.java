@@ -2,7 +2,6 @@ package micdm.transportlive2.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import javax.inject.Inject;
 
@@ -10,33 +9,27 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
-import micdm.transportlive2.data.loaders.VehiclesLoader;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.misc.ResultWatcherN;
 
-public class AllVehiclesPresenter extends BasePresenter<AllVehiclesPresenter.View, AllVehiclesPresenter.ViewInput> implements VehiclesLoader.Client {
+public class AllVehiclesPresenter extends BasePresenter {
 
-    public interface View {
+    public static class ViewInput {
 
-        Observable<Collection<Id>> getLoadVehiclesRequests();
-    }
-
-    static class ViewInput extends BasePresenter.ViewInput<View> {
-
-        private final Subject<Collection<Id>> loadVehiclesRequests = BehaviorSubject.create();
+        private final Subject<Collection<Id>> loadVehiclesRequests = PublishSubject.create();
 
         Observable<Collection<Id>> getLoadVehiclesRequests() {
             return loadVehiclesRequests;
         }
 
-        @Override
-        Disposable subscribeForInput(View view) {
-            return view.getLoadVehiclesRequests().subscribe(loadVehiclesRequests::onNext);
+        public void loadVehicles(Collection<Id> ids) {
+            loadVehiclesRequests.onNext(ids);
         }
     }
 
@@ -45,41 +38,23 @@ public class AllVehiclesPresenter extends BasePresenter<AllVehiclesPresenter.Vie
     @Inject
     Loaders loaders;
 
+    public final ViewInput viewInput = new ViewInput();
     private final Subject<Result<Collection<Vehicle>>> results = BehaviorSubject.create();
-
-    AllVehiclesPresenter() {
-        super(new ViewInput());
-    }
 
     @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            getVehiclesLoadersToAttach().subscribe(loader -> loader.attach(this)),
-            getVehiclesLoadersToDetach().subscribe(loader -> loader.detach(this)),
+            subscribeForInput(),
             subscribeForResults()
         );
     }
 
-    private Observable<VehiclesLoader> getVehiclesLoadersToAttach() {
-        return commonFunctions
-            .getDelta(
-                viewInput.getLoadVehiclesRequests()
-                    .compose(commonFunctions.getPrevious())
-                    .startWith(Collections.<Id>emptyList()),
-                viewInput.getLoadVehiclesRequests()
-            )
-            .switchMap(Observable::fromIterable)
-            .map(loaders::getVehiclesLoader);
-    }
-
-    private Observable<VehiclesLoader> getVehiclesLoadersToDetach() {
-        return commonFunctions
-            .getDelta(
-                viewInput.getLoadVehiclesRequests().skip(1),
-                viewInput.getLoadVehiclesRequests().compose(commonFunctions.getPrevious())
-            )
-            .switchMap(Observable::fromIterable)
-            .map(loaders::getVehiclesLoader);
+    private Disposable subscribeForInput() {
+        return viewInput.getLoadVehiclesRequests().subscribe(ids -> {
+            for (Id id: ids) {
+                loaders.getVehiclesLoader(id).load();
+            }
+        });
     }
 
     private Disposable subscribeForResults() {
@@ -105,11 +80,6 @@ public class AllVehiclesPresenter extends BasePresenter<AllVehiclesPresenter.Vie
                 )
             )
             .subscribe(results::onNext);
-    }
-
-    @Override
-    public Observable<Id> getLoadVehiclesRequests() {
-        return viewInput.getLoadVehiclesRequests().switchMap(Observable::fromIterable);
     }
 
     public Observable<Result<Collection<Vehicle>>> getResults() {

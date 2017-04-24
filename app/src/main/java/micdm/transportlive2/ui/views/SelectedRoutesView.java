@@ -16,6 +16,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
@@ -25,9 +26,8 @@ import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.RoutesPresenter;
 
-public class SelectedRoutesView extends PresentedView implements RoutesPresenter.View {
+public class SelectedRoutesView extends PresentedView {
 
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
@@ -104,7 +104,15 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
 
     @Override
     Disposable subscribeForEvents() {
-        return subscribeForSelectedRoutes();
+        return new CompositeDisposable(
+            subscribeForLoadRoutesRequests(),
+            subscribeForSelectedRoutes()
+        );
+    }
+
+    private Disposable subscribeForLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
     }
 
     private Disposable subscribeForSelectedRoutes() {
@@ -134,20 +142,5 @@ public class SelectedRoutesView extends PresentedView implements RoutesPresenter
             )
             .compose(commonFunctions.toMainThread())
             .subscribe(((Adapter) itemsView.getAdapter())::setRoutes);
-    }
-
-    @Override
-    void attachToPresenters() {
-        presenters.getRoutesPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getRoutesPresenter().detach(this);
-    }
-
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
     }
 }

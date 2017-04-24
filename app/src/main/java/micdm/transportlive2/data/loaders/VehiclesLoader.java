@@ -3,7 +3,6 @@ package micdm.transportlive2.data.loaders;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetVehiclesResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
@@ -13,12 +12,7 @@ import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutableVehicle;
 import micdm.transportlive2.models.Vehicle;
 
-public class VehiclesLoader extends BaseLoader<VehiclesLoader.Client, Collection<Vehicle>> {
-
-    public interface Client {
-
-        Observable<Id> getLoadVehiclesRequests();
-    }
+public class VehiclesLoader extends BaseLoader<Collection<Vehicle>> {
 
     static class VehiclesServerLoader implements ServerLoader<Collection<Vehicle>> {
 
@@ -58,8 +52,8 @@ public class VehiclesLoader extends BaseLoader<VehiclesLoader.Client, Collection
         }
     }
 
-    VehiclesLoader(ClientHandler<Client> clientHandler, CacheLoader<Collection<Vehicle>> cacheLoader,
-                   ServerLoader<Collection<Vehicle>> serverLoader, StoreClient<Collection<Vehicle>> storeClient) {
-        super(clientHandler, cacheLoader, serverLoader, storeClient);
+    VehiclesLoader(CacheLoader<Collection<Vehicle>> cacheLoader, ServerLoader<Collection<Vehicle>> serverLoader,
+                   StoreClient<Collection<Vehicle>> storeClient) {
+        super(cacheLoader, serverLoader, storeClient);
     }
 }

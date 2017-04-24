@@ -24,7 +24,6 @@ public class LoaderModule {
     @AppScope
     RoutesLoader provideRoutesLoader(IdFactory idFactory, RoutesStore routesStore, ServerConnector serverConnector) {
         RoutesLoader instance = new RoutesLoader(
-            clients -> clients.get().flatMap(RoutesLoader.Client::getLoadRoutesRequests),
             new StoreCacheLoader<>(routesStore),
             new RoutesLoader.RoutesServerLoader(idFactory, serverConnector),
             new RoutesLoader.RoutesStoreClient(routesStore)

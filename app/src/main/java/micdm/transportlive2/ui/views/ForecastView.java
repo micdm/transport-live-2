@@ -36,17 +36,13 @@ import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Forecast;
 import micdm.transportlive2.models.ImmutablePreferences;
-import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
-import micdm.transportlive2.ui.ForecastPresenter;
-import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
-import micdm.transportlive2.ui.RoutesPresenter;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 import micdm.transportlive2.ui.misc.ResultWatcher2;
 
-public class ForecastView extends PresentedView implements RoutesPresenter.View, ForecastPresenter.View, PreferencesPresenter.View {
+public class ForecastView extends PresentedView {
 
     static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
@@ -173,25 +169,44 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
     }
 
     @Override
-    void attachToPresenters() {
-        presenters.getForecastPresenter(stationId).attach(this);
-        presenters.getPreferencesPresenter().attach(this);
-        presenters.getRoutesPresenter().attach(this);
-    }
-
-    @Override
-    void detachFromPresenters() {
-        presenters.getForecastPresenter(stationId).detach(this);
-        presenters.getPreferencesPresenter().detach(this);
-        presenters.getRoutesPresenter().detach(this);
-    }
-
-    @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
+            subscribeForLoadRoutesRequests(),
+            subscribeForLoadForecastRequests(),
+            subscribeForChangePreferencesRequests(),
             subscribeForForecast(),
             subscribeForFavorite()
         );
+    }
+
+    private Disposable subscribeForLoadRoutesRequests() {
+        return Observable.just(Irrelevant.INSTANCE)
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+    }
+
+    private Disposable subscribeForLoadForecastRequests() {
+        return cannotLoadView.getRetryRequest()
+            .startWith(Irrelevant.INSTANCE)
+            .switchMap(o -> Observable.interval(0, LOAD_FORECAST_INTERVAL.getStandardSeconds(), TimeUnit.SECONDS))
+            .subscribe(o -> presenters.getForecastPresenter(stationId).viewInput.loadForecast());
+    }
+
+    private Disposable subscribeForChangePreferencesRequests() {
+        return RxView.clicks(titleView)
+            .map(o -> stationId)
+            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (stationId, preferences) -> {
+                Collection<Id> selectedStations = new HashSet<>(preferences.selectedStations());
+                if (selectedStations.contains(stationId)) {
+                    selectedStations.remove(stationId);
+                } else {
+                    selectedStations.add(stationId);
+                }
+                return ImmutablePreferences.builder()
+                    .from(preferences)
+                    .selectedStations(selectedStations)
+                    .build();
+            })
+            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
     private Disposable subscribeForForecast() {
@@ -258,36 +273,6 @@ public class ForecastView extends PresentedView implements RoutesPresenter.View,
         }
         Collections.sort(result, (a, b) -> a.vehicle.estimatedTime().compareTo(b.vehicle.estimatedTime()));
         return result;
-    }
-
-    @Override
-    public Observable<Object> getLoadRoutesRequests() {
-        return Observable.just(Irrelevant.INSTANCE);
-    }
-
-    @Override
-    public Observable<Object> getLoadForecastRequests() {
-        return cannotLoadView.getRetryRequest()
-            .startWith(Irrelevant.INSTANCE)
-            .switchMap(o -> Observable.interval(0, LOAD_FORECAST_INTERVAL.getStandardSeconds(), TimeUnit.SECONDS));
-    }
-
-    @Override
-    public Observable<Preferences> getChangePreferencesRequests() {
-        return RxView.clicks(titleView)
-            .map(o -> stationId)
-            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (stationId, preferences) -> {
-                Collection<Id> selectedStations = new HashSet<>(preferences.selectedStations());
-                if (selectedStations.contains(stationId)) {
-                    selectedStations.remove(stationId);
-                } else {
-                    selectedStations.add(stationId);
-                }
-                return ImmutablePreferences.builder()
-                    .from(preferences)
-                    .selectedStations(selectedStations)
-                    .build();
-            });
     }
 
     public Observable<Object> getCloseRequests() {

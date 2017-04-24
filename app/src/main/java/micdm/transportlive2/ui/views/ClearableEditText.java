@@ -54,13 +54,13 @@ public class ClearableEditText extends BaseView {
         );
     }
 
-    Disposable subscribeForInput() {
+    private Disposable subscribeForInput() {
         return getText()
             .map(text -> text.length() == 0)
             .subscribe(isEmpty -> clearView.setVisibility(isEmpty ? GONE : VISIBLE));
     }
 
-    Disposable subscribeForClear() {
+    private Disposable subscribeForClear() {
         return RxView.clicks(clearView).subscribe(o -> clear());
     }
 

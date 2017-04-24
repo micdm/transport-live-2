@@ -30,7 +30,6 @@ public class Stores extends Container<BaseStore> {
     public PathStore getPathStore(Id routeId) {
         return getOrCreateInstance(pathStores, routeId, () ->
             new PathStore(
-                clients -> clients.get().flatMap(PathStore.Client::getStorePathRequests),
                 new BaseStore.Adapter<Path>() {
                     @Override
                     public String serialize(Path path) {
@@ -57,7 +56,6 @@ public class Stores extends Container<BaseStore> {
     public StationStore getStationStore(Id stationId) {
         return getOrCreateInstance(stationStores, stationId, () ->
             new StationStore(
-                clients -> clients.get().flatMap(StationStore.Client::getStoreStationRequests),
                 new BaseStore.Adapter<Station>() {
                     @Override
                     public String serialize(Station station) {

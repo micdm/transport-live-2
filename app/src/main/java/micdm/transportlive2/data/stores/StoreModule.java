@@ -33,7 +33,6 @@ public class StoreModule {
     @AppScope
     PreferencesStore providePreferencesStore(Gson gson, SharedPreferences sharedPreferences) {
         PreferencesStore instance = new PreferencesStore(
-            clients -> clients.get().flatMap(PreferencesStore.Client::getChangePreferencesRequests),
             new BaseStore.Adapter<Preferences>() {
                 @Override
                 public String serialize(Preferences preferences) {
@@ -70,7 +69,6 @@ public class StoreModule {
     @AppScope
     RoutesStore provideRoutesStore(Cache cache, Gson gson) {
         RoutesStore instance = new RoutesStore(
-            clients -> clients.get().flatMap(RoutesStore.Client::getStoreRoutesRequests),
             new BaseStore.Adapter<Collection<RouteGroup>>() {
                 @Override
                 public String serialize(Collection<RouteGroup> groups) {

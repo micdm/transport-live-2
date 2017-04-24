@@ -25,7 +25,8 @@ public class ProbablyEmptyRecyclerView extends BaseView {
     ViewGroup contentView;
     @BindView(R.id.v__probably_empty_recycler_view__list)
     RecyclerView listView;
-    TextView messageView;
+
+    private TextView messageView;
 
     private final RecyclerView.AdapterDataObserver dataObserver = new RecyclerView.AdapterDataObserver() {
         @Override
