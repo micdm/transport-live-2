@@ -174,6 +174,7 @@ public class ForecastView extends PresentedView {
             subscribeForLoadRoutesRequests(),
             subscribeForLoadForecastRequests(),
             subscribeForChangePreferencesRequests(),
+            subscribeForResetCurrentStation(),
             subscribeForForecast(),
             subscribeForFavorite()
         );
@@ -209,9 +210,12 @@ public class ForecastView extends PresentedView {
             .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
     }
 
+    private Disposable subscribeForResetCurrentStation() {
+        return RxView.clicks(closeView).subscribe(o -> presenters.getCurrentStationPresenter().viewInput.resetCurrentStation());
+    }
+
     private Disposable subscribeForForecast() {
-        ResultWatcher2<Collection<RouteGroup>, Forecast> watcher = new ResultWatcher2<>(
-            commonFunctions,
+        ResultWatcher2<Collection<RouteGroup>, Forecast> watcher = ResultWatcher2.newInstance(
             presenters.getRoutesPresenter().getResults(),
             presenters.getForecastPresenter(stationId).getResults()
         );
@@ -273,9 +277,5 @@ public class ForecastView extends PresentedView {
         }
         Collections.sort(result, (a, b) -> a.vehicle.estimatedTime().compareTo(b.vehicle.estimatedTime()));
         return result;
-    }
-
-    public Observable<Object> getCloseRequests() {
-        return RxView.clicks(closeView);
     }
 }

@@ -77,7 +77,7 @@ public class VehiclesView extends PresentedView {
         return new CompositeDisposable(
             subscribeForLoadRoutesRequests(),
             subscribeForLoadPathsRequests(),
-            subscribeForForecast(),
+            subscribeForCurrentStation(),
             subscribeForAbout(),
             subscribeForRequiredData()
         );
@@ -95,13 +95,9 @@ public class VehiclesView extends PresentedView {
             .subscribe(presenters.getPathsPresenter().viewInput::loadPaths);
     }
 
-    private Disposable subscribeForForecast() {
+    private Disposable subscribeForCurrentStation() {
         Observable<ForecastView> common =
-            Observable
-                .merge(
-                    mapView.getSelectStationRequests(),
-                    selectedStationsView.getSelectStationRequests()
-                )
+            presenters.getCurrentStationPresenter().getCurrentStation()
                 .map(stationId -> {
                     ForecastView view = (ForecastView) layoutInflater.inflate(R.layout.v__vehicles__forecast, contentView, false);
                     view.setStationId(stationId);
@@ -116,9 +112,7 @@ public class VehiclesView extends PresentedView {
             Observable
                 .merge(
                     common.compose(commonFunctions.getPrevious()),
-                    common.switchMap(view ->
-                        view.getCloseRequests().compose(commonFunctions.toConst(view))
-                    )
+                    presenters.getCurrentStationPresenter().getNoCurrentStation().withLatestFrom(common, (o, view) -> view)
                 )
                 .subscribe(contentView::removeView)
         );

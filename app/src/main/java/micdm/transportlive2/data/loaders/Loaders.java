@@ -22,6 +22,8 @@ public class Loaders extends Container<BaseLoader> {
     @Inject
     RoutesLoader routesLoader;
     @Inject
+    SearchStationsLoader searchStationsLoader;
+    @Inject
     ServerConnector serverConnector;
     @Inject
     Stores stores;
@@ -57,6 +59,10 @@ public class Loaders extends Container<BaseLoader> {
             ComponentHolder.getAppComponent().inject(instance);
             return instance;
         });
+    }
+
+    public SearchStationsLoader getSearchStationsLoader() {
+        return searchStationsLoader;
     }
 
     public StationLoader getStationLoader(Id stationId) {

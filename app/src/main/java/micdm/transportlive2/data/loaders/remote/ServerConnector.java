@@ -31,4 +31,8 @@ public class ServerConnector {
     public Single<GetStationResponse> getStation(Id stationId) {
         return apiService.getStation(stationId.getOriginal());
     }
+
+    public Single<SearchStationsResponse> searchStations(String query) {
+        return apiService.searchStations(query);
+    }
 }

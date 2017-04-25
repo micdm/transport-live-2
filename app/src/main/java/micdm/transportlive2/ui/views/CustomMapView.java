@@ -296,6 +296,7 @@ public class CustomMapView extends PresentedView {
             subscribeForLoadPathsRequests(),
             subscribeForLoadVehiclesRequests(),
             subscribeForChangePreferencesRequests(),
+            subscribeForSetCurrentStationRequests(),
             subscribeForActivityEvents(),
             subscribeForMap(),
             subscribeForVehicles(),
@@ -350,6 +351,24 @@ public class CustomMapView extends PresentedView {
                     .build()
             )
             .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+    }
+
+    private Disposable subscribeForSetCurrentStationRequests() {
+        return getMap()
+            .switchMap(map ->
+                Observable.<Id>create(source -> {
+                    map.setOnMarkerClickListener(marker -> {
+                        Object tag = marker.getTag();
+                        if (tag != null && tag instanceof Id) {
+                            source.onNext((Id) tag);
+                            return true;
+                        }
+                        return false;
+                    });
+                    source.setCancellable(() -> map.setOnMarkerClickListener(null));
+                })
+            )
+            .subscribe(presenters.getCurrentStationPresenter().viewInput::setCurrentStation);
     }
 
     private Disposable subscribeForActivityEvents() {
@@ -497,22 +516,6 @@ public class CustomMapView extends PresentedView {
                 )
                 .replay()
                 .refCount()
-        );
-    }
-
-    public Observable<Id> getSelectStationRequests() {
-        return getMap().switchMap(map ->
-            Observable.create(source -> {
-                map.setOnMarkerClickListener(marker -> {
-                    Object tag = marker.getTag();
-                    if (tag != null && tag instanceof Id) {
-                        source.onNext((Id) tag);
-                        return true;
-                    }
-                    return false;
-                });
-                source.setCancellable(() -> map.setOnMarkerClickListener(null));
-            })
         );
     }
 }

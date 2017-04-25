@@ -28,6 +28,15 @@ public class UiModule {
 
     @Provides
     @AppScope
+    CurrentStationPresenter provideCurrentStationPresenter() {
+        CurrentStationPresenter instance = new CurrentStationPresenter();
+        ComponentHolder.getAppComponent().inject(instance);
+        instance.init();
+        return instance;
+    }
+
+    @Provides
+    @AppScope
     RoutesPresenter provideRoutesPresenter() {
         RoutesPresenter instance = new RoutesPresenter();
         ComponentHolder.getAppComponent().inject(instance);
@@ -57,6 +66,15 @@ public class UiModule {
     @AppScope
     PreferencesPresenter providePreferencesPresenter() {
         PreferencesPresenter instance = new PreferencesPresenter();
+        ComponentHolder.getAppComponent().inject(instance);
+        instance.init();
+        return instance;
+    }
+
+    @Provides
+    @AppScope
+    SearchPresenter provideSearchPresenter() {
+        SearchPresenter instance = new SearchPresenter();
         ComponentHolder.getAppComponent().inject(instance);
         instance.init();
         return instance;

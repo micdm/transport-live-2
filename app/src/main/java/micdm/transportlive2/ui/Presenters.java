@@ -14,11 +14,15 @@ public class Presenters extends Container<BasePresenter> {
     @Inject
     AllVehiclesPresenter allVehiclesPresenter;
     @Inject
+    CurrentStationPresenter currentStationPresenter;
+    @Inject
     PathsPresenter pathsPresenter;
     @Inject
     PreferencesPresenter preferencesPresenter;
     @Inject
     RoutesPresenter routesPresenter;
+    @Inject
+    SearchPresenter searchPresenter;
 
     private final Map<Id, ForecastPresenter> forecastPresenters = new HashMap<>();
     private final Map<Id, StationPresenter> stationPresenters = new HashMap<>();
@@ -26,6 +30,10 @@ public class Presenters extends Container<BasePresenter> {
 
     public AllVehiclesPresenter getAllVehiclesPresenter() {
         return allVehiclesPresenter;
+    }
+
+    public CurrentStationPresenter getCurrentStationPresenter() {
+        return currentStationPresenter;
     }
 
     public ForecastPresenter getForecastPresenter(Id stationId) {
@@ -46,6 +54,10 @@ public class Presenters extends Container<BasePresenter> {
 
     public RoutesPresenter getRoutesPresenter() {
         return routesPresenter;
+    }
+
+    public SearchPresenter getSearchPresenter() {
+        return searchPresenter;
     }
 
     public StationPresenter getStationPresenter(Id stationId) {

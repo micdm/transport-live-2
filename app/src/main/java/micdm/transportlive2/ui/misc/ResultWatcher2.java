@@ -1,8 +1,10 @@
 package micdm.transportlive2.ui.misc;
 
 import io.reactivex.Observable;
+import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
+import micdm.transportlive2.misc.ObservableCache;
 
 public class ResultWatcher2<T1, T2> {
 
@@ -17,12 +19,22 @@ public class ResultWatcher2<T1, T2> {
         }
     }
 
+    public static <T1, T2> ResultWatcher2<T1, T2> newInstance(Observable<Result<T1>> first, Observable<Result<T2>> second) {
+        return new ResultWatcher2<>(
+            ComponentHolder.getAppComponent().getCommonFunctions(),
+            ComponentHolder.getAppComponent().getObservableCache(),
+            first, second);
+    }
+
     private final CommonFunctions commonFunctions;
+    private final ObservableCache observableCache;
     private final Observable<Result<T1>> first;
     private final Observable<Result<T2>> second;
 
-    public ResultWatcher2(CommonFunctions commonFunctions, Observable<Result<T1>> first, Observable<Result<T2>> second) {
+    private ResultWatcher2(CommonFunctions commonFunctions, ObservableCache observableCache,
+                           Observable<Result<T1>> first, Observable<Result<T2>> second) {
         this.commonFunctions = commonFunctions;
+        this.observableCache = observableCache;
         this.first = first;
         this.second = second;
     }
@@ -46,7 +58,7 @@ public class ResultWatcher2<T1, T2> {
     }
 
     private Observable<Product<Result<T1>, Result<T2>>> getLatest() {
-        return Observable.combineLatest(first, second, Product::new);
+        return observableCache.get("getLatest", () -> Observable.combineLatest(first, second, Product::new).share());
     }
 
     private boolean isLoading(Product<Result<T1>, Result<T2>> product) {

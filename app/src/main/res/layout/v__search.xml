@@ -4,13 +4,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
     <micdm.transportlive2.ui.views.ClearableEditText
-        android:id="@+id/v__search_route__input"
+        android:id="@+id/v__search__input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:hint="@string/v__search_route__input"/>
+        app:hint="@string/v__search__input"/>
     <micdm.transportlive2.ui.views.ProbablyEmptyRecyclerView
-        android:id="@+id/v__search_route__items"
+        android:id="@+id/v__search__items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:message="@layout/v__search_route__no_routes"/>
+        app:message="@layout/v__search__no_items"/>
 </LinearLayout>

@@ -32,4 +32,12 @@ public class LoaderModule {
         instance.init();
         return instance;
     }
+
+    @Provides
+    @AppScope
+    SearchStationsLoader provideSearchLoader() {
+        SearchStationsLoader instance = new SearchStationsLoader();
+        ComponentHolder.getAppComponent().inject(instance);
+        return instance;
+    }
 }

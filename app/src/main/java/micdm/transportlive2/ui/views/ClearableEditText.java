@@ -2,9 +2,10 @@ package micdm.transportlive2.ui.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.annotation.DrawableRes;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.jakewharton.rxbinding2.view.RxView;
@@ -22,7 +23,7 @@ public class ClearableEditText extends BaseView {
     @BindView(R.id.v__clearabled_edit_text__input)
     TextView inputView;
     @BindView(R.id.v__clearabled_edit_text__clear)
-    View clearView;
+    ImageView clearView;
 
     private final String hint;
 
@@ -64,11 +65,19 @@ public class ClearableEditText extends BaseView {
         return RxView.clicks(clearView).subscribe(o -> clear());
     }
 
-    Observable<CharSequence> getText() {
+    public Observable<CharSequence> getText() {
         return RxTextView.textChanges(inputView);
     }
 
-    void clear() {
+    public void clear() {
         inputView.setText("");
+    }
+
+    public void setClearIcon(@DrawableRes int drawableId) {
+        clearView.setImageResource(drawableId);
+    }
+
+    public void resetClearIcon() {
+        clearView.setImageResource(R.drawable.ic_cancel);
     }
 }

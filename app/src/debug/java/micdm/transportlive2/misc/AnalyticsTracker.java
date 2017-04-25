@@ -13,4 +13,8 @@ public class AnalyticsTracker {
     public void trackRouteSelection(String routeId) {
         // Nothing to do here
     }
+
+    public void trackStationSelection(String stationId) {
+        // Nothing to do here
+    }
 }

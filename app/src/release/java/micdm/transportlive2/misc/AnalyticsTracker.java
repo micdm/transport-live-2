@@ -32,4 +32,14 @@ public class AnalyticsTracker {
                 .build()
         );
     }
+
+    public void trackStationSelection(String stationId) {
+        tracker.send(
+            new HitBuilders.EventBuilder()
+                .setCategory("station")
+                .setAction("select")
+                .setLabel(stationId)
+                .build()
+        );
+    }
 }

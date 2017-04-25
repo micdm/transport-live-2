@@ -6,6 +6,7 @@ import micdm.transportlive2.data.loaders.ForecastLoader;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.PathLoader;
 import micdm.transportlive2.data.loaders.RoutesLoader;
+import micdm.transportlive2.data.loaders.SearchStationsLoader;
 import micdm.transportlive2.data.loaders.StationLoader;
 import micdm.transportlive2.data.loaders.VehiclesLoader;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
@@ -15,12 +16,15 @@ import micdm.transportlive2.data.stores.Stores;
 import micdm.transportlive2.misc.Cache;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.MiscModule;
+import micdm.transportlive2.misc.ObservableCache;
 import micdm.transportlive2.ui.AllVehiclesPresenter;
+import micdm.transportlive2.ui.CurrentStationPresenter;
 import micdm.transportlive2.ui.ForecastPresenter;
 import micdm.transportlive2.ui.PathsPresenter;
 import micdm.transportlive2.ui.PreferencesPresenter;
 import micdm.transportlive2.ui.Presenters;
 import micdm.transportlive2.ui.RoutesPresenter;
+import micdm.transportlive2.ui.SearchPresenter;
 import micdm.transportlive2.ui.StationPresenter;
 import micdm.transportlive2.ui.UiModule;
 import micdm.transportlive2.ui.VehiclesPresenter;
@@ -35,6 +39,7 @@ public interface AppComponent {
     ActivityComponent.Builder activityComponentBuilder();
 
     CommonFunctions getCommonFunctions();
+    ObservableCache getObservableCache();
 
     void inject(App target);
     void inject(Cache target);
@@ -60,4 +65,7 @@ public interface AppComponent {
     void inject(Presenters target);
     void inject(StationLoader target);
     void inject(StationPresenter target);
+    void inject(SearchStationsLoader target);
+    void inject(SearchPresenter target);
+    void inject(CurrentStationPresenter target);
 }

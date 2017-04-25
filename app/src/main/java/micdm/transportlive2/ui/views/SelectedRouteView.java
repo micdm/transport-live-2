@@ -27,6 +27,7 @@ import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.misc.ObservableCache;
 import micdm.transportlive2.models.ImmutablePreferences;
+import micdm.transportlive2.models.ImmutableRouteInfo;
 import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
@@ -122,7 +123,10 @@ public class SelectedRouteView extends PresentedView {
                 for (RouteGroup group: groups) {
                     for (Route route: group.routes()) {
                         if (route.id().equals(routeId)) {
-                            return new RouteInfo(group, route);
+                            return ImmutableRouteInfo.builder()
+                                .group(group)
+                                .route(route)
+                                .build();
                         }
                     }
                 }
@@ -130,8 +134,8 @@ public class SelectedRouteView extends PresentedView {
             })
             .compose(commonFunctions.toMainThread())
             .subscribe(info -> {
-                iconView.setColorFilter(colorConstructor.getByString(info.route.id().getOriginal()));
-                nameView.setText(resources.getString(R.string.v__selected_route__name, miscFunctions.getRouteGroupName(info.group), info.route.number()));
+                iconView.setColorFilter(colorConstructor.getByString(info.route().id().getOriginal()));
+                nameView.setText(resources.getString(R.string.v__selected_route__name, miscFunctions.getRouteGroupName(info.group()), info.route().number()));
             });
     }
 

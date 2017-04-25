@@ -10,9 +10,12 @@
     <string name="v__cannot_load__message">Не получилось загрузить данные</string>
     <string name="v__cannot_load__retry">Ещё раз</string>
     <string name="v__loading__message">Загрузка…</string>
-    <string name="v__search_route__input">Номер, конечная остановка…</string>
-    <string name="v__search_route__route">%1$s №%2$s (%3$s → %4$s)</string>
-    <string name="v__search_route__no_routes">Ничего подходящего не найдено.</string>
+    <string name="v__search__input">Маршрут, остановка…</string>
+    <string name="v__search__item__route_name">%1$s №%2$s</string>
+    <string name="v__search__item__route_description">%1$s → %2$s</string>
+    <string name="v__search__item__station_name">%s</string>
+    <string name="v__search__item__station_description">%s</string>
+    <string name="v__search__no_items">Ничего подходящего не найдено.</string>
     <string name="v__custom_map__no_vehicles">Кажется, весь транспорт в парке</string>
     <string name="v__forecast__item__route">%1$s №%2$s</string>
     <string name="v__forecast__item__time">%d мин.</string>
@@ -24,7 +27,7 @@
     <string name="v__selected_routes__no_routes">Выберите маршруты через поисковую строку.</string>
     <string name="v__selected_route__name">%1$s №%2$s</string>
     <string name="v__selected_stations__title">Остановки</string>
-    <string name="v__selected_stations__no_stations">Выберите остановки на карте.</string>
+    <string name="v__selected_stations__no_stations">Выберите остановки через поисковую строку или на карте.</string>
     <string name="v__main_toolbar__open_drawer">Открыть</string>
     <string name="v__main_toolbar__close_drawer">Закрыть</string>
 </resources>

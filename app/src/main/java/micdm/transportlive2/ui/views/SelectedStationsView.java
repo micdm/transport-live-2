@@ -16,6 +16,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
@@ -107,7 +108,15 @@ public class SelectedStationsView extends BaseView {
 
     @Override
     Disposable subscribeForEvents() {
-        return subscribeForSelectedStations();
+        return new CompositeDisposable(
+            subscribeForSetCurrentStationRequests(),
+            subscribeForSelectedStations()
+        );
+    }
+
+    private Disposable subscribeForSetCurrentStationRequests() {
+        return ((Adapter) stationsView.getAdapter()).getSelectStationsRequests()
+            .subscribe(presenters.getCurrentStationPresenter().viewInput::setCurrentStation);
     }
 
     private Disposable subscribeForSelectedStations() {
@@ -118,9 +127,5 @@ public class SelectedStationsView extends BaseView {
                 return result;
             })
             .subscribe(((Adapter) stationsView.getAdapter())::setStationIds);
-    }
-
-    public Observable<Id> getSelectStationRequests() {
-        return ((Adapter) stationsView.getAdapter()).getSelectStationsRequests();
     }
 }

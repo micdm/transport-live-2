@@ -23,8 +23,10 @@ import micdm.transportlive2.R;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Irrelevant;
+import micdm.transportlive2.models.ImmutableRouteInfo;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
+import micdm.transportlive2.models.RouteInfo;
 import micdm.transportlive2.ui.Presenters;
 
 public class SelectedRoutesView extends PresentedView {
@@ -54,7 +56,7 @@ public class SelectedRoutesView extends PresentedView {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            ((SelectedRouteView) holder.itemView).setRouteId(routes.get(position).route.id());
+            ((SelectedRouteView) holder.itemView).setRouteId(routes.get(position).route().id());
         }
 
         @Override
@@ -64,7 +66,7 @@ public class SelectedRoutesView extends PresentedView {
 
         @Override
         public long getItemId(int position) {
-            return routes.get(position).route.id().getNumeric();
+            return routes.get(position).route().id().getNumeric();
         }
 
         void setRoutes(List<RouteInfo> routes) {
@@ -127,15 +129,20 @@ public class SelectedRoutesView extends PresentedView {
                     for (RouteGroup group: groups) {
                         for (Route route: group.routes()) {
                             if (routeIds.contains(route.id())) {
-                                routes.add(new RouteInfo(group, route));
+                                routes.add(
+                                    ImmutableRouteInfo.builder()
+                                        .group(group)
+                                        .route(route)
+                                        .build()
+                                );
                             }
                         }
                     }
                     Collections.sort(routes, (a, b) -> {
-                        if (a.group.equals(b.group)) {
-                            return a.route.number().compareTo(b.route.number());
+                        if (a.group().equals(b.group())) {
+                            return a.route().number().compareTo(b.route().number());
                         }
-                        return a.group.type().compareTo(b.group.type());
+                        return a.group().type().compareTo(b.group().type());
                     });
                     return routes;
                 }

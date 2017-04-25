@@ -22,4 +22,7 @@ interface ApiService {
 
     @GET("PathwayMilestone")
     Single<GetStationResponse> getStation(@Query("pathwayMilestoneId") String stationId);
+
+    @GET("Search")
+    Single<SearchStationsResponse> searchStations(@Query("searchString") String query);
 }
