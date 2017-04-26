@@ -62,7 +62,7 @@ public class SearchView extends PresentedView {
                 }
                 return Observable.timer(SEARCH_DELAY.getMillis(), TimeUnit.MILLISECONDS);
             })
-            .subscribe(presenters.getSearchPresenter().viewInput::search);
+            .subscribe(presenters.getSearchPresenter().viewInput.searchQuery::set);
     }
 
     private Disposable subscribeForSearchResults() {

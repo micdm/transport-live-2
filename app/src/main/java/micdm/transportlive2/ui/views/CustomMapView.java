@@ -306,12 +306,12 @@ public class CustomMapView extends PresentedView {
 
     private Disposable subscribeForLoadRoutesRequests() {
         return Observable.just(Irrelevant.INSTANCE)
-            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes.call());
     }
 
     private Disposable subscribeForLoadPathsRequests() {
         return presenters.getPreferencesPresenter().getSelectedRoutes()
-            .subscribe(presenters.getPathsPresenter().viewInput::loadPaths);
+            .subscribe(presenters.getPathsPresenter().viewInput.routes::set);
     }
 
     private Disposable subscribeForLoadVehiclesRequests() {
@@ -329,7 +329,7 @@ public class CustomMapView extends PresentedView {
                     .compose(commonFunctions.toConst(routeIds))
                     .takeUntil(activityLifecycleWatcher.getState(Stage.PAUSE, true));
             })
-            .subscribe(presenters.getAllVehiclesPresenter().viewInput::loadVehicles);
+            .subscribe(presenters.getAllVehiclesPresenter().viewInput.routes::set);
     }
 
     private Disposable subscribeForChangePreferencesRequests() {
@@ -350,7 +350,7 @@ public class CustomMapView extends PresentedView {
                     )
                     .build()
             )
-            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+            .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
 
     private Disposable subscribeForSetCurrentStationRequests() {
@@ -368,7 +368,7 @@ public class CustomMapView extends PresentedView {
                     source.setCancellable(() -> map.setOnMarkerClickListener(null));
                 })
             )
-            .subscribe(presenters.getCurrentStationPresenter().viewInput::setCurrentStation);
+            .subscribe(presenters.getCurrentStationPresenter().viewInput.currentStation::set);
     }
 
     private Disposable subscribeForActivityEvents() {

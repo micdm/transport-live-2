@@ -70,7 +70,7 @@ public class SelectedStationView extends PresentedView {
 
     private Disposable subscribeForLoadStationRequests() {
         return Observable.just(Irrelevant.INSTANCE)
-            .subscribe(o -> presenters.getStationPresenter(stationId).viewInput.loadStation());
+            .subscribe(o -> presenters.getStationPresenter(stationId).viewInput.loadStation.call());
     }
 
     private Disposable subscribeForChangePreferencesRequests() {
@@ -84,7 +84,7 @@ public class SelectedStationView extends PresentedView {
                     .selectedStations(selectedStations)
                     .build();
             })
-            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+            .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
 
     private Disposable subscribeForData() {

@@ -8,25 +8,17 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
-import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.stores.Stores;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Preferences;
+import micdm.transportlive2.ui.misc.properties.ValueProperty;
 
 public class PreferencesPresenter extends BasePresenter {
 
     public static class ViewInput {
 
-        private final Subject<Preferences> changePreferencesRequests = PublishSubject.create();
-
-        Observable<Preferences> getChangePreferencesRequests() {
-            return changePreferencesRequests;
-        }
-
-        public void changePreferences(Preferences preferences) {
-            changePreferencesRequests.onNext(preferences);
-        }
+        public final ValueProperty<Preferences> preferences = new ValueProperty<>();
     }
 
     @Inject
@@ -44,7 +36,7 @@ public class PreferencesPresenter extends BasePresenter {
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getChangePreferencesRequests().subscribe(stores.getPreferencesStore()::store);
+        return viewInput.preferences.get().subscribe(stores.getPreferencesStore()::store);
     }
 
     private Disposable subscribeForPreferences() {

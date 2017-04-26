@@ -78,7 +78,7 @@ public class MainToolbarView extends PresentedView {
                     .needShowStations(needShowStations)
                     .build()
             )
-            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+            .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
 
     private Disposable subscribeForVehicles() {

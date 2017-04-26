@@ -217,12 +217,12 @@ public class SearchResultsView extends PresentedView {
                     .addSelectedRoutes(routeIds)
                     .build()
             )
-            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+            .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
 
     private Disposable subscribeForSetCurrentStationRequests() {
         return selectStationsRequests
-            .subscribe(presenters.getCurrentStationPresenter().viewInput::setCurrentStation);
+            .subscribe(presenters.getCurrentStationPresenter().viewInput.currentStation::set);
     }
 
     private Disposable subscribeForSearchQuery() {
@@ -256,11 +256,11 @@ public class SearchResultsView extends PresentedView {
         return new CompositeDisposable(
             selectRoutesRequests.subscribe(routeId -> {
                 analyticsTracker.trackRouteSelection(routeId.getOriginal());
-                presenters.getSearchPresenter().viewInput.reset();
+                presenters.getSearchPresenter().viewInput.reset.call();
             }),
             selectStationsRequests.subscribe(stationId -> {
                 analyticsTracker.trackStationSelection(stationId.getOriginal());
-                presenters.getSearchPresenter().viewInput.reset();
+                presenters.getSearchPresenter().viewInput.reset.call();
             })
         );
     }

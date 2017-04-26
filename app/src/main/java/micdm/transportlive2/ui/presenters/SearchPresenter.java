@@ -15,7 +15,6 @@ import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
-import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.ImmutableRouteInfo;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
@@ -23,6 +22,8 @@ import micdm.transportlive2.models.RouteInfo;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 import micdm.transportlive2.ui.misc.ResultWatcher2;
+import micdm.transportlive2.ui.misc.properties.NoValueProperty;
+import micdm.transportlive2.ui.misc.properties.ValueProperty;
 
 public class SearchPresenter extends BasePresenter {
 
@@ -39,24 +40,8 @@ public class SearchPresenter extends BasePresenter {
 
     public static class ViewInput {
 
-        private final Subject<CharSequence> searchRequests = PublishSubject.create();
-        private final Subject<Object> resetRequests = PublishSubject.create();
-
-        Observable<CharSequence> getSearchRequests() {
-            return searchRequests;
-        }
-
-        Observable<Object> getResetRequests() {
-            return resetRequests;
-        }
-
-        public void search(CharSequence query) {
-            searchRequests.onNext(query);
-        }
-
-        public void reset() {
-            resetRequests.onNext(Irrelevant.INSTANCE);
-        }
+        public final ValueProperty<CharSequence> searchQuery = new ValueProperty<>();
+        public final NoValueProperty reset = new NoValueProperty();
     }
 
     @Inject
@@ -85,11 +70,11 @@ public class SearchPresenter extends BasePresenter {
     }
 
     private Disposable subscribeForSetSearchQueryRequests() {
-        return viewInput.getSearchRequests().subscribe(searchQuery::onNext);
+        return viewInput.searchQuery.get().subscribe(searchQuery::onNext);
     }
 
     private Disposable subscribeForSearchRequests() {
-        Observable<String> common = viewInput.getSearchRequests().map(query -> query.toString().toLowerCase());
+        Observable<String> common = viewInput.searchQuery.get().map(query -> query.toString().toLowerCase());
         ResultWatcher2<Collection<RouteInfo>, Collection<Station>> watcher = ResultWatcher2.newInstance(
             common.switchMap(query -> {
                 if (query.isEmpty()) {
@@ -155,7 +140,7 @@ public class SearchPresenter extends BasePresenter {
     }
 
     private Disposable subscribeForResetRequests() {
-        return viewInput.getResetRequests().subscribe(resetRequests::onNext);
+        return viewInput.reset.get().subscribe(resetRequests::onNext);
     }
 
     public Observable<CharSequence> getSearchQuery() {

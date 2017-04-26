@@ -182,14 +182,14 @@ public class ForecastView extends PresentedView {
 
     private Disposable subscribeForLoadRoutesRequests() {
         return Observable.just(Irrelevant.INSTANCE)
-            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes.call());
     }
 
     private Disposable subscribeForLoadForecastRequests() {
         return cannotLoadView.getRetryRequest()
             .startWith(Irrelevant.INSTANCE)
             .switchMap(o -> Observable.interval(0, LOAD_FORECAST_INTERVAL.getStandardSeconds(), TimeUnit.SECONDS))
-            .subscribe(o -> presenters.getForecastPresenter(stationId).viewInput.loadForecast());
+            .subscribe(o -> presenters.getForecastPresenter(stationId).viewInput.loadForecast.call());
     }
 
     private Disposable subscribeForChangePreferencesRequests() {
@@ -207,11 +207,11 @@ public class ForecastView extends PresentedView {
                     .selectedStations(selectedStations)
                     .build();
             })
-            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+            .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
 
     private Disposable subscribeForResetCurrentStation() {
-        return RxView.clicks(closeView).subscribe(o -> presenters.getCurrentStationPresenter().viewInput.resetCurrentStation());
+        return RxView.clicks(closeView).subscribe(o -> presenters.getCurrentStationPresenter().viewInput.reset.call());
     }
 
     private Disposable subscribeForForecast() {

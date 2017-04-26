@@ -7,28 +7,19 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
-import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
-import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.Vehicle;
+import micdm.transportlive2.ui.misc.properties.NoValueProperty;
 
 public class VehiclesPresenter extends BasePresenter {
 
     static class ViewInput {
 
-        private final Subject<Object> loadVehiclesRequests = PublishSubject.create();
-
-        Observable<Object> getLoadVehiclesRequests() {
-            return loadVehiclesRequests;
-        }
-
-        public void loadVehicles() {
-            loadVehiclesRequests.onNext(Irrelevant.INSTANCE);
-        }
+        public final NoValueProperty loadVehicles = new NoValueProperty();
     }
 
     @Inject
@@ -51,7 +42,7 @@ public class VehiclesPresenter extends BasePresenter {
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getLoadVehiclesRequests()
+        return viewInput.loadVehicles.get()
             .switchMap(o -> loaders.getVehiclesLoader(routeId).load())
             .subscribe(results::onNext);
     }

@@ -116,7 +116,7 @@ public class SelectedStationsView extends BaseView {
 
     private Disposable subscribeForSetCurrentStationRequests() {
         return ((Adapter) stationsView.getAdapter()).getSelectStationsRequests()
-            .subscribe(presenters.getCurrentStationPresenter().viewInput::setCurrentStation);
+            .subscribe(presenters.getCurrentStationPresenter().viewInput.currentStation::set);
     }
 
     private Disposable subscribeForSelectedStations() {

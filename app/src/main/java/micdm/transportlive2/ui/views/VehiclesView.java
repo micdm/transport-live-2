@@ -86,13 +86,13 @@ public class VehiclesView extends PresentedView {
     private Disposable subscribeForLoadRoutesRequests() {
         return cannotLoadView.getRetryRequest()
             .startWith(Irrelevant.INSTANCE)
-            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes.call());
     }
 
     private Disposable subscribeForLoadPathsRequests() {
         return cannotLoadView.getRetryRequest()
             .switchMap(o -> presenters.getPreferencesPresenter().getSelectedRoutes())
-            .subscribe(presenters.getPathsPresenter().viewInput::loadPaths);
+            .subscribe(presenters.getPathsPresenter().viewInput.routes::set);
     }
 
     private Disposable subscribeForCurrentStation() {
@@ -112,7 +112,7 @@ public class VehiclesView extends PresentedView {
             Observable
                 .merge(
                     common.compose(commonFunctions.getPrevious()),
-                    presenters.getCurrentStationPresenter().getNoCurrentStation().withLatestFrom(common, (o, view) -> view)
+                    presenters.getCurrentStationPresenter().getResetRequests().withLatestFrom(common, (o, view) -> view)
                 )
                 .subscribe(contentView::removeView)
         );

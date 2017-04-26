@@ -98,7 +98,7 @@ public class SelectedRouteView extends PresentedView {
 
     private Disposable subscribeForLoadRoutesRequests() {
         return Observable.just(Irrelevant.INSTANCE)
-            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes());
+            .subscribe(o -> presenters.getRoutesPresenter().viewInput.loadRoutes.call());
     }
 
     private Disposable subscribeForChangePreferencesRequests() {
@@ -112,7 +112,7 @@ public class SelectedRouteView extends PresentedView {
                     .selectedRoutes(selectedRoutes)
                     .build();
             })
-            .subscribe(presenters.getPreferencesPresenter().viewInput::changePreferences);
+            .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
 
     private Disposable subscribeForRoute() {

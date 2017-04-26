@@ -8,7 +8,6 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
-import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
@@ -16,20 +15,13 @@ import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.misc.ResultWatcherN;
+import micdm.transportlive2.ui.misc.properties.ValueProperty;
 
 public class AllVehiclesPresenter extends BasePresenter {
 
     public static class ViewInput {
 
-        private final Subject<Collection<Id>> loadVehiclesRequests = PublishSubject.create();
-
-        Observable<Collection<Id>> getLoadVehiclesRequests() {
-            return loadVehiclesRequests;
-        }
-
-        public void loadVehicles(Collection<Id> ids) {
-            loadVehiclesRequests.onNext(ids);
-        }
+        public final ValueProperty<Collection<Id>> routes = new ValueProperty<>();
     }
 
     @Inject
@@ -46,7 +38,7 @@ public class AllVehiclesPresenter extends BasePresenter {
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getLoadVehiclesRequests()
+        return viewInput.routes.get()
             .map(routeIds -> {
                 Collection<Observable<Result<Collection<Vehicle>>>> observables = new ArrayList<>();
                 for (Id routeId: routeIds) {
