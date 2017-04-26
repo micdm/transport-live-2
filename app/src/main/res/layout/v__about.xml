@@ -6,7 +6,7 @@
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
     android:paddingTop="8dp"
-    android:background="@drawable/search_route_background">
+    android:background="@drawable/card_background">
     <TextView
         android:id="@+id/v__about__title"
         android:layout_width="match_parent"

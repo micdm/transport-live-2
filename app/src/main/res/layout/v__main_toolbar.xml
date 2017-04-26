@@ -7,10 +7,15 @@
         android:id="@+id/v__main_toolbar__toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/search_route_background">
+        android:background="@drawable/card_background">
         <micdm.transportlive2.ui.views.SearchView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
     </android.support.v7.widget.Toolbar>
+    <micdm.transportlive2.ui.views.SearchResultsView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/card_background"/>
 </LinearLayout>

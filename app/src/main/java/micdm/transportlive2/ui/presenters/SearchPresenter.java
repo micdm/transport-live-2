@@ -7,6 +7,7 @@ import java.util.Collections;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
@@ -14,6 +15,7 @@ import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
+import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.ImmutableRouteInfo;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
@@ -38,13 +40,22 @@ public class SearchPresenter extends BasePresenter {
     public static class ViewInput {
 
         private final Subject<CharSequence> searchRequests = PublishSubject.create();
+        private final Subject<Object> resetRequests = PublishSubject.create();
 
         Observable<CharSequence> getSearchRequests() {
             return searchRequests;
         }
 
+        Observable<Object> getResetRequests() {
+            return resetRequests;
+        }
+
         public void search(CharSequence query) {
             searchRequests.onNext(query);
+        }
+
+        public void reset() {
+            resetRequests.onNext(Irrelevant.INSTANCE);
         }
     }
 
@@ -56,7 +67,9 @@ public class SearchPresenter extends BasePresenter {
     MiscFunctions miscFunctions;
 
     public final ViewInput viewInput = new ViewInput();
-    private final Subject<Result<SearchResult>> results = BehaviorSubject.create();
+    private final Subject<CharSequence> searchQuery = BehaviorSubject.create();
+    private final Subject<Result<SearchResult>> searchResults = BehaviorSubject.create();
+    private final Subject<Object> resetRequests = PublishSubject.create();
 
     @Override
     Disposable subscribeForEvents() {
@@ -64,6 +77,18 @@ public class SearchPresenter extends BasePresenter {
     }
 
     private Disposable subscribeForInput() {
+        return new CompositeDisposable(
+            subscribeForSetSearchQueryRequests(),
+            subscribeForSearchRequests(),
+            subscribeForResetRequests()
+        );
+    }
+
+    private Disposable subscribeForSetSearchQueryRequests() {
+        return viewInput.getSearchRequests().subscribe(searchQuery::onNext);
+    }
+
+    private Disposable subscribeForSearchRequests() {
         Observable<String> common = viewInput.getSearchRequests().map(query -> query.toString().toLowerCase());
         ResultWatcher2<Collection<RouteInfo>, Collection<Station>> watcher = ResultWatcher2.newInstance(
             common.switchMap(query -> {
@@ -85,7 +110,7 @@ public class SearchPresenter extends BasePresenter {
                 watcher.getSuccess().map(product -> Result.newSuccess(new SearchResult(product.first, product.second))),
                 watcher.getFail().map(o -> Result.newFail())
             )
-            .subscribe(results::onNext);
+            .subscribe(searchResults::onNext);
     }
 
     private Observable<Result<Collection<RouteInfo>>> getRoutes(String query) {
@@ -129,7 +154,19 @@ public class SearchPresenter extends BasePresenter {
             route.destination().toLowerCase().contains(search);
     }
 
-    public Observable<Result<SearchResult>> getResults() {
-        return results;
+    private Disposable subscribeForResetRequests() {
+        return viewInput.getResetRequests().subscribe(resetRequests::onNext);
+    }
+
+    public Observable<CharSequence> getSearchQuery() {
+        return searchQuery;
+    }
+
+    public Observable<Result<SearchResult>> getSearchResults() {
+        return searchResults;
+    }
+
+    public Observable<Object> getResetRequests() {
+        return resetRequests;
     }
 }
