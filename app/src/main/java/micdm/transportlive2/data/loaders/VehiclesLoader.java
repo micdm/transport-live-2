@@ -52,8 +52,7 @@ public class VehiclesLoader extends BaseLoader<Collection<Vehicle>> {
         }
     }
 
-    VehiclesLoader(CacheLoader<Collection<Vehicle>> cacheLoader, ServerLoader<Collection<Vehicle>> serverLoader,
-                   StoreClient<Collection<Vehicle>> storeClient) {
-        super(cacheLoader, serverLoader, storeClient);
+    VehiclesLoader(CacheClient<Collection<Vehicle>> cacheClient, ServerLoader<Collection<Vehicle>> serverLoader) {
+        super(cacheClient, serverLoader);
     }
 }

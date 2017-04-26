@@ -25,7 +25,7 @@ import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Station;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 
 public class SelectedStationView extends PresentedView {
 

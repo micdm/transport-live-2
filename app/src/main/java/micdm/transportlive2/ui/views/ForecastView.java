@@ -38,7 +38,7 @@ import micdm.transportlive2.models.Forecast;
 import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 import micdm.transportlive2.ui.misc.ResultWatcher2;
 

@@ -23,7 +23,7 @@ import io.reactivex.subjects.Subject;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
 import micdm.transportlive2.misc.Id;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 
 public class SelectedStationsView extends BaseView {
 

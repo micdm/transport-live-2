@@ -21,7 +21,7 @@ import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Irrelevant;
 import micdm.transportlive2.models.RouteGroup;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 
 public class VehiclesView extends PresentedView {
 

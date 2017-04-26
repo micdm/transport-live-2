@@ -1,4 +1,4 @@
-package micdm.transportlive2.ui;
+package micdm.transportlive2.ui.presenters;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,14 +6,12 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.data.loaders.Loaders;
 import micdm.transportlive2.data.loaders.Result;
-import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.ui.misc.ResultWatcherN;
@@ -34,8 +32,6 @@ public class PathsPresenter extends BasePresenter {
     }
 
     @Inject
-    CommonFunctions commonFunctions;
-    @Inject
     Loaders loaders;
 
     public final ViewInput viewInput = new ViewInput();
@@ -43,28 +39,17 @@ public class PathsPresenter extends BasePresenter {
 
     @Override
     Disposable subscribeForEvents() {
-        return new CompositeDisposable(
-            subscribeForInput(),
-            subscribeForResults()
-        );
+        return subscribeForInput();
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getLoadPathsRequests().subscribe(ids -> {
-            for (Id id: ids) {
-                loaders.getPathLoader(id).load();
-            }
-        });
-    }
-
-    private Disposable subscribeForResults() {
         return viewInput.getLoadPathsRequests()
             .map(routeIds -> {
                 Collection<Observable<Result<Path>>> observables = new ArrayList<>();
                 for (Id routeId: routeIds) {
-                    observables.add(loaders.getPathLoader(routeId).getData());
+                    observables.add(loaders.getPathLoader(routeId).load());
                 }
-                return new ResultWatcherN<>(commonFunctions, observables);
+                return ResultWatcherN.newInstance(observables);
             })
             .switchMap(watcher ->
                 Observable.<Result<Collection<Path>>>merge(

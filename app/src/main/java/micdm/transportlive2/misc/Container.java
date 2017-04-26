@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Container<T1> {
+public class Container<T> {
 
     protected interface Factory<T> {
 
@@ -13,10 +13,10 @@ public class Container<T1> {
 
     private final Lock lock = new ReentrantLock();
 
-    protected <T2 extends T1> T2 getOrCreateInstance(Map<Id, T2> container, Id key, Factory<T2> factory) {
+    protected <Item extends T, Key> Item getOrCreateInstance(Map<Key, Item> container, Key key, Factory<Item> factory) {
         lock.lock();
         try {
-            T2 instance = container.get(key);
+            Item instance = container.get(key);
             if (instance == null) {
                 instance = factory.newInstance();
                 onNewInstance(instance);
@@ -28,5 +28,5 @@ public class Container<T1> {
         }
     }
 
-    protected void onNewInstance(T1 instance) {}
+    protected void onNewInstance(T instance) {}
 }

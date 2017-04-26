@@ -63,14 +63,14 @@ public class PathLoader extends BaseLoader<Path> {
         }
     }
 
-    static class PathStoreClient extends DefaultStoreClient<Path> {
+    static class PathCacheClient extends DefaultCacheClient<Path> {
 
-        PathStoreClient(PathStore store) {
+        PathCacheClient(PathStore store) {
             super(store);
         }
     }
 
-    PathLoader(CacheLoader<Path> cacheLoader, ServerLoader<Path> serverLoader, StoreClient<Path> storeClient) {
-        super(cacheLoader, serverLoader, storeClient);
+    PathLoader(CacheClient<Path> cacheClient, ServerLoader<Path> serverLoader) {
+        super(cacheClient, serverLoader);
     }
 }

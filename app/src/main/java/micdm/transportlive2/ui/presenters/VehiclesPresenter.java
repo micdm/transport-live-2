@@ -1,11 +1,10 @@
-package micdm.transportlive2.ui;
+package micdm.transportlive2.ui.presenters;
 
 import java.util.Collection;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
@@ -48,18 +47,13 @@ public class VehiclesPresenter extends BasePresenter {
 
     @Override
     Disposable subscribeForEvents() {
-        return new CompositeDisposable(
-            subscribeForInput(),
-            subscribeForResults()
-        );
+        return subscribeForInput();
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getLoadVehiclesRequests().subscribe(o -> loaders.getVehiclesLoader(routeId).load());
-    }
-
-    private Disposable subscribeForResults() {
-        return loaders.getVehiclesLoader(routeId).getData().subscribe(results::onNext);
+        return viewInput.getLoadVehiclesRequests()
+            .switchMap(o -> loaders.getVehiclesLoader(routeId).load())
+            .subscribe(results::onNext);
     }
 
     public Observable<Result<Collection<Vehicle>>> getResults() {

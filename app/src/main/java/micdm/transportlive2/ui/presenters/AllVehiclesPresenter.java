@@ -1,4 +1,4 @@
-package micdm.transportlive2.ui;
+package micdm.transportlive2.ui.presenters;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,7 +6,6 @@ import java.util.Collection;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
@@ -43,32 +42,21 @@ public class AllVehiclesPresenter extends BasePresenter {
 
     @Override
     Disposable subscribeForEvents() {
-        return new CompositeDisposable(
-            subscribeForInput(),
-            subscribeForResults()
-        );
+        return subscribeForInput();
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getLoadVehiclesRequests().subscribe(ids -> {
-            for (Id id: ids) {
-                loaders.getVehiclesLoader(id).load();
-            }
-        });
-    }
-
-    private Disposable subscribeForResults() {
         return viewInput.getLoadVehiclesRequests()
             .map(routeIds -> {
                 Collection<Observable<Result<Collection<Vehicle>>>> observables = new ArrayList<>();
                 for (Id routeId: routeIds) {
-                    observables.add(loaders.getVehiclesLoader(routeId).getData());
+                    observables.add(loaders.getVehiclesLoader(routeId).load());
                 }
-                return new ResultWatcherN<>(commonFunctions, observables);
+                return ResultWatcherN.newInstance(observables);
             })
-            .<Result<Collection<Vehicle>>>switchMap(watcher ->
-                Observable.merge(
-                    watcher.getLoading().compose(commonFunctions.toConst(Result.newLoading())),
+            .switchMap(watcher ->
+                Observable.<Result<Collection<Vehicle>>>merge(
+                    watcher.getLoading().map(o -> Result.newLoading()),
                     watcher.getSuccess().map(datas -> {
                         Collection<Vehicle> vehicles = new ArrayList<>();
                         for (Collection<Vehicle> data: datas) {
@@ -76,7 +64,7 @@ public class AllVehiclesPresenter extends BasePresenter {
                         }
                         return Result.newSuccess(vehicles);
                     }),
-                    watcher.getFail().compose(commonFunctions.toConst(Result.newFail()))
+                    watcher.getFail().map(o -> Result.newFail())
                 )
             )
             .subscribe(results::onNext);

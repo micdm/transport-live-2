@@ -27,7 +27,7 @@ import micdm.transportlive2.models.ImmutableRouteInfo;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.RouteInfo;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 
 public class SelectedRoutesView extends PresentedView {
 

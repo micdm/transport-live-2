@@ -46,7 +46,7 @@ public class ForecastLoader extends BaseLoader<Forecast> {
         }
     }
 
-    ForecastLoader(CacheLoader<Forecast> cacheLoader, ServerLoader<Forecast> serverLoader, StoreClient<Forecast> storeClient) {
-        super(cacheLoader, serverLoader, storeClient);
+    ForecastLoader(CacheClient<Forecast> cacheClient, ServerLoader<Forecast> serverLoader) {
+        super(cacheClient, serverLoader);
     }
 }

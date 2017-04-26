@@ -1,4 +1,4 @@
-package micdm.transportlive2.ui;
+package micdm.transportlive2.ui.presenters;
 
 import io.reactivex.disposables.Disposable;
 

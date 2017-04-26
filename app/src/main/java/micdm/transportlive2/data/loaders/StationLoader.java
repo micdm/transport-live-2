@@ -3,7 +3,6 @@ package micdm.transportlive2.data.loaders;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetStationResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.StationStore;
 import micdm.transportlive2.misc.Id;
 import micdm.transportlive2.misc.IdFactory;
 import micdm.transportlive2.models.ImmutablePoint;
@@ -44,14 +43,7 @@ public class StationLoader extends BaseLoader<Station> {
         }
     }
 
-    static class StationStoreClient extends DefaultStoreClient<Station> {
-
-        StationStoreClient(StationStore store) {
-            super(store);
-        }
-    }
-
-    StationLoader(CacheLoader<Station> cacheLoader, ServerLoader<Station> serverLoader, StoreClient<Station> storeClient) {
-        super(cacheLoader, serverLoader, storeClient);
+    StationLoader(CacheClient<Station> cacheClient, ServerLoader<Station> serverLoader) {
+        super(cacheClient, serverLoader);
     }
 }

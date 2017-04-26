@@ -5,16 +5,28 @@ import java.util.Collection;
 import java.util.List;
 
 import io.reactivex.Observable;
+import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.data.loaders.Result;
 import micdm.transportlive2.misc.CommonFunctions;
+import micdm.transportlive2.misc.ObservableCache;
 
 public class ResultWatcherN<T> {
 
+    public static <T> ResultWatcherN<T> newInstance(Collection<Observable<Result<T>>> observables) {
+        return new ResultWatcherN<>(
+            ComponentHolder.getAppComponent().getCommonFunctions(),
+            ComponentHolder.getAppComponent().getObservableCache(),
+            observables
+        );
+    }
+
     private final CommonFunctions commonFunctions;
+    private final ObservableCache observableCache;
     private final Collection<Observable<Result<T>>> observables;
 
-    public ResultWatcherN(CommonFunctions commonFunctions, Collection<Observable<Result<T>>> observables) {
+    public ResultWatcherN(CommonFunctions commonFunctions, ObservableCache observableCache, Collection<Observable<Result<T>>> observables) {
         this.commonFunctions = commonFunctions;
+        this.observableCache = observableCache;
         this.observables = observables;
     }
 
@@ -44,15 +56,19 @@ public class ResultWatcherN<T> {
     }
 
     private Observable<List<Result<T>>> getLatest() {
-        return Observable.combineLatest(
-            observables,
-            (Object... objects) -> {
-                List<Result<T>> results = new ArrayList<>(objects.length);
-                for (Object object: objects) {
-                    results.add((Result<T>) object);
-                }
-                return results;
-            }
+        return observableCache.get("getLatest", () ->
+            Observable
+                .combineLatest(
+                    observables,
+                    (Object... objects) -> {
+                        List<Result<T>> results = new ArrayList<>(objects.length);
+                        for (Object object: objects) {
+                            results.add((Result<T>) object);
+                        }
+                        return results;
+                    }
+                )
+                .share()
         );
     }
 

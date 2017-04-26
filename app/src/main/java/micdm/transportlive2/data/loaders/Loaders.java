@@ -22,23 +22,21 @@ public class Loaders extends Container<BaseLoader> {
     @Inject
     RoutesLoader routesLoader;
     @Inject
-    SearchStationsLoader searchStationsLoader;
-    @Inject
     ServerConnector serverConnector;
     @Inject
     Stores stores;
 
     private final Map<Id, ForecastLoader> forecastLoaders = new HashMap<>();
     private final Map<Id, PathLoader> pathLoaders = new HashMap<>();
+    private final Map<String, SearchStationsLoader> searchStationsLoaders = new HashMap<>();
     private final Map<Id, StationLoader> stationLoaders = new HashMap<>();
     private final Map<Id, VehiclesLoader> vehiclesLoaders = new HashMap<>();
 
     public ForecastLoader getForecastLoader(Id stationId) {
         return getOrCreateInstance(forecastLoaders, stationId, () -> {
             ForecastLoader instance = new ForecastLoader(
-                new DummyCacheLoader<>(),
-                new ForecastLoader.ForecastServerLoader(idFactory, serverConnector, stationId),
-                new DummyStoreClient<>()
+                new DummyCacheClient<>(),
+                new ForecastLoader.ForecastServerLoader(idFactory, serverConnector, stationId)
             );
             ComponentHolder.getAppComponent().inject(instance);
             return instance;
@@ -52,25 +50,30 @@ public class Loaders extends Container<BaseLoader> {
     public PathLoader getPathLoader(Id routeId) {
         return getOrCreateInstance(pathLoaders, routeId, () -> {
             PathLoader instance = new PathLoader(
-                new StoreCacheLoader<>(stores.getPathStore(routeId)),
-                new PathLoader.PathServerLoader(idFactory, serverConnector, routeId),
-                new PathLoader.PathStoreClient(stores.getPathStore(routeId))
+                new DefaultCacheClient<>(stores.getPathStore(routeId)),
+                new PathLoader.PathServerLoader(idFactory, serverConnector, routeId)
             );
             ComponentHolder.getAppComponent().inject(instance);
             return instance;
         });
     }
 
-    public SearchStationsLoader getSearchStationsLoader() {
-        return searchStationsLoader;
+    public SearchStationsLoader getSearchStationsLoader(String query) {
+        return getOrCreateInstance(searchStationsLoaders, query, () -> {
+            SearchStationsLoader instance = new SearchStationsLoader(
+                new DummyCacheClient<>(),
+                new SearchStationsLoader.SearchStationsServerLoader(idFactory, serverConnector, query)
+            );
+            ComponentHolder.getAppComponent().inject(instance);
+            return instance;
+        });
     }
 
     public StationLoader getStationLoader(Id stationId) {
         return getOrCreateInstance(stationLoaders, stationId, () -> {
             StationLoader instance = new StationLoader(
-                new StoreCacheLoader<>(stores.getStationStore(stationId)),
-                new StationLoader.StationServerLoader(idFactory, serverConnector, stationId),
-                new StationLoader.StationStoreClient(stores.getStationStore(stationId))
+                new DefaultCacheClient<>(stores.getStationStore(stationId)),
+                new StationLoader.StationServerLoader(idFactory, serverConnector, stationId)
             );
             ComponentHolder.getAppComponent().inject(instance);
             return instance;
@@ -80,17 +83,11 @@ public class Loaders extends Container<BaseLoader> {
     public VehiclesLoader getVehiclesLoader(Id routeId) {
         return getOrCreateInstance(vehiclesLoaders, routeId, () -> {
             VehiclesLoader instance = new VehiclesLoader(
-                new DummyCacheLoader<>(),
-                new VehiclesLoader.VehiclesServerLoader(idFactory, serverConnector, routeId),
-                new DummyStoreClient<>()
+                new DummyCacheClient<>(),
+                new VehiclesLoader.VehiclesServerLoader(idFactory, serverConnector, routeId)
             );
             ComponentHolder.getAppComponent().inject(instance);
             return instance;
         });
-    }
-
-    @Override
-    protected void onNewInstance(BaseLoader instance) {
-        instance.init();
     }
 }

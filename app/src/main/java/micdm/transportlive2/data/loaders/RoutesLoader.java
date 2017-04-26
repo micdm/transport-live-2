@@ -8,7 +8,6 @@ import java.util.Map;
 import io.reactivex.Single;
 import micdm.transportlive2.data.loaders.remote.GetRoutesResponse;
 import micdm.transportlive2.data.loaders.remote.ServerConnector;
-import micdm.transportlive2.data.stores.RoutesStore;
 import micdm.transportlive2.misc.IdFactory;
 import micdm.transportlive2.models.ImmutableRoute;
 import micdm.transportlive2.models.ImmutableRouteGroup;
@@ -73,15 +72,7 @@ public class RoutesLoader extends BaseLoader<Collection<RouteGroup>> {
         }
     }
 
-    static class RoutesStoreClient extends DefaultStoreClient<Collection<RouteGroup>> {
-
-        RoutesStoreClient(RoutesStore store) {
-            super(store);
-        }
-    }
-
-    RoutesLoader(CacheLoader<Collection<RouteGroup>> cacheLoader, ServerLoader<Collection<RouteGroup>> serverLoader,
-                 StoreClient<Collection<RouteGroup>> storeClient) {
-        super(cacheLoader, serverLoader, storeClient);
+    RoutesLoader(CacheClient<Collection<RouteGroup>> cacheClient, ServerLoader<Collection<RouteGroup>> serverLoader) {
+        super(cacheClient, serverLoader);
     }
 }

@@ -24,19 +24,9 @@ public class LoaderModule {
     @AppScope
     RoutesLoader provideRoutesLoader(IdFactory idFactory, RoutesStore routesStore, ServerConnector serverConnector) {
         RoutesLoader instance = new RoutesLoader(
-            new StoreCacheLoader<>(routesStore),
-            new RoutesLoader.RoutesServerLoader(idFactory, serverConnector),
-            new RoutesLoader.RoutesStoreClient(routesStore)
+            new DefaultCacheClient<>(routesStore),
+            new RoutesLoader.RoutesServerLoader(idFactory, serverConnector)
         );
-        ComponentHolder.getAppComponent().inject(instance);
-        instance.init();
-        return instance;
-    }
-
-    @Provides
-    @AppScope
-    SearchStationsLoader provideSearchLoader() {
-        SearchStationsLoader instance = new SearchStationsLoader();
         ComponentHolder.getAppComponent().inject(instance);
         return instance;
     }

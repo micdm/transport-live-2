@@ -1,9 +1,8 @@
-package micdm.transportlive2.ui;
+package micdm.transportlive2.ui.presenters;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
@@ -43,18 +42,13 @@ public class StationPresenter extends BasePresenter {
 
     @Override
     Disposable subscribeForEvents() {
-        return new CompositeDisposable(
-            subscribeForInput(),
-            subscribeForResults()
-        );
+        return subscribeForInput();
     }
 
     private Disposable subscribeForInput() {
-        return viewInput.getLoadStationRequests().subscribe(o -> loaders.getStationLoader(stationId).load());
-    }
-
-    private Disposable subscribeForResults() {
-        return loaders.getStationLoader(stationId).getData().subscribe(results::onNext);
+        return viewInput.getLoadStationRequests()
+            .switchMap(o -> loaders.getStationLoader(stationId).load())
+            .subscribe(results::onNext);
     }
 
     public Observable<Result<Station>> getResults() {

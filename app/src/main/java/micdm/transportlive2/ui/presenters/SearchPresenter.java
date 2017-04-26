@@ -1,4 +1,4 @@
-package micdm.transportlive2.ui;
+package micdm.transportlive2.ui.presenters;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,7 +76,7 @@ public class SearchPresenter extends BasePresenter {
                 if (query.isEmpty()) {
                     return Observable.just(Result.newSuccess(Collections.emptyList()));
                 }
-                return loaders.getSearchStationsLoader().load(query);
+                return loaders.getSearchStationsLoader(query).load();
             })
         );
         return Observable
@@ -89,7 +89,7 @@ public class SearchPresenter extends BasePresenter {
     }
 
     private Observable<Result<Collection<RouteInfo>>> getRoutes(String query) {
-        Observable<Result<Collection<RouteGroup>>> common = loaders.getRoutesLoader().getData();
+        Observable<Result<Collection<RouteGroup>>> common = loaders.getRoutesLoader().load().share();
         return Observable.merge(
             common
                 .filter(Result::isLoading)

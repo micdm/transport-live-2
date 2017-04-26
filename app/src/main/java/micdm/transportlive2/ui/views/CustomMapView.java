@@ -54,7 +54,7 @@ import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;

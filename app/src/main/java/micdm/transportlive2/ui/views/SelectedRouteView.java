@@ -32,7 +32,7 @@ import micdm.transportlive2.models.Preferences;
 import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Vehicle;
-import micdm.transportlive2.ui.Presenters;
+import micdm.transportlive2.ui.presenters.Presenters;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.MiscFunctions;
 
