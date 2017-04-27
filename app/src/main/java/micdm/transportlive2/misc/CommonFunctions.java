@@ -1,6 +1,7 @@
 package micdm.transportlive2.misc;
 
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,11 +14,20 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 
 public class CommonFunctions {
+
+    public interface Handler2<T1, T2> {
+
+        void handle(T1 first, T2 second);
+    }
+
+    public interface Handler3<T1, T2, T3> {
+
+        void handle(T1 first, T2 second, T3 third);
+    }
 
     private static final int DEFAULT_MIN_DELAY = 200;
 
@@ -31,8 +41,16 @@ public class CommonFunctions {
         return Pair.with(first, second);
     }
 
-    public <T1, T2> Consumer<Pair<T1, T2>> unwrap(BiConsumer<T1, T2> handler) {
-        return pair -> handler.accept(pair.getValue0(), pair.getValue1());
+    public <T1, T2, T3> Triplet<T1, T2, T3> wrap(T1 first, T2 second, T3 third) {
+        return Triplet.with(first, second, third);
+    }
+
+    public <T1, T2> Consumer<Pair<T1, T2>> unwrap(Handler2<T1, T2> handler) {
+        return pair -> handler.handle(pair.getValue0(), pair.getValue1());
+    }
+
+    public <T1, T2, T3> Consumer<Triplet<T1, T2, T3>> unwrap(Handler3<T1, T2, T3> handler) {
+        return triplet -> handler.handle(triplet.getValue0(), triplet.getValue1(), triplet.getValue2());
     }
 
     public <T> ObservableTransformer<T, T> getPrevious() {
