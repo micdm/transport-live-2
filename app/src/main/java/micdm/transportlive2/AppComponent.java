@@ -17,6 +17,11 @@ import micdm.transportlive2.misc.Cache;
 import micdm.transportlive2.misc.CommonFunctions;
 import micdm.transportlive2.misc.MiscModule;
 import micdm.transportlive2.misc.ObservableCache;
+import micdm.transportlive2.ui.UiModule;
+import micdm.transportlive2.ui.misc.MiscFunctions;
+import micdm.transportlive2.ui.misc.PathPaintConstructor;
+import micdm.transportlive2.ui.misc.VehicleIconPaintConstructor;
+import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 import micdm.transportlive2.ui.presenters.AllVehiclesPresenter;
 import micdm.transportlive2.ui.presenters.CurrentStationPresenter;
 import micdm.transportlive2.ui.presenters.ForecastPresenter;
@@ -26,11 +31,7 @@ import micdm.transportlive2.ui.presenters.Presenters;
 import micdm.transportlive2.ui.presenters.RoutesPresenter;
 import micdm.transportlive2.ui.presenters.SearchPresenter;
 import micdm.transportlive2.ui.presenters.StationPresenter;
-import micdm.transportlive2.ui.UiModule;
 import micdm.transportlive2.ui.presenters.VehiclesPresenter;
-import micdm.transportlive2.ui.misc.MiscFunctions;
-import micdm.transportlive2.ui.misc.PaintConstructor;
-import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 
 @AppScope
 @Component(modules = {AppModule.class, DataModule.class, MiscModule.class, RxModule.class, UiModule.class})
@@ -43,7 +44,7 @@ public interface AppComponent {
 
     void inject(App target);
     void inject(Cache target);
-    void inject(PaintConstructor target);
+    void inject(VehicleIconPaintConstructor target);
     void inject(PathLoader target);
     void inject(PathsPresenter target);
     void inject(PathStore target);
@@ -68,4 +69,5 @@ public interface AppComponent {
     void inject(SearchStationsLoader target);
     void inject(SearchPresenter target);
     void inject(CurrentStationPresenter target);
+    void inject(PathPaintConstructor target);
 }

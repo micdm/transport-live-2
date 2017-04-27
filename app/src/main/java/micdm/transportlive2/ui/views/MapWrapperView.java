@@ -5,24 +5,16 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -45,124 +37,199 @@ import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
 import micdm.transportlive2.models.Preferences;
-import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
 import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
-import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher.Stage;
 import micdm.transportlive2.ui.misc.ColorConstructor;
+import micdm.transportlive2.ui.misc.PaintConstructor;
 import micdm.transportlive2.ui.misc.PermissionChecker;
 import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 import micdm.transportlive2.ui.presenters.Presenters;
+import ru.yandex.yandexmapkit.MapController;
+import ru.yandex.yandexmapkit.MapView;
+import ru.yandex.yandexmapkit.OverlayManager;
+import ru.yandex.yandexmapkit.map.MapEvent;
+import ru.yandex.yandexmapkit.map.OnMapListener;
+import ru.yandex.yandexmapkit.overlay.IRender;
+import ru.yandex.yandexmapkit.overlay.Overlay;
+import ru.yandex.yandexmapkit.overlay.OverlayItem;
+import ru.yandex.yandexmapkit.utils.GeoPoint;
+import ru.yandex.yandexmapkit.utils.ScreenPoint;
 
 public class MapWrapperView extends BaseView {
 
-    private static class VehicleHandler {
+//    private static class VehicleHandler {
+//
+//        private static class VehicleMarker {
+//
+//            Vehicle vehicle;
+//            final Marker marker;
+//            VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
+//            final ValueAnimator animator;
+//
+//            private VehicleMarker(Vehicle vehicle, Marker marker, ValueAnimator animator) {
+//                this.vehicle = vehicle;
+//                this.marker = marker;
+//                this.animator = animator;
+//                animator.addUpdateListener(animation -> marker.setPosition((LatLng) animation.getAnimatedValue()));
+//            }
+//
+//            void cleanup() {
+//                marker.remove();
+//                if (bitmapWrapper != null) {
+//                    bitmapWrapper.recycle();
+//                }
+//                animator.removeAllUpdateListeners();
+//                animator.cancel();
+//            }
+//        }
+//
+//        private final Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
+//        private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
+//        private final GoogleMap map;
+//        private final Map<Id, VehicleMarker> markers = new HashMap<>();
+//
+//        VehicleHandler(Provider<ValueAnimator> vehicleMarkerAnimatorProvider, VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
+//            this.vehicleMarkerAnimatorProvider = vehicleMarkerAnimatorProvider;
+//            this.vehicleMarkerIconBuilder = vehicleMarkerIconBuilder;
+//            this.map = map;
+//        }
+//
+//        void handle(Collection<RouteGroup> groups, Collection<Vehicle> vehicles) {
+//            Collection<Id> outdated = new HashSet<>(markers.keySet());
+//            for (Vehicle vehicle: vehicles) {
+//                VehicleMarker vehicleMarker = markers.get(vehicle.id());
+//                if (vehicleMarker == null) {
+//                    vehicleMarker = newMarker(vehicle);
+//                    markers.put(vehicle.id(), vehicleMarker);
+//                } else {
+//                    outdated.remove(vehicle.id());
+//                    if (vehicleMarker.vehicle.equals(vehicle)) {
+//                        continue;
+//                    }
+//                    vehicleMarker.vehicle = vehicle;
+//                    updatePosition(vehicleMarker.marker, vehicle.position(), vehicleMarker.animator);
+//                }
+//                updateIcon(vehicleMarker, groups, vehicle);
+//            }
+//            for (Id id: outdated) {
+//                markers.remove(id).cleanup();
+//            }
+//        }
+//
+//        private VehicleMarker newMarker(Vehicle vehicle) {
+//            MarkerOptions options = new MarkerOptions()
+//                .anchor(0.5f, 0.5f)
+//                .flat(true)
+//                .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()))
+//                .zIndex(1);
+//            return new VehicleMarker(vehicle, map.addMarker(options), vehicleMarkerAnimatorProvider.get());
+//        }
+//
+//        private void updatePosition(Marker marker, Point position, ValueAnimator animator) {
+//            animator.cancel();
+//            animator.setObjectValues(marker.getPosition(), new LatLng(position.latitude(), position.longitude()));
+//            animator.start();
+//        }
+//
+//        private void updateIcon(VehicleMarker vehicleMarker, Collection<RouteGroup> groups, Vehicle vehicle) {
+//            if (vehicleMarker.bitmapWrapper != null) {
+//                vehicleMarker.bitmapWrapper.recycle();
+//                vehicleMarker.bitmapWrapper = null;
+//            }
+//            Route route = getRouteById(groups, vehicle.routeId());
+//            vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
+//            vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
+//        }
+//
+//        private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
+//            for (RouteGroup group: groups) {
+//                for (Route route: group.routes()) {
+//                    if (route.id().equals(routeId)) {
+//                        return route;
+//                    }
+//                }
+//            }
+//            throw new IllegalStateException(String.format("cannot find routeId %s", routeId));
+//        }
+//    }
+//
 
-        private static class VehicleMarker {
+    private static class PathsOverlay extends Overlay {
 
-            Vehicle vehicle;
-            final Marker marker;
-            VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
-            final ValueAnimator animator;
-
-            private VehicleMarker(Vehicle vehicle, Marker marker, ValueAnimator animator) {
-                this.vehicle = vehicle;
-                this.marker = marker;
-                this.animator = animator;
-                animator.addUpdateListener(animation -> marker.setPosition((LatLng) animation.getAnimatedValue()));
-            }
-
-            void cleanup() {
-                marker.remove();
-                if (bitmapWrapper != null) {
-                    bitmapWrapper.recycle();
-                }
-                animator.removeAllUpdateListeners();
-                animator.cancel();
-            }
+        PathsOverlay(MapController mapController) {
+            super(mapController);
         }
 
-        private final Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
-        private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
-        private final GoogleMap map;
-        private final Map<Id, VehicleMarker> markers = new HashMap<>();
-
-        VehicleHandler(Provider<ValueAnimator> vehicleMarkerAnimatorProvider, VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
-            this.vehicleMarkerAnimatorProvider = vehicleMarkerAnimatorProvider;
-            this.vehicleMarkerIconBuilder = vehicleMarkerIconBuilder;
-            this.map = map;
-        }
-
-        void handle(Collection<RouteGroup> groups, Collection<Vehicle> vehicles) {
-            Collection<Id> outdated = new HashSet<>(markers.keySet());
-            for (Vehicle vehicle: vehicles) {
-                VehicleMarker vehicleMarker = markers.get(vehicle.id());
-                if (vehicleMarker == null) {
-                    vehicleMarker = newMarker(vehicle);
-                    markers.put(vehicle.id(), vehicleMarker);
-                } else {
-                    outdated.remove(vehicle.id());
-                    if (vehicleMarker.vehicle.equals(vehicle)) {
-                        continue;
-                    }
-                    vehicleMarker.vehicle = vehicle;
-                    updatePosition(vehicleMarker.marker, vehicle.position(), vehicleMarker.animator);
-                }
-                updateIcon(vehicleMarker, groups, vehicle);
+        @Override
+        public List prepareDraw() {
+            for (Object item: getOverlayItems()) {
+                ((Polyline) item).prepare(getMapController());
             }
-            for (Id id: outdated) {
-                markers.remove(id).cleanup();
+            return getOverlayItems();
+        }
+    }
+
+    private static class Polyline extends OverlayItem {
+
+        private static final GeoPoint DUMMY = new GeoPoint(0, 0);
+
+        private final List<GeoPoint> geoPoints = new ArrayList<>();
+        private final List<ScreenPoint> screenPoints = new ArrayList<>();
+        private final Id routeId;
+
+        Polyline(Id routeId) {
+            super(DUMMY, null);
+            this.routeId = routeId;
+        }
+
+        void addPoint(GeoPoint point) {
+            geoPoints.add(point);
+        }
+
+        Id getRouteId() {
+            return routeId;
+        }
+
+        android.graphics.Path getPath() {
+            android.graphics.Path path = new android.graphics.Path();
+            path.moveTo(screenPoints.get(0).getX(), screenPoints.get(0).getY());
+            for (int i = 1; i < screenPoints.size(); i += 1) {
+                path.lineTo(screenPoints.get(i).getX(), screenPoints.get(i).getY());
+            }
+            return path;
+        }
+
+        void prepare(MapController mapController) {
+            screenPoints.clear();
+            for (GeoPoint point: geoPoints) {
+                screenPoints.add(mapController.getScreenPoint(point));
             }
         }
+    }
 
-        private VehicleMarker newMarker(Vehicle vehicle) {
-            MarkerOptions options = new MarkerOptions()
-                .anchor(0.5f, 0.5f)
-                .flat(true)
-                .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()))
-                .zIndex(1);
-            return new VehicleMarker(vehicle, map.addMarker(options), vehicleMarkerAnimatorProvider.get());
+    private static class PathsRenderer implements IRender {
+
+        private final PaintConstructor paintConstructor;
+
+        PathsRenderer(PaintConstructor paintConstructor) {
+            this.paintConstructor = paintConstructor;
         }
 
-        private void updatePosition(Marker marker, Point position, ValueAnimator animator) {
-            animator.cancel();
-            animator.setObjectValues(marker.getPosition(), new LatLng(position.latitude(), position.longitude()));
-            animator.start();
-        }
-
-        private void updateIcon(VehicleMarker vehicleMarker, Collection<RouteGroup> groups, Vehicle vehicle) {
-            if (vehicleMarker.bitmapWrapper != null) {
-                vehicleMarker.bitmapWrapper.recycle();
-                vehicleMarker.bitmapWrapper = null;
-            }
-            Route route = getRouteById(groups, vehicle.routeId());
-            vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
-            vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
-        }
-
-        private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
-            for (RouteGroup group: groups) {
-                for (Route route: group.routes()) {
-                    if (route.id().equals(routeId)) {
-                        return route;
-                    }
-                }
-            }
-            throw new IllegalStateException(String.format("cannot find routeId %s", routeId));
+        @Override
+        public void draw(Canvas canvas, OverlayItem item) {
+            canvas.drawPath(((Polyline) item).getPath(), paintConstructor.getByString(((Polyline) item).getRouteId().getOriginal()));
         }
     }
 
     private static class PathHandler {
 
-        private final ColorConstructor colorConstructor;
-        private final GoogleMap map;
+        private final Overlay overlay;
         private final Map<Id, Polyline> polylines = new HashMap<>();
 
-        PathHandler(ColorConstructor colorConstructor, GoogleMap map) {
-            this.colorConstructor = colorConstructor;
-            this.map = map;
+        PathHandler(Overlay overlay) {
+            this.overlay = overlay;
         }
 
         void handle(Collection<Path> paths) {
@@ -175,60 +242,73 @@ public class MapWrapperView extends BaseView {
                 }
             }
             for (Id id: outdated) {
-                polylines.remove(id).remove();
+                Polyline polyline = polylines.remove(id);
+                overlay.removeOverlayItem(polyline);
             }
         }
 
         private Polyline newPolyline(Path path) {
-            PolylineOptions options = new PolylineOptions()
-                .color(colorConstructor.getByString(path.routeId().getOriginal()) & 0x55FFFFFF)
-                .width(4);
-            for (Point point : path.points()) {
-                options.add(new LatLng(point.latitude(), point.longitude()));
+            Polyline polyline = new Polyline(path.routeId());
+            for (Point point: path.points()) {
+                polyline.addPoint(new GeoPoint(point.latitude(), point.longitude()));
             }
-            return map.addPolyline(options);
+            overlay.addOverlayItem(polyline);
+            return polyline;
         }
     }
 
     private static class StationHandler {
 
-        private final Bitmap icon;
-        private final GoogleMap map;
-        private final Map<Id, Marker> markers = new HashMap<>();
+        private static class VehicleMarker {
 
-        StationHandler(Bitmap icon, GoogleMap map) {
+            final OverlayItem marker;
+            final Id stationId;
+
+            private VehicleMarker(OverlayItem marker, Id stationId) {
+                this.marker = marker;
+                this.stationId = stationId;
+            }
+
+            void cleanup(Overlay overlay) {
+                overlay.removeOverlayItem(marker);
+            }
+        }
+
+        private final Bitmap icon;
+        private final Resources resources;
+        private final Overlay overlay;
+        private final Map<Id, VehicleMarker> markers = new HashMap<>();
+
+        StationHandler(Bitmap icon, Resources resources, Overlay overlay) {
             this.icon = icon;
-            this.map = map;
+            this.resources = resources;
+            this.overlay = overlay;
         }
 
         void handle(Collection<Station> stations, boolean needShowStations) {
             Collection<Id> outdated = new HashSet<>(markers.keySet());
             for (Station station: stations) {
-                Marker marker = markers.get(station.id());
-                if (marker == null) {
-                    marker = newMarker(station, needShowStations);
-                    marker.setTag(station.id());
-                    markers.put(station.id(), marker);
+                VehicleMarker vehicleMarker = markers.get(station.id());
+                if (vehicleMarker == null) {
+                    vehicleMarker = newMarker(station, needShowStations);
+                    markers.put(station.id(), vehicleMarker);
                 } else {
                     outdated.remove(station.id());
-                    marker.setVisible(needShowStations);
+                    vehicleMarker.marker.setVisible(needShowStations);
                 }
             }
             for (Id id: outdated) {
-                markers.remove(id).remove();
+                VehicleMarker vehicleMarker = markers.remove(id);
+                vehicleMarker.cleanup(overlay);
             }
         }
 
-        private Marker newMarker(Station station, boolean needShow) {
-            return map.addMarker(
-                new MarkerOptions()
-                    .anchor(0.5f, 0.5f)
-                    .flat(true)
-                    .icon(BitmapDescriptorFactory.fromBitmap(icon))
-                    .position(new LatLng(station.location().latitude(), station.location().longitude()))
-                    .title(station.name())
-                    .visible(needShow)
-            );
+        private VehicleMarker newMarker(Station station, boolean needShow) {
+            OverlayItem marker = new OverlayItem(new GeoPoint(station.location().latitude(), station.location().longitude()),
+                                                 new BitmapDrawable(resources, icon));
+            marker.setVisible(needShow);
+            overlay.addOverlayItem(marker);
+            return new VehicleMarker(marker, station.id());
         }
     }
 
@@ -245,6 +325,9 @@ public class MapWrapperView extends BaseView {
     CommonFunctions commonFunctions;
     @Inject
     ObservableCache observableCache;
+    @Inject
+    @Named("pathLine")
+    PaintConstructor pathLinePaintConstructor;
     @Inject
     PermissionChecker permissionChecker;
     @Inject
@@ -277,31 +360,60 @@ public class MapWrapperView extends BaseView {
     }
 
     @Override
+    void setupViews() {
+        mapView.showBuiltInScreenButtons(true);
+    }
+
+    @Override
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
-            subscribeForActivityEvents(),
             subscribeForMap(),
-            subscribeForRoutesAndVehicles(),
+//            subscribeForRoutesAndVehicles(),
             subscribeForPaths(),
             subscribeForStations()
         );
     }
 
-    private Observable<GoogleMap> getMap() {
-        return observableCache.get("getMap", () ->
-            Observable.<GoogleMap>create(source -> mapView.getMapAsync(source::onNext))
+    private Observable<MapController> getMapController() {
+        return observableCache.get("getMapController", () ->
+            Observable.<MapController>create(source -> source.onNext(mapView.getMapController()))
                 .replay()
                 .refCount()
         );
     }
 
-    private Observable<CameraPosition> getCameraPosition() {
+    private Observable<OverlayManager> getOverlayManager() {
+        return observableCache.get("getOverlayManager", () ->
+            getMapController()
+                .switchMap(mapController -> Observable.<OverlayManager>create(source -> source.onNext(mapController.getOverlayManager())))
+                .replay()
+                .refCount()
+        );
+    }
+
+    private Observable<Preferences.CameraPosition> getCameraPosition() {
         return observableCache.get("getCameraPosition", () ->
-            getMap()
-                .switchMap(map ->
-                    Observable.<CameraPosition>create(source -> {
-                        map.setOnCameraIdleListener(() -> source.onNext(map.getCameraPosition()));
-                        source.setCancellable(() -> map.setOnCameraIdleListener(null));
+            getMapController()
+                .switchMap(mapController ->
+                    Observable.<Preferences.CameraPosition>create(source -> {
+                        OnMapListener listener = event -> {
+                            int code = event.getMsg();
+                            if (code == MapEvent.MSG_SCALE_END || code == MapEvent.MSG_SCROLL_END || code == MapEvent.MSG_ZOOM_END) {
+                                source.onNext(
+                                    ImmutablePreferences.CameraPosition.builder()
+                                        .position(
+                                            ImmutablePoint.builder()
+                                                .latitude(mapController.getMapCenter().getLat())
+                                                .longitude(mapController.getMapCenter().getLon())
+                                                .build()
+                                        )
+                                        .zoom(mapController.getZoomCurrent())
+                                        .build()
+                                );
+                            }
+                        };
+                        mapController.addMapListener(listener);
+                        source.setCancellable(() -> mapController.removeMapListener(listener));
                     })
                 )
                 .replay()
@@ -309,96 +421,91 @@ public class MapWrapperView extends BaseView {
         );
     }
 
-    private Disposable subscribeForActivityEvents() {
-        return new CompositeDisposable(
-            activityLifecycleWatcher.getState(Stage.CREATE)
-                .subscribe(state -> mapView.onCreate(state.extra)),
-            activityLifecycleWatcher.getState(Stage.START)
-                .subscribe(state -> mapView.onStart()),
-            activityLifecycleWatcher.getState(Stage.RESUME)
-                .subscribe(state -> mapView.onResume()),
-            activityLifecycleWatcher.getState(Stage.PAUSE)
-                .subscribe(state -> mapView.onPause()),
-            activityLifecycleWatcher.getState(Stage.STOP)
-                .subscribe(state -> mapView.onStop()),
-            activityLifecycleWatcher.getState(Stage.DESTROY)
-                .subscribe(state -> mapView.onDestroy()),
-            activityLifecycleWatcher.getState(Stage.SAVE_STATE)
-                .subscribe(state -> mapView.onSaveInstanceState(state.extra)),
-            activityLifecycleWatcher.getState(Stage.LOW_MEMORY)
-                .subscribe(state -> mapView.onLowMemory())
-        );
-    }
-
     private Disposable subscribeForMap() {
         return new CompositeDisposable(
-            getMap().subscribe(map -> {
-                UiSettings uiSettings = map.getUiSettings();
-                uiSettings.setMapToolbarEnabled(false);
-                uiSettings.setZoomControlsEnabled(true);
-                map.setPadding(0, resources.getDimensionPixelSize(R.dimen.map_top_padding), 0, 0);
-            }),
-            getMap()
+            getMapController()
                 .withLatestFrom(presenters.getPreferencesPresenter().getCameraPosition(), commonFunctions::wrap)
-                .subscribe(commonFunctions.unwrap((map, camera) -> {
-                    CameraPosition position = CameraPosition.fromLatLngZoom(new LatLng(camera.position().latitude(),
-                            camera.position().longitude()),
-                        (float) camera.zoom());
-                    map.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+                .subscribe(commonFunctions.unwrap((mapController, camera) -> {
+                    mapController.setPositionNoAnimationTo(new GeoPoint(camera.position().latitude(), camera.position().longitude()));
+                    mapController.setZoomCurrent((float) camera.zoom());
                 })),
             Observable
                 .combineLatest(
-                    getMap(),
+                    getOverlayManager(),
                     permissionChecker.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION),
                     commonFunctions::wrap
                 )
-                .subscribe(commonFunctions.unwrap(GoogleMap::setMyLocationEnabled))
+                .subscribe(commonFunctions.unwrap((overlayManager, isLocationAccessAllowed) ->
+                    overlayManager.getMyLocation().setEnabled(isLocationAccessAllowed)
+                ))
         );
     }
 
-    private Disposable subscribeForRoutesAndVehicles() {
-        return getMap()
-            .switchMap(map ->
-                Observable.combineLatest(
-                    Observable.just(new VehicleHandler(vehicleMarkerAnimatorProvider, vehicleMarkerIconBuilder, map)),
-                    groups,
-                    vehicles,
-                    commonFunctions::wrap
-                )
-            )
-            .compose(commonFunctions.toMainThread())
-            .subscribe(commonFunctions.unwrap(VehicleHandler::handle));
-    }
-
+//    private Disposable subscribeForRoutesAndVehicles() {
+//        return getMap()
+//            .switchMap(map ->
+//                Observable.combineLatest(
+//                    Observable.just(new VehicleHandler(vehicleMarkerAnimatorProvider, vehicleMarkerIconBuilder, map)),
+//                    groups,
+//                    vehicles,
+//                    commonFunctions::wrap
+//                )
+//            )
+//            .compose(commonFunctions.toMainThread())
+//            .subscribe(commonFunctions.unwrap(VehicleHandler::handle));
+//    }
+//
     private Disposable subscribeForPaths() {
-        return getMap()
-            .switchMap(map ->
-                Observable.combineLatest(
-                    Observable.just(new PathHandler(colorConstructor, map)),
-                    paths,
-                    commonFunctions::wrap
+        Observable<PathsOverlay> common = getMapController()
+            .map(mapController -> {
+                PathsOverlay overlay = new PathsOverlay(mapController);
+                overlay.setIRender(new PathsRenderer(pathLinePaintConstructor));
+                return overlay;
+            })
+            .replay()
+            .refCount();
+        return new CompositeDisposable(
+            Observable
+                .combineLatest(getOverlayManager(), common, commonFunctions::wrap)
+                .subscribe(commonFunctions.unwrap(OverlayManager::addOverlay)),
+            common
+                .switchMap(overlay ->
+                    Observable.combineLatest(
+                        Observable.just(new PathHandler(overlay)),
+                        paths,
+                        commonFunctions::wrap
+                    )
                 )
-            )
-            .compose(commonFunctions.toMainThread())
-            .subscribe(commonFunctions.unwrap(PathHandler::handle));
+                .compose(commonFunctions.toMainThread())
+                .subscribe(commonFunctions.unwrap(PathHandler::handle))
+        );
     }
 
     private Disposable subscribeForStations() {
-        return getMap()
-            .switchMap(map ->
-                Observable.combineLatest(
-                    Observable.just(new StationHandler(stationIcon, map)),
-                    stations,
+        Observable<Overlay> common = getMapController()
+            .map(Overlay::new)
+            .replay()
+            .refCount();
+        return new CompositeDisposable(
+            Observable
+                .combineLatest(getOverlayManager(), common, commonFunctions::wrap)
+                .subscribe(commonFunctions.unwrap(OverlayManager::addOverlay)),
+            common
+                .switchMap(overlay ->
                     Observable.combineLatest(
-                        presenters.getPreferencesPresenter().getNeedShowStations(),
-                        getCameraPosition().map(cameraPosition -> cameraPosition.zoom >= CAMERA_ZOOM_TO_SHOW_STATIONS),
-                        (a, b) -> a && b
-                    ),
-                    commonFunctions::wrap
+                        Observable.just(new StationHandler(stationIcon, resources, overlay)),
+                        stations,
+                        Observable.combineLatest(
+                            presenters.getPreferencesPresenter().getNeedShowStations(),
+                            getCameraPosition().map(cameraPosition -> cameraPosition.zoom() >= CAMERA_ZOOM_TO_SHOW_STATIONS),
+                            (a, b) -> a && b
+                        ),
+                        commonFunctions::wrap
+                    )
                 )
-            )
-            .compose(commonFunctions.toMainThread())
-            .subscribe(commonFunctions.unwrap(StationHandler::handle));
+                .compose(commonFunctions.toMainThread())
+                .subscribe(commonFunctions.unwrap(StationHandler::handle))
+        );
     }
 
     public Observable<Preferences> getPreferences() {
@@ -407,35 +514,26 @@ public class MapWrapperView extends BaseView {
             (cameraPosition, preferences) ->
                 ImmutablePreferences.builder()
                     .from(preferences)
-                    .cameraPosition(
-                        ImmutablePreferences.CameraPosition.builder()
-                            .position(
-                                ImmutablePoint.builder()
-                                    .latitude(cameraPosition.target.latitude)
-                                    .longitude(cameraPosition.target.longitude)
-                                    .build()
-                            )
-                            .zoom(cameraPosition.zoom)
-                            .build()
-                    )
+                    .cameraPosition(cameraPosition)
                     .build()
         );
     }
 
     public Observable<Id> getCurrentStation() {
-        return getMap().switchMap(map ->
-            Observable.<Id>create(source -> {
-                map.setOnMarkerClickListener(marker -> {
-                    Object tag = marker.getTag();
-                    if (tag != null && tag instanceof Id) {
-                        source.onNext((Id) tag);
-                        return true;
-                    }
-                    return false;
-                });
-                source.setCancellable(() -> map.setOnMarkerClickListener(null));
-            })
-        );
+        return Observable.empty();
+//        return getMap().switchMap(map ->
+//            Observable.<Id>create(source -> {
+//                map.setOnMarkerClickListener(marker -> {
+//                    Object tag = marker.getTag();
+//                    if (tag != null && tag instanceof Id) {
+//                        source.onNext((Id) tag);
+//                        return true;
+//                    }
+//                    return false;
+//                });
+//                source.setCancellable(() -> map.setOnMarkerClickListener(null));
+//            })
+//        );
     }
 
     public void setRoutes(Collection<RouteGroup> groups) {

@@ -2,8 +2,9 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.google.android.gms.maps.MapView
+    <ru.yandex.yandexmapkit.MapView
         android:id="@+id/v__map_wrapper__map"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:apiKey="TKkQXWbCskmpVnuaBD03G9mEWeTuHsf5p6L8czF-1XQf4SLqmKDx9-hz3FXNQ256pI~b9cdS3EnGkkQi8kmYJIA9lH6ljqXvqmDhGA-CuDE="/>
 </FrameLayout>

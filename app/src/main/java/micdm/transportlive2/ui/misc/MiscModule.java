@@ -1,5 +1,7 @@
 package micdm.transportlive2.ui.misc;
 
+import javax.inject.Named;
+
 import dagger.Module;
 import dagger.Provides;
 import micdm.transportlive2.AppScope;
@@ -9,9 +11,19 @@ import micdm.transportlive2.ComponentHolder;
 public class MiscModule {
 
     @Provides
+    @Named("pathLine")
     @AppScope
-    PaintConstructor providePaintConstructor() {
-        PaintConstructor instance = new PaintConstructor();
+    PaintConstructor providePathLinePaintConstructor() {
+        PathPaintConstructor instance = new PathPaintConstructor();
+        ComponentHolder.getAppComponent().inject(instance);
+        return instance;
+    }
+
+    @Provides
+    @Named("vehicleIcon")
+    @AppScope
+    PaintConstructor provideVehicleIconPaintConstructor() {
+        VehicleIconPaintConstructor instance = new VehicleIconPaintConstructor();
         ComponentHolder.getAppComponent().inject(instance);
         return instance;
     }

@@ -11,7 +11,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 
-import com.google.android.gms.maps.model.LatLng;
+import org.javatuples.Pair;
 
 import javax.inject.Named;
 
@@ -65,16 +65,16 @@ public class UiModule {
     }
 
     @Provides
-    ValueAnimator provideMarkerAnimator(TypeEvaluator<LatLng> typeEvaluator) {
-        return ValueAnimator.ofObject(typeEvaluator, new LatLng(0, 0));
-    }
+    ValueAnimator provideMarkerAnimator(TypeEvaluator<Pair<Double, Double>> typeEvaluator) {
+        return ValueAnimator.ofObject(typeEvaluator, Pair.with(0, 0));
+    }   // TODO: надо?
 
     @Provides
     @AppScope
-    TypeEvaluator<LatLng> provideLatLngTypeEvaluator() {
-        return (fraction, startValue, endValue) -> new LatLng(
-            startValue.latitude + (endValue.latitude - startValue.latitude) * fraction,
-            startValue.longitude + (endValue.longitude - startValue.longitude) * fraction
+    TypeEvaluator<Pair<Double, Double>> provideLatLngTypeEvaluator() {
+        return (fraction, startValue, endValue) -> Pair.with(
+            startValue.getValue0() + (endValue.getValue0() - startValue.getValue0()) * fraction,
+            startValue.getValue1() + (endValue.getValue1() - startValue.getValue1()) * fraction
         );
-    }
+    }   // TODO: надо?
 }

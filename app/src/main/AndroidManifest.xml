@@ -11,9 +11,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:name="micdm.transportlive2.App">
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key"/>
         <activity
             android:name="micdm.transportlive2.MainActivity">
             <intent-filter>
