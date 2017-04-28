@@ -344,7 +344,7 @@ public class MapWrapperView extends BaseView {
     private static final byte STATION_MARKER_PRIORITY = 2;
     private static final byte VEHICLE_MARKER_PRIORITY = 3;
 
-    private static final int CAMERA_ZOOM_TO_SHOW_STATIONS = 13;
+    private static final int CAMERA_ZOOM_TO_SHOW_STATIONS = 14;
 
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
@@ -473,7 +473,14 @@ public class MapWrapperView extends BaseView {
                 )
                 .subscribe(commonFunctions.unwrap((overlayManager, isLocationAccessAllowed) ->
                     overlayManager.getMyLocation().setEnabled(isLocationAccessAllowed)
-                ))
+                )),
+            Observable
+                .combineLatest(
+                    getMapController(),
+                    presenters.getPreferencesPresenter().getNeedUseHdMap(),
+                    commonFunctions::wrap
+                )
+                .subscribe(commonFunctions.unwrap(MapController::setHDMode))
         );
     }
 

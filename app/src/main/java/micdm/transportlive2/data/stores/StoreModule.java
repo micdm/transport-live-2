@@ -47,6 +47,7 @@ public class StoreModule {
             ImmutablePreferences.builder()
                 .selectedRoutes(Collections.emptySet())
                 .selectedStations(Collections.emptySet())
+                .needUseHdMap(false)
                 .needShowStations(true)
                 .cameraPosition(
                     ImmutablePreferences.CameraPosition.builder()
@@ -56,7 +57,7 @@ public class StoreModule {
                                 .longitude(84.987703)
                                 .build()
                         )
-                        .zoom(12)
+                        .zoom(14)
                         .build()
                 )
                 .build()

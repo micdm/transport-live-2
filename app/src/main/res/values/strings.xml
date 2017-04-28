@@ -5,6 +5,7 @@
         <item>Трамвай</item>
         <item>Автобус</item>
     </string-array>
+    <string name="m__main__use_hd_map">Карта в HD</string>
     <string name="m__main__show_stations">Остановки</string>
     <string name="m__main__about">О программе…</string>
     <string name="v__cannot_load__message">Не получилось загрузить данные</string>
@@ -20,7 +21,7 @@
     <string name="v__forecast__item__route">%1$s №%2$s</string>
     <string name="v__forecast__item__time">%d мин.</string>
     <string name="v__about__title">%1$s v%2$s</string>
-    <string name="v__about__source">Работает с gpt.incom.tomsk.ru</string>
+    <string name="v__about__source">Работает с gpt.incom.tomsk.ru\nна картах Яндекса</string>
     <string name="v__about__author">По всем вопросам пишите на demerzov@gmail.com</string>
     <string name="v__about__ok">Понятно</string>
     <string name="v__selected_routes__title">Маршруты</string>

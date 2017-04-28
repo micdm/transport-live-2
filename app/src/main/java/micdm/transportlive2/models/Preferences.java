@@ -19,6 +19,7 @@ public interface Preferences {
 
     Set<Id> selectedRoutes();
     Set<Id> selectedStations();
+    boolean needUseHdMap();
     boolean needShowStations();
     CameraPosition cameraPosition();
 }

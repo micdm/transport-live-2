@@ -59,6 +59,12 @@ public class PreferencesPresenter extends BasePresenter {
             .distinctUntilChanged();
     }
 
+    public Observable<Boolean> getNeedUseHdMap() {
+        return preferences
+            .map(Preferences::needUseHdMap)
+            .distinctUntilChanged();
+    }
+
     public Observable<Boolean> getNeedShowStations() {
         return preferences
             .map(Preferences::needShowStations)

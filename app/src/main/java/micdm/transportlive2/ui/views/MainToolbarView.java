@@ -64,19 +64,32 @@ public class MainToolbarView extends PresentedView {
         return new CompositeDisposable(
             subscribeForChangePreferencesRequests(),
             subscribeForVehicles(),
+            subscribeForUseHdMap(),
             subscribeForShowStations()
         );
     }
 
     private Disposable subscribeForChangePreferencesRequests() {
-        return getMenuClicks()
-            .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
-            .map(item -> !item.isChecked())
-            .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (needShowStations, preferences) ->
-                ImmutablePreferences.builder()
-                    .from(preferences)
-                    .needShowStations(needShowStations)
-                    .build()
+        return Observable
+            .merge(
+                getMenuClicks()
+                    .filter(menuItem -> menuItem.getItemId() == R.id.m__main__use_hd_map)
+                    .map(item -> !item.isChecked())
+                    .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (useHdMap, preferences) ->
+                        ImmutablePreferences.builder()
+                            .from(preferences)
+                            .needUseHdMap(useHdMap)
+                            .build()
+                    ),
+                getMenuClicks()
+                    .filter(menuItem -> menuItem.getItemId() == R.id.m__main__show_stations)
+                    .map(item -> !item.isChecked())
+                    .withLatestFrom(presenters.getPreferencesPresenter().getPreferences(), (needShowStations, preferences) ->
+                        ImmutablePreferences.builder()
+                            .from(preferences)
+                            .needShowStations(needShowStations)
+                            .build()
+                    )
             )
             .subscribe(presenters.getPreferencesPresenter().viewInput.preferences::set);
     }
@@ -97,6 +110,11 @@ public class MainToolbarView extends PresentedView {
                 .filter(Result::isFail)
                 .subscribe(o -> toolbarView.setNavigationIcon(R.drawable.menu_warning))
         );
+    }
+
+    private Disposable subscribeForUseHdMap() {
+        return presenters.getPreferencesPresenter().getNeedUseHdMap()
+            .subscribe(toolbarView.getMenu().findItem(R.id.m__main__use_hd_map)::setChecked);
     }
 
     private Disposable subscribeForShowStations() {

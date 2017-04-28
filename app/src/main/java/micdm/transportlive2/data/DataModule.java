@@ -249,6 +249,7 @@ public class DataModule {
                 idTypeAdapter.write(out, id);
             }
             out.endArray();
+            out.name("needUseHdMap").value(preferences.needUseHdMap());
             out.name("needShowStations").value(preferences.needShowStations());
             out.name("cameraPosition");
             preferencesCameraPositionTypeAdapter.write(out, preferences.cameraPosition());
@@ -274,6 +275,9 @@ public class DataModule {
                         builder.addSelectedStations(idTypeAdapter.read(in));
                     }
                     in.endArray();
+                }
+                if (name.equals("needUseHdMap")) {
+                    builder.needUseHdMap(in.nextBoolean());
                 }
                 if (name.equals("needShowStations")) {
                     builder.needShowStations(in.nextBoolean());

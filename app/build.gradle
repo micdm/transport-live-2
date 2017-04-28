@@ -27,15 +27,15 @@ android {
     }
     buildTypes {
         release {
-            applicationIdSuffix '.yx'
-            versionNameSuffix '-yx'
+            applicationIdSuffix '.yndx'
+            versionNameSuffix '-yndx'
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
             debuggable true
-            applicationIdSuffix '.yx.dev'
-            versionNameSuffix '-yx-dev'
+            applicationIdSuffix '.yndx.dev'
+            versionNameSuffix '-yndx-dev'
         }
     }
     compileOptions {
