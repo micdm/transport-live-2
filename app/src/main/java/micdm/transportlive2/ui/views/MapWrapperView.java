@@ -26,6 +26,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import micdm.transportlive2.ComponentHolder;
 import micdm.transportlive2.R;
@@ -37,6 +38,7 @@ import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Path;
 import micdm.transportlive2.models.Point;
 import micdm.transportlive2.models.Preferences;
+import micdm.transportlive2.models.Route;
 import micdm.transportlive2.models.RouteGroup;
 import micdm.transportlive2.models.Station;
 import micdm.transportlive2.models.Vehicle;
@@ -44,6 +46,7 @@ import micdm.transportlive2.ui.misc.ActivityLifecycleWatcher;
 import micdm.transportlive2.ui.misc.ColorConstructor;
 import micdm.transportlive2.ui.misc.PaintConstructor;
 import micdm.transportlive2.ui.misc.PermissionChecker;
+import micdm.transportlive2.ui.misc.Repainter;
 import micdm.transportlive2.ui.misc.VehicleMarkerIconBuilder;
 import micdm.transportlive2.ui.presenters.Presenters;
 import ru.yandex.yandexmapkit.MapController;
@@ -59,115 +62,109 @@ import ru.yandex.yandexmapkit.utils.ScreenPoint;
 
 public class MapWrapperView extends BaseView {
 
-//    private static class VehicleHandler {
-//
-//        private static class VehicleMarker {
-//
-//            Vehicle vehicle;
-//            final Marker marker;
-//            VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
-//            final ValueAnimator animator;
-//
-//            private VehicleMarker(Vehicle vehicle, Marker marker, ValueAnimator animator) {
-//                this.vehicle = vehicle;
-//                this.marker = marker;
-//                this.animator = animator;
-//                animator.addUpdateListener(animation -> marker.setPosition((LatLng) animation.getAnimatedValue()));
-//            }
-//
-//            void cleanup() {
-//                marker.remove();
-//                if (bitmapWrapper != null) {
-//                    bitmapWrapper.recycle();
-//                }
-//                animator.removeAllUpdateListeners();
-//                animator.cancel();
-//            }
-//        }
-//
-//        private final Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
-//        private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
-//        private final GoogleMap map;
-//        private final Map<Id, VehicleMarker> markers = new HashMap<>();
-//
-//        VehicleHandler(Provider<ValueAnimator> vehicleMarkerAnimatorProvider, VehicleMarkerIconBuilder vehicleMarkerIconBuilder, GoogleMap map) {
-//            this.vehicleMarkerAnimatorProvider = vehicleMarkerAnimatorProvider;
-//            this.vehicleMarkerIconBuilder = vehicleMarkerIconBuilder;
-//            this.map = map;
-//        }
-//
-//        void handle(Collection<RouteGroup> groups, Collection<Vehicle> vehicles) {
-//            Collection<Id> outdated = new HashSet<>(markers.keySet());
-//            for (Vehicle vehicle: vehicles) {
-//                VehicleMarker vehicleMarker = markers.get(vehicle.id());
-//                if (vehicleMarker == null) {
-//                    vehicleMarker = newMarker(vehicle);
-//                    markers.put(vehicle.id(), vehicleMarker);
-//                } else {
-//                    outdated.remove(vehicle.id());
-//                    if (vehicleMarker.vehicle.equals(vehicle)) {
-//                        continue;
-//                    }
-//                    vehicleMarker.vehicle = vehicle;
-//                    updatePosition(vehicleMarker.marker, vehicle.position(), vehicleMarker.animator);
-//                }
-//                updateIcon(vehicleMarker, groups, vehicle);
-//            }
-//            for (Id id: outdated) {
-//                markers.remove(id).cleanup();
-//            }
-//        }
-//
-//        private VehicleMarker newMarker(Vehicle vehicle) {
-//            MarkerOptions options = new MarkerOptions()
-//                .anchor(0.5f, 0.5f)
-//                .flat(true)
-//                .position(new LatLng(vehicle.position().latitude(), vehicle.position().longitude()))
-//                .zIndex(1);
-//            return new VehicleMarker(vehicle, map.addMarker(options), vehicleMarkerAnimatorProvider.get());
-//        }
-//
-//        private void updatePosition(Marker marker, Point position, ValueAnimator animator) {
-//            animator.cancel();
-//            animator.setObjectValues(marker.getPosition(), new LatLng(position.latitude(), position.longitude()));
-//            animator.start();
-//        }
-//
-//        private void updateIcon(VehicleMarker vehicleMarker, Collection<RouteGroup> groups, Vehicle vehicle) {
-//            if (vehicleMarker.bitmapWrapper != null) {
-//                vehicleMarker.bitmapWrapper.recycle();
-//                vehicleMarker.bitmapWrapper = null;
-//            }
-//            Route route = getRouteById(groups, vehicle.routeId());
-//            vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
-//            vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
-//        }
-//
-//        private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
-//            for (RouteGroup group: groups) {
-//                for (Route route: group.routes()) {
-//                    if (route.id().equals(routeId)) {
-//                        return route;
-//                    }
-//                }
-//            }
-//            throw new IllegalStateException(String.format("cannot find routeId %s", routeId));
-//        }
-//    }
-//
+    private static class VehicleHandler {
 
-    private static class PathsOverlay extends Overlay {
+        private static class VehicleMarker {
 
-        PathsOverlay(MapController mapController) {
-            super(mapController);
+            Vehicle vehicle;
+            final OverlayItem marker;
+            VehicleMarkerIconBuilder.BitmapWrapper bitmapWrapper;
+            final ValueAnimator animator;
+
+            private VehicleMarker(Vehicle vehicle, OverlayItem marker, ValueAnimator animator) {
+                this.vehicle = vehicle;
+                this.marker = marker;
+                this.animator = animator;
+            }
+
+            void cleanup(Overlay overlay) {
+                overlay.removeOverlayItem(marker);
+                if (bitmapWrapper != null) {
+                    bitmapWrapper.recycle();
+                }
+                animator.removeAllUpdateListeners();
+                animator.cancel();
+            }
         }
 
-        @Override
-        public List prepareDraw() {
-            for (Object item: getOverlayItems()) {
-                ((Polyline) item).prepare(getMapController());
+        private final Resources resources;
+        private final Repainter repainter;
+        private final Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
+        private final VehicleMarkerIconBuilder vehicleMarkerIconBuilder;
+        private final byte priority;
+        private final Overlay overlay;
+        private final Map<Id, VehicleMarker> markers = new HashMap<>();
+
+        VehicleHandler(Resources resources, Repainter repainter, Provider<ValueAnimator> vehicleMarkerAnimatorProvider,
+                       VehicleMarkerIconBuilder vehicleMarkerIconBuilder, byte priority, Overlay overlay) {
+            this.resources = resources;
+            this.repainter = repainter;
+            this.vehicleMarkerAnimatorProvider = vehicleMarkerAnimatorProvider;
+            this.vehicleMarkerIconBuilder = vehicleMarkerIconBuilder;
+            this.priority = priority;
+            this.overlay = overlay;
+        }
+
+        void handle(Collection<RouteGroup> groups, Collection<Vehicle> vehicles) {
+            Collection<Id> outdated = new HashSet<>(markers.keySet());
+            for (Vehicle vehicle: vehicles) {
+                VehicleMarker vehicleMarker = markers.get(vehicle.id());
+                if (vehicleMarker == null) {
+                    vehicleMarker = newMarker(vehicle);
+                    markers.put(vehicle.id(), vehicleMarker);
+                } else {
+                    outdated.remove(vehicle.id());
+                    if (vehicleMarker.vehicle.equals(vehicle)) {
+                        continue;
+                    }
+                    vehicleMarker.vehicle = vehicle;
+                    updatePosition(vehicleMarker.marker, vehicle.position(), vehicleMarker.animator);
+                }
+                updateIcon(vehicleMarker, groups, vehicle);
             }
-            return getOverlayItems();
+            for (Id id: outdated) {
+                markers.remove(id).cleanup(overlay);
+            }
+            repainter.requestRepaint();
+        }
+
+        private VehicleMarker newMarker(Vehicle vehicle) {
+            OverlayItem marker = new OverlayItem(new GeoPoint(vehicle.position().latitude(), vehicle.position().longitude()), null);
+            marker.setPriority(priority);
+            overlay.addOverlayItem(marker);
+            ValueAnimator animator = vehicleMarkerAnimatorProvider.get();
+            animator.addUpdateListener(animation -> {
+                marker.setGeoPoint((GeoPoint) animation.getAnimatedValue());
+                repainter.requestRepaint();
+            });
+            return new VehicleMarker(vehicle, marker, animator);
+        }
+
+        private void updatePosition(OverlayItem marker, Point position, ValueAnimator animator) {
+            animator.cancel();
+            animator.setObjectValues(marker.getGeoPoint(), new GeoPoint(position.latitude(), position.longitude()));
+            animator.start();
+        }
+
+        private void updateIcon(VehicleMarker vehicleMarker, Collection<RouteGroup> groups, Vehicle vehicle) {
+            if (vehicleMarker.bitmapWrapper != null) {
+                vehicleMarker.bitmapWrapper.recycle();
+                vehicleMarker.bitmapWrapper = null;
+            }
+            Route route = getRouteById(groups, vehicle.routeId());
+            vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
+            vehicleMarker.marker.setDrawable(new BitmapDrawable(resources, vehicleMarker.bitmapWrapper.getBitmap()));
+        }
+
+        private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
+            for (RouteGroup group: groups) {
+                for (Route route: group.routes()) {
+                    if (route.id().equals(routeId)) {
+                        return route;
+                    }
+                }
+            }
+            throw new IllegalStateException(String.format("cannot find routeId %s", routeId));
         }
     }
 
@@ -209,6 +206,21 @@ public class MapWrapperView extends BaseView {
         }
     }
 
+    private static class PathsOverlay extends Overlay {
+
+        PathsOverlay(MapController mapController) {
+            super(mapController);
+        }
+
+        @Override
+        public List prepareDraw() {
+            for (Object item: getOverlayItems()) {
+                ((Polyline) item).prepare(getMapController());
+            }
+            return getOverlayItems();
+        }
+    }
+
     private static class PathsRenderer implements IRender {
 
         private final PaintConstructor paintConstructor;
@@ -225,10 +237,14 @@ public class MapWrapperView extends BaseView {
 
     private static class PathHandler {
 
+        private final Repainter repainter;
+        private final byte priority;
         private final Overlay overlay;
         private final Map<Id, Polyline> polylines = new HashMap<>();
 
-        PathHandler(Overlay overlay) {
+        PathHandler(Repainter repainter, byte priority, Overlay overlay) {
+            this.repainter = repainter;
+            this.priority = priority;
             this.overlay = overlay;
         }
 
@@ -245,6 +261,7 @@ public class MapWrapperView extends BaseView {
                 Polyline polyline = polylines.remove(id);
                 overlay.removeOverlayItem(polyline);
             }
+            repainter.requestRepaint();
         }
 
         private Polyline newPolyline(Path path) {
@@ -252,6 +269,7 @@ public class MapWrapperView extends BaseView {
             for (Point point: path.points()) {
                 polyline.addPoint(new GeoPoint(point.latitude(), point.longitude()));
             }
+            polyline.setPriority(priority);
             overlay.addOverlayItem(polyline);
             return polyline;
         }
@@ -259,12 +277,12 @@ public class MapWrapperView extends BaseView {
 
     private static class StationHandler {
 
-        private static class VehicleMarker {
+        private static class StationMarker {
 
             final OverlayItem marker;
             final Id stationId;
 
-            private VehicleMarker(OverlayItem marker, Id stationId) {
+            private StationMarker(OverlayItem marker, Id stationId) {
                 this.marker = marker;
                 this.stationId = stationId;
             }
@@ -275,44 +293,58 @@ public class MapWrapperView extends BaseView {
         }
 
         private final Bitmap icon;
+        private final Repainter repainter;
         private final Resources resources;
+        private final byte priority;
         private final Overlay overlay;
-        private final Map<Id, VehicleMarker> markers = new HashMap<>();
 
-        StationHandler(Bitmap icon, Resources resources, Overlay overlay) {
+        private final Map<Id, StationMarker> markers = new HashMap<>();
+        private final Subject<Id> selectStationsRequests = PublishSubject.create();
+
+        StationHandler(Bitmap icon, Repainter repainter, Resources resources, byte priority, Overlay overlay) {
             this.icon = icon;
+            this.repainter = repainter;
             this.resources = resources;
+            this.priority = priority;
             this.overlay = overlay;
         }
 
-        void handle(Collection<Station> stations, boolean needShowStations) {
+        void handle(Collection<Station> stations) {
             Collection<Id> outdated = new HashSet<>(markers.keySet());
             for (Station station: stations) {
-                VehicleMarker vehicleMarker = markers.get(station.id());
-                if (vehicleMarker == null) {
-                    vehicleMarker = newMarker(station, needShowStations);
-                    markers.put(station.id(), vehicleMarker);
+                StationMarker stationMarker = markers.get(station.id());
+                if (stationMarker == null) {
+                    stationMarker = newMarker(station);
+                    markers.put(station.id(), stationMarker);
                 } else {
                     outdated.remove(station.id());
-                    vehicleMarker.marker.setVisible(needShowStations);
                 }
             }
             for (Id id: outdated) {
-                VehicleMarker vehicleMarker = markers.remove(id);
-                vehicleMarker.cleanup(overlay);
+                markers.remove(id).cleanup(overlay);
             }
+            repainter.requestRepaint();
         }
 
-        private VehicleMarker newMarker(Station station, boolean needShow) {
+        private StationMarker newMarker(Station station) {
             OverlayItem marker = new OverlayItem(new GeoPoint(station.location().latitude(), station.location().longitude()),
                                                  new BitmapDrawable(resources, icon));
-            marker.setVisible(needShow);
+            marker.setOverlayItemListener(o -> selectStationsRequests.onNext(station.id()));
+            marker.setPriority(priority);
             overlay.addOverlayItem(marker);
-            return new VehicleMarker(marker, station.id());
+            return new StationMarker(marker, station.id());
+        }
+
+        Observable<Id> getSelectStationsRequests() {
+            return selectStationsRequests;
         }
     }
 
-    private static final int CAMERA_ZOOM_TO_SHOW_STATIONS = 12;
+    private static final byte PATH_LINE_PRIORITY = 1;
+    private static final byte STATION_MARKER_PRIORITY = 2;
+    private static final byte VEHICLE_MARKER_PRIORITY = 3;
+
+    private static final int CAMERA_ZOOM_TO_SHOW_STATIONS = 13;
 
     @Inject
     ActivityLifecycleWatcher activityLifecycleWatcher;
@@ -333,6 +365,8 @@ public class MapWrapperView extends BaseView {
     @Inject
     Presenters presenters;
     @Inject
+    Repainter repainter;
+    @Inject
     Resources resources;
     @Inject
     Provider<ValueAnimator> vehicleMarkerAnimatorProvider;
@@ -346,6 +380,7 @@ public class MapWrapperView extends BaseView {
     private final Subject<Collection<Path>> paths = BehaviorSubject.create();
     private final Subject<Collection<Station>> stations = BehaviorSubject.create();
     private final Subject<Collection<Vehicle>> vehicles = BehaviorSubject.create();
+    private final Subject<Id> selectStationsRequests = PublishSubject.create();
 
     public MapWrapperView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -368,7 +403,8 @@ public class MapWrapperView extends BaseView {
     Disposable subscribeForEvents() {
         return new CompositeDisposable(
             subscribeForMap(),
-//            subscribeForRoutesAndVehicles(),
+            subscribeForRepainter(),
+            subscribeForRoutesAndVehicles(),
             subscribeForPaths(),
             subscribeForStations()
         );
@@ -441,20 +477,40 @@ public class MapWrapperView extends BaseView {
         );
     }
 
-//    private Disposable subscribeForRoutesAndVehicles() {
-//        return getMap()
-//            .switchMap(map ->
-//                Observable.combineLatest(
-//                    Observable.just(new VehicleHandler(vehicleMarkerAnimatorProvider, vehicleMarkerIconBuilder, map)),
-//                    groups,
-//                    vehicles,
-//                    commonFunctions::wrap
-//                )
-//            )
-//            .compose(commonFunctions.toMainThread())
-//            .subscribe(commonFunctions.unwrap(VehicleHandler::handle));
-//    }
-//
+    private Disposable subscribeForRepainter() {
+        return getMapController()
+            .switchMap(mapController ->
+                repainter
+                    .getRepaintRequests()
+                    .compose(commonFunctions.toConst(mapController))
+            )
+            .compose(commonFunctions.toMainThread())
+            .subscribe(MapController::notifyRepaint);
+    }
+
+    private Disposable subscribeForRoutesAndVehicles() {
+        Observable<Overlay> common = getMapController()
+            .map(Overlay::new)
+            .replay()
+            .refCount();
+        return new CompositeDisposable(
+            Observable
+                .combineLatest(getOverlayManager(), common, commonFunctions::wrap)
+                .subscribe(commonFunctions.unwrap(OverlayManager::addOverlay)),
+            common
+                .switchMap(overlay ->
+                    Observable.combineLatest(
+                        Observable.just(new VehicleHandler(resources, repainter, vehicleMarkerAnimatorProvider, vehicleMarkerIconBuilder, VEHICLE_MARKER_PRIORITY, overlay)),
+                        groups,
+                        vehicles,
+                        commonFunctions::wrap
+                    )
+                )
+                .compose(commonFunctions.toMainThread())
+                .subscribe(commonFunctions.unwrap(VehicleHandler::handle))
+        );
+    }
+
     private Disposable subscribeForPaths() {
         Observable<PathsOverlay> common = getMapController()
             .map(mapController -> {
@@ -471,7 +527,7 @@ public class MapWrapperView extends BaseView {
             common
                 .switchMap(overlay ->
                     Observable.combineLatest(
-                        Observable.just(new PathHandler(overlay)),
+                        Observable.just(new PathHandler(repainter, PATH_LINE_PRIORITY, overlay)),
                         paths,
                         commonFunctions::wrap
                     )
@@ -482,29 +538,43 @@ public class MapWrapperView extends BaseView {
     }
 
     private Disposable subscribeForStations() {
-        Observable<Overlay> common = getMapController()
+        Observable<Overlay> overlays = getMapController()
             .map(Overlay::new)
+            .replay()
+            .refCount();
+        Observable<StationHandler> handlers = overlays
+            .map(overlay -> new StationHandler(stationIcon, repainter, resources, STATION_MARKER_PRIORITY, overlay))
             .replay()
             .refCount();
         return new CompositeDisposable(
             Observable
-                .combineLatest(getOverlayManager(), common, commonFunctions::wrap)
+                .combineLatest(getOverlayManager(), overlays, commonFunctions::wrap)
                 .subscribe(commonFunctions.unwrap(OverlayManager::addOverlay)),
-            common
-                .switchMap(overlay ->
+            Observable
+                .combineLatest(
+                    overlays,
+                    presenters.getPreferencesPresenter().getNeedShowStations(),
+                    getCameraPosition().map(cameraPosition -> cameraPosition.zoom() >= CAMERA_ZOOM_TO_SHOW_STATIONS),
+                    (overlay, a, b) -> commonFunctions.wrap(overlay, a && b)
+                )
+                .compose(commonFunctions.toMainThread())
+                .subscribe(commonFunctions.unwrap((overlay, isVisible) -> {
+                    overlay.setVisible(isVisible);
+                    repainter.requestRepaint();
+                })),
+            handlers
+                .switchMap(handler ->
                     Observable.combineLatest(
-                        Observable.just(new StationHandler(stationIcon, resources, overlay)),
+                        Observable.just(handler),
                         stations,
-                        Observable.combineLatest(
-                            presenters.getPreferencesPresenter().getNeedShowStations(),
-                            getCameraPosition().map(cameraPosition -> cameraPosition.zoom() >= CAMERA_ZOOM_TO_SHOW_STATIONS),
-                            (a, b) -> a && b
-                        ),
                         commonFunctions::wrap
                     )
                 )
                 .compose(commonFunctions.toMainThread())
-                .subscribe(commonFunctions.unwrap(StationHandler::handle))
+                .subscribe(commonFunctions.unwrap(StationHandler::handle)),
+            handlers
+                .switchMap(StationHandler::getSelectStationsRequests)
+                .subscribe(selectStationsRequests::onNext)
         );
     }
 
@@ -520,20 +590,7 @@ public class MapWrapperView extends BaseView {
     }
 
     public Observable<Id> getCurrentStation() {
-        return Observable.empty();
-//        return getMap().switchMap(map ->
-//            Observable.<Id>create(source -> {
-//                map.setOnMarkerClickListener(marker -> {
-//                    Object tag = marker.getTag();
-//                    if (tag != null && tag instanceof Id) {
-//                        source.onNext((Id) tag);
-//                        return true;
-//                    }
-//                    return false;
-//                });
-//                source.setCancellable(() -> map.setOnMarkerClickListener(null));
-//            })
-//        );
+        return selectStationsRequests;
     }
 
     public void setRoutes(Collection<RouteGroup> groups) {

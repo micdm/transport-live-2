@@ -11,8 +11,6 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 
-import org.javatuples.Pair;
-
 import javax.inject.Named;
 
 import dagger.Module;
@@ -22,6 +20,7 @@ import micdm.transportlive2.AppScope;
 import micdm.transportlive2.R;
 import micdm.transportlive2.ui.misc.MiscModule;
 import micdm.transportlive2.ui.presenters.PresenterModule;
+import ru.yandex.yandexmapkit.utils.GeoPoint;
 
 @Module(includes = {MiscModule.class, PresenterModule.class})
 public class UiModule {
@@ -65,16 +64,16 @@ public class UiModule {
     }
 
     @Provides
-    ValueAnimator provideMarkerAnimator(TypeEvaluator<Pair<Double, Double>> typeEvaluator) {
-        return ValueAnimator.ofObject(typeEvaluator, Pair.with(0, 0));
-    }   // TODO: надо?
+    ValueAnimator provideMarkerAnimator(TypeEvaluator<GeoPoint> typeEvaluator) {
+        return ValueAnimator.ofObject(typeEvaluator, new GeoPoint(0, 0));
+    }
 
     @Provides
     @AppScope
-    TypeEvaluator<Pair<Double, Double>> provideLatLngTypeEvaluator() {
-        return (fraction, startValue, endValue) -> Pair.with(
-            startValue.getValue0() + (endValue.getValue0() - startValue.getValue0()) * fraction,
-            startValue.getValue1() + (endValue.getValue1() - startValue.getValue1()) * fraction
+    TypeEvaluator<GeoPoint> provideLatLngTypeEvaluator() {
+        return (fraction, startValue, endValue) -> new GeoPoint(
+            startValue.getLat() + (endValue.getLat() - startValue.getLat()) * fraction,
+            startValue.getLon() + (endValue.getLon() - startValue.getLon()) * fraction
         );
-    }   // TODO: надо?
+    }
 }

@@ -49,4 +49,10 @@ public class MiscModule {
         ComponentHolder.getAppComponent().inject(instance);
         return instance;
     }
+
+    @Provides
+    @AppScope
+    Repainter provideRepainter() {
+        return new Repainter();
+    }
 }
