@@ -8,4 +8,4 @@ Immutables, Retrofit, RxJava и ещё всякого по мелочи — ну
 
 [previous-version]: https://play.google.com/store/apps/details?id=com.micdm.transportlive
 [new-version]: https://play.google.com/store/apps/details?id=micdm.transportlive2
-[yandex-map-branch]: https://github.com/micdm/transport-live-2/tree/yandex_maps
+[yandex-maps-branch]: https://github.com/micdm/transport-live-2/tree/yandex_maps
