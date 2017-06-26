@@ -2,6 +2,7 @@ package micdm.transportlive2;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 
 import dagger.Module;
@@ -34,5 +35,11 @@ class AppModule {
     @AppScope
     Resources provideResources(App app) {
         return app.getResources();
+    }
+
+    @Provides
+    @AppScope
+    AssetManager provideAssetManager(App app) {
+        return app.getAssets();
     }
 }
