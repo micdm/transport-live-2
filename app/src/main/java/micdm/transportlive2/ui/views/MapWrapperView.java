@@ -138,8 +138,10 @@ public class MapWrapperView extends BaseView {
                 vehicleMarker.bitmapWrapper = null;
             }
             Route route = getRouteById(groups, vehicle.routeId());
-            vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
-            vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
+            if (route != null) {
+                vehicleMarker.bitmapWrapper = vehicleMarkerIconBuilder.build(route.id().getOriginal(), route.number(), vehicle.direction());
+                vehicleMarker.marker.setIcon(BitmapDescriptorFactory.fromBitmap(vehicleMarker.bitmapWrapper.getBitmap()));
+            }
         }
 
         private Route getRouteById(Collection<RouteGroup> groups, Id routeId) {
@@ -150,7 +152,8 @@ public class MapWrapperView extends BaseView {
                     }
                 }
             }
-            throw new IllegalStateException(String.format("cannot find routeId %s", routeId));
+            // NOTE: вообще это странное место: пришли машины с маршрутом, про который у нас нет инфы
+            return null;
         }
     }
 
