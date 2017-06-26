@@ -8,13 +8,13 @@ p.load(new FileInputStream(rootProject.file('../keys/sign.properties')))
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion "25.0.3"
     defaultConfig {
         applicationId "micdm.transportlive2"
         minSdkVersion 16
         targetSdkVersion 25
-        versionCode 3
-        versionName "1.2"
+        versionCode 5
+        versionName "1.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {

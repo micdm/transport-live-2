@@ -37,7 +37,7 @@ public class SearchStationsLoader extends BaseLoader<Collection<Station>> {
                     ImmutableStation.builder()
                         .id(idFactory.newInstance(item.PathwayMilestoneId))
                         .name(item.LegalName)
-                        .description(item.Description)
+                        .description(item.Description == null ? "" : item.Description)
                         .location(
                             ImmutablePoint.builder()
                                 .latitude(item.Latitude)

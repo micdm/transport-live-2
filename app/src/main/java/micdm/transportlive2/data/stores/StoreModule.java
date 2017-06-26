@@ -1,6 +1,7 @@
 package micdm.transportlive2.data.stores;
 
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 
 import com.google.gson.Gson;
 
@@ -12,7 +13,6 @@ import dagger.Module;
 import dagger.Provides;
 import micdm.transportlive2.AppScope;
 import micdm.transportlive2.ComponentHolder;
-import micdm.transportlive2.misc.Cache;
 import micdm.transportlive2.models.ImmutablePoint;
 import micdm.transportlive2.models.ImmutablePreferences;
 import micdm.transportlive2.models.Preferences;
@@ -68,7 +68,7 @@ public class StoreModule {
 
     @Provides
     @AppScope
-    RoutesStore provideRoutesStore(Cache cache, Gson gson) {
+    RoutesStore provideRoutesStore(AssetManager assetManager, Gson gson) {
         RoutesStore instance = new RoutesStore(
             new BaseStore.Adapter<Collection<RouteGroup>>() {
                 @Override
@@ -80,7 +80,7 @@ public class StoreModule {
                     return Arrays.asList(gson.fromJson(serialized, RouteGroup[].class));
                 }
             },
-            new CacheStorage(cache, "routes")
+            new AssetStorage(assetManager, "routes")
         );
         instance.init();
         return instance;
