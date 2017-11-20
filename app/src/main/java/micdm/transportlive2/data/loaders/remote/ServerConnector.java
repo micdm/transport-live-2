@@ -17,7 +17,7 @@ public class ServerConnector {
     }
 
     public Single<Collection<GetVehiclesResponse>> getVehicles(Id routeId) {
-        return apiService.getVehicles(routeId.getOriginal());
+        return apiService.getVehicles(routeId.getOriginal(), false);
     }
 
     public Single<GetPathResponse> getPath(Id routeId) {
